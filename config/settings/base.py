@@ -15,6 +15,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Apps
+    'v1.blockchain.apps.BlockchainConfig',
+
 ]
 
 MIDDLEWARE = [
