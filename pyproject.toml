@@ -6,12 +6,13 @@ name = "Node"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
-python = "^3.9"
 Django = "4.0b1"
-python-dotenv = "0.19.1"
 psycopg2 = "2.9.1"
 pymongo = "3.12.1"
+python = "^3.9"
+python-dotenv = "0.19.1"
 redis = "3.5.3"
+requests = "2.26.0"
 
 [tool.poetry.dev-dependencies]
 

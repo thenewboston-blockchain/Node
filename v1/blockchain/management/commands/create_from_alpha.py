@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from pymongo import MongoClient
 
+from v1.utils.network import fetch
+
 """
 python3 manage.py create_from_alpha
 
@@ -22,3 +24,16 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Sample message'))
         blocks = self.database['blocks']
         blocks.delete_many({})
+
+        response = fetch(
+            url=(
+                f'https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/'
+                f'latest.json'
+            ),
+            headers={}
+        )
+
+        for account_number, account_data in response.items():
+            balance = account_data['balance']
+            balance_lock = account_data['balance_lock']
+            print(account_number, balance, balance_lock)
