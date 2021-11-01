@@ -8,5 +8,9 @@ Follow the steps below to set up the project on your environment.
 
 ```
 DJANGO_SETTINGS_MODULE=
+POSTGRES_DB_NAME=
+POSTGRES_HOST=
+POSTGRES_PASSWORD=
+POSTGRES_USER=
 SECRET_KEY=
 ```
