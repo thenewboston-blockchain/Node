@@ -8,6 +8,8 @@ Follow the steps below to set up the project on your environment.
 
 ```
 DJANGO_SETTINGS_MODULE=
+MONGO_DB_NAME=
+MONGO_HOST=
 POSTGRES_DB_NAME=
 POSTGRES_HOST=
 POSTGRES_PASSWORD=

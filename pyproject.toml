@@ -10,6 +10,7 @@ python = "^3.9"
 Django = "4.0b1"
 python-dotenv = "0.19.1"
 psycopg2 = "2.9.1"
+pymongo = "3.12.1"
 
 [tool.poetry.dev-dependencies]
 
