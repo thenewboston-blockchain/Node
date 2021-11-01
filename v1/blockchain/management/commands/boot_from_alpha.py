@@ -24,7 +24,6 @@ class Command(BaseCommand):
         self.database = mongo[settings.MONGO_DB_NAME]
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Sample message'))
         blocks = self.database['blocks']
         blocks.delete_many({})
 
@@ -40,5 +39,6 @@ class Command(BaseCommand):
             message=response,
             signing_key=get_signing_key()
         )
-
         blocks.insert_one(block)
+
+        self.stdout.write(self.style.SUCCESS('Success'))
