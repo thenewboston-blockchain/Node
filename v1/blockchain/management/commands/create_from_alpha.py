@@ -2,7 +2,10 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from pymongo import MongoClient
 
+from v1.utils.blocks import generate_block
 from v1.utils.network import fetch
+from v1.utils.tools import sort_and_encode
+from v1.utils.signing import get_signing_key, verify_signature
 
 """
 python3 manage.py create_from_alpha
@@ -25,15 +28,31 @@ class Command(BaseCommand):
         blocks = self.database['blocks']
         blocks.delete_many({})
 
-        response = fetch(
-            url=(
-                f'https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/'
-                f'latest.json'
-            ),
-            headers={}
+        message = {
+            'apples': 123,
+            'bacon': 456
+        }
+
+        block = generate_block(
+            message=message,
+            signing_key=get_signing_key()
         )
 
-        for account_number, account_data in response.items():
-            balance = account_data['balance']
-            balance_lock = account_data['balance_lock']
-            print(account_number, balance, balance_lock)
+        verify_signature(
+            message=sort_and_encode(message),
+            signature=block['signature'],
+            signer=block['signer']
+        )
+
+        # response = fetch(
+        #     url=(
+        #         f'https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/'
+        #         f'latest.json'
+        #     ),
+        #     headers={}
+        # )
+        #
+        # for account_number, account_data in response.items():
+        #     balance = account_data['balance']
+        #     balance_lock = account_data['balance_lock']
+        #     print(account_number, balance, balance_lock)
