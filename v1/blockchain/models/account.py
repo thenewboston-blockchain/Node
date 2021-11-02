@@ -2,6 +2,6 @@ from dataclasses import dataclass
 
 
 @dataclass
-class AccountState:
+class Account:
     balance: int
     balance_lock: str
