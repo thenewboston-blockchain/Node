@@ -26,10 +26,10 @@ class Command(BaseCommand):
         super().__init__(*args, **kwargs)
         mongo = MongoClient(settings.MONGO_HOST, settings.MONGO_PORT)
         self.database = mongo[settings.MONGO_DB_NAME]
+        self.blocks_collection = self.database['blocks']
 
     def handle(self, *args, **options):
-        blocks = self.database['blocks']
-        blocks.delete_many({})
+        self.wipe_data()
 
         response = fetch(
             url=(
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             message=snapshot,
             signing_key=get_signing_key()
         )
-        blocks.insert_one({
+        self.blocks_collection.insert_one({
             '_id': 0,
             'block_identifier': 1,  # TODO: Hash the block
             **block
@@ -66,3 +66,6 @@ class Command(BaseCommand):
             )
 
         return Snapshot(accounts=accounts, nodes={})
+
+    def wipe_data(self):
+        self.blocks_collection.delete_many({})
