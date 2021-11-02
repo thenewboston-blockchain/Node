@@ -1,7 +1,11 @@
+from dataclasses import asdict
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from pymongo import MongoClient
 
+from v1.blockchain.models.account_state import AccountState
+from v1.blockchain.models.blockchain_state import BlockchainState
 from v1.utils.blocks import generate_block
 from v1.utils.network import fetch
 from v1.utils.signing import get_signing_key
@@ -23,6 +27,18 @@ class Command(BaseCommand):
         mongo = MongoClient(settings.MONGO_HOST, settings.MONGO_PORT)
         self.database = mongo[settings.MONGO_DB_NAME]
 
+    @staticmethod
+    def blockchain_state_from_alpha_backup(*, alpha_backup):
+        account_states = {}
+
+        for account_number, account_data in alpha_backup.items():
+            account_states[account_number] = AccountState(
+                balance=account_data['balance'],
+                balance_lock=account_data['balance_lock']
+            )
+
+        return BlockchainState(account_states=account_states)
+
     def handle(self, *args, **options):
         blocks = self.database['blocks']
         blocks.delete_many({})
@@ -35,10 +51,16 @@ class Command(BaseCommand):
             headers={}
         )
 
+        blockchain_state = self.blockchain_state_from_alpha_backup(alpha_backup=response)
+        blockchain_state = asdict(blockchain_state)
+
         block = generate_block(
-            message=response,
+            message=blockchain_state,
             signing_key=get_signing_key()
         )
-        blocks.insert_one(block)
+        blocks.insert_one({
+            '_id': 0,
+            **block
+        })
 
         self.stdout.write(self.style.SUCCESS('Success'))
