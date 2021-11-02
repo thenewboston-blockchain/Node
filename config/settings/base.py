@@ -17,7 +17,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
+    'v1.blocks.apps.BlocksConfig',
     'v1.blockchain.apps.BlockchainConfig',
+    'v1.signed_change_requests.apps.SignedChangeRequestsConfig',
 
 ]
 
