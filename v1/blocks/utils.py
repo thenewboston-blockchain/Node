@@ -1,5 +1,5 @@
+from v1.utils.signing import encode_key, generate_signature, get_public_key
 from v1.utils.tools import sort_and_encode
-from .signing import encode_key, generate_signature, get_public_key
 
 
 def generate_block(*, message, signing_key):

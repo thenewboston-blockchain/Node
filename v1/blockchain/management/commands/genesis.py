@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from hashlib import sha3_256
 
 from django.conf import settings
 from django.core.cache import cache
@@ -6,22 +7,22 @@ from django.core.management.base import BaseCommand
 from pymongo import MongoClient
 
 from v1.blockchain.models.account import Account
+from v1.blockchain.models.mongo import Mongo
 from v1.blockchain.models.snapshot import Snapshot
-from v1.utils.blocks import generate_block
 from v1.utils.network import fetch
-from v1.utils.signing import get_signing_key
+from v1.utils.tools import sort_and_encode
 
 """
-python3 manage.py boot_from_alpha
+python3 manage.py genesis
 
 Running this script will:
 - Download the latest alpha backup file
-- Create the initial blockchain
+- Create the genesis block
 """
 
 
 class Command(BaseCommand):
-    help = 'Boot from the latest alpha backup file'
+    help = 'Download the latest alpha backup file and create the genesis block'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,17 +43,17 @@ class Command(BaseCommand):
 
         snapshot = self.snapshot_from_alpha_backup(alpha_backup=response)
         snapshot = asdict(snapshot)
+        snapshot_bytes = sort_and_encode(snapshot)
 
-        # TODO: Write a helper function for all of this
-        block = generate_block(
-            message=snapshot,
-            signing_key=get_signing_key()
+        snapshot_hash = sha3_256()
+        snapshot_hash.update(snapshot_bytes)
+        block_identifier = snapshot_hash.hexdigest()
+
+        Mongo().insert_block(
+            block_identifier=block_identifier,
+            block_number=0,
+            message=snapshot
         )
-        self.blocks_collection.insert_one({
-            '_id': 0,
-            'block_identifier': 1,  # TODO: Hash the block
-            **block
-        })
 
         self.stdout.write(self.style.SUCCESS('Success'))
 
