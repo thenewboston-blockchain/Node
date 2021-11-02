@@ -1,6 +1,7 @@
 from dataclasses import asdict
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from pymongo import MongoClient
 
@@ -69,3 +70,4 @@ class Command(BaseCommand):
 
     def wipe_data(self):
         self.blocks_collection.delete_many({})
+        cache.clear()
