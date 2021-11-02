@@ -22,3 +22,6 @@ class Mongo:
             'block_identifier': block_identifier,
             **block
         })
+
+    def reset_blockchain(self):
+        self.blocks_collection.delete_many({})

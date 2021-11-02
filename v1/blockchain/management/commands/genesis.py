@@ -1,10 +1,8 @@
 from dataclasses import asdict
 from hashlib import sha3_256
 
-from django.conf import settings
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
-from pymongo import MongoClient
 
 from v1.blockchain.models.account import Account
 from v1.blockchain.models.mongo import Mongo
@@ -26,9 +24,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        mongo = MongoClient(settings.MONGO_HOST, settings.MONGO_PORT)
-        self.database = mongo[settings.MONGO_DB_NAME]
-        self.blocks_collection = self.database['blocks']
+        self.mongo = Mongo()
 
     def handle(self, *args, **options):
         self.wipe_data()
@@ -49,7 +45,7 @@ class Command(BaseCommand):
         snapshot_hash.update(snapshot_bytes)
         block_identifier = snapshot_hash.hexdigest()
 
-        Mongo().insert_block(
+        self.mongo.insert_block(
             block_identifier=block_identifier,
             block_number=0,
             message=snapshot
@@ -70,5 +66,5 @@ class Command(BaseCommand):
         return Snapshot(accounts=accounts, nodes={})
 
     def wipe_data(self):
-        self.blocks_collection.delete_many({})
+        self.mongo.reset_blockchain()
         cache.clear()
