@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from v1.general.models.signed import Signed
-from .signed_change_request_message import GenesisSignedChangeRequestMessage
+from v1.signed_change_request_messages.genesis import GenesisSignedChangeRequestMessage
 
 
 @dataclass

@@ -6,9 +6,10 @@ from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from v1.blockchain.models.mongo import Mongo
-from v1.blocks.models.gensis_block import GenesisBlock
-from v1.signed_change_requests.models.signed_change_request import GenesisSignedChangeRequest
-from v1.signed_change_requests.models.signed_change_request_message import GenesisSignedChangeRequestMessage
+from v1.blocks.gensis import GenesisBlock
+from v1.constants.block_types import GENESIS
+from v1.signed_change_request_messages.genesis import GenesisSignedChangeRequestMessage
+from v1.signed_change_requests.genesis import GenesisSignedChangeRequest
 from v1.utils.network import fetch
 from v1.utils.signing import encode_key, generate_signature, get_public_key
 from v1.utils.tools import sort_and_encode
@@ -48,7 +49,7 @@ class Command(BaseCommand):
         signed_change_request_message = GenesisSignedChangeRequestMessage(
             accounts=response,
             lock=public_key,
-            request_type='GENESIS'
+            request_type=GENESIS
         )
         signed_change_request = GenesisSignedChangeRequest(
             message=signed_change_request_message,
