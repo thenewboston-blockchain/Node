@@ -4,6 +4,7 @@ from hashlib import sha3_256
 
 from django.core.management.base import BaseCommand
 
+from v1.accounts.models.alpha_account import AlphaAccount
 from v1.block_messages.gensis import GenesisBlockMessage
 from v1.blockchain.models.blockchain import Blockchain
 from v1.blockchain.models.mongo import Mongo
@@ -31,10 +32,22 @@ class Command(BaseCommand):
         self.blockchain = Blockchain()
         self.mongo = Mongo()
 
+    @staticmethod
+    def get_updated_accounts(accounts) -> dict[str, dict]:
+        results = {}
+
+        for account_number, account_data in accounts.items():
+            results[account_number] = {
+                'balance': account_data['balance'],
+                'lock': account_data['balance_lock']
+            }
+
+        return results
+
     def handle(self, *args, **options):
         self.blockchain.reset()
 
-        response = fetch(
+        accounts: dict[str, AlphaAccount] = fetch(
             url=(
                 f'https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/'
                 f'latest.json'
@@ -42,13 +55,13 @@ class Command(BaseCommand):
             headers={}
         )
 
-        response_bytes = sort_and_encode(response)
+        accounts_bytes = sort_and_encode(accounts)
         accounts_hash = sha3_256()
-        accounts_hash.update(response_bytes)
+        accounts_hash.update(accounts_bytes)
         public_key = encode_key(key=get_public_key())
 
         signed_change_request_message = GenesisSignedChangeRequestMessage(
-            accounts=response,
+            accounts=accounts,
             lock=public_key,
             request_type=GENESIS
         )
@@ -57,14 +70,13 @@ class Command(BaseCommand):
             signature=generate_signature(message=asdict(signed_change_request_message)),
             signer=public_key,
         )
-
         genesis_block_message = GenesisBlockMessage(
             block_identifier=accounts_hash.hexdigest(),
             block_number=0,
             block_type=signed_change_request_message.request_type,
             signed_change_request=signed_change_request,
             timestamp=str(datetime.now()),
-            updates={}
+            updates={'accounts': self.get_updated_accounts(accounts)}
         )
 
         self.blockchain.add(block_message=asdict(genesis_block_message))
