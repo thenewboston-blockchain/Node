@@ -2,7 +2,6 @@ from dataclasses import asdict
 from datetime import datetime
 from hashlib import sha3_256
 
-from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
 from v1.block_messages.gensis import GenesisBlockMessage
@@ -33,7 +32,7 @@ class Command(BaseCommand):
         self.mongo = Mongo()
 
     def handle(self, *args, **options):
-        self.wipe_data()
+        self.blockchain.reset()
 
         response = fetch(
             url=(
@@ -70,7 +69,3 @@ class Command(BaseCommand):
 
         self.blockchain.add(block_message=asdict(genesis_block_message))
         self.stdout.write(self.style.SUCCESS('Success'))
-
-    def wipe_data(self):
-        self.mongo.reset_blockchain()
-        cache.clear()
