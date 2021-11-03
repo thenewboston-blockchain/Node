@@ -5,12 +5,12 @@ from hashlib import sha3_256
 from django.core.management.base import BaseCommand
 
 from v1.accounts.models.alpha_account import AlphaAccount
-from v1.block_messages.gensis import GenesisBlockMessage
+from v1.block_messages.models.gensis import GenesisBlockMessage
 from v1.blockchain.models.blockchain import Blockchain
 from v1.blockchain.models.mongo import Mongo
 from v1.constants.block_types import GENESIS
-from v1.signed_change_request_messages.genesis import GenesisSignedChangeRequestMessage
-from v1.signed_change_requests.genesis import GenesisSignedChangeRequest
+from v1.signed_change_request_messages.models.genesis import GenesisSignedChangeRequestMessage
+from v1.signed_change_requests.models.genesis import GenesisSignedChangeRequest
 from v1.utils.network import fetch
 from v1.utils.signing import encode_key, generate_signature, get_public_key
 from v1.utils.tools import sort_and_encode
