@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .account import Account
+from v1.accounts.models.account import Account
 from .node import Node
 
 
@@ -8,3 +8,4 @@ from .node import Node
 class Snapshot:
     accounts: dict[str, Account]
     nodes: dict[str, Node]
+    last_block_number: int
