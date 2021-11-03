@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 
 @dataclass
-class BaseBlock:
+class BaseBlockMessage:
     block_identifier: str
     block_number: int
     block_type: str
-    timestamp: datetime
+    timestamp: str
     updates: dict

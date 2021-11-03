@@ -1,7 +1,7 @@
-from dataclasses import asdict
-
 from django.conf import settings
 from pymongo import MongoClient
+
+from v1.utils.signing import encode_key, generate_signature, get_public_key
 
 
 class Mongo:
@@ -11,10 +11,12 @@ class Mongo:
         self.database = mongo[settings.MONGO_DB_NAME]
         self.blocks_collection = self.database['blocks']
 
-    def insert_block(self, *, block):
+    def insert_block(self, *, block_message: dict):
         self.blocks_collection.insert_one({
-            '_id': block.block_number,
-            **asdict(block)
+            '_id': block_message['block_number'],
+            'message': block_message,
+            'signature': generate_signature(message=block_message),
+            'signer': encode_key(key=get_public_key()),
         })
 
     def reset_blockchain(self):

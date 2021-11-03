@@ -5,8 +5,9 @@ from hashlib import sha3_256
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
+from v1.block_messages.gensis import GenesisBlockMessage
+from v1.blockchain.models.blockchain import Blockchain
 from v1.blockchain.models.mongo import Mongo
-from v1.blocks.gensis import GenesisBlock
 from v1.constants.block_types import GENESIS
 from v1.signed_change_request_messages.genesis import GenesisSignedChangeRequestMessage
 from v1.signed_change_requests.genesis import GenesisSignedChangeRequest
@@ -28,6 +29,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.blockchain = Blockchain()
         self.mongo = Mongo()
 
     def handle(self, *args, **options):
@@ -57,16 +59,16 @@ class Command(BaseCommand):
             signer=public_key,
         )
 
-        genesis_block = GenesisBlock(
+        genesis_block_message = GenesisBlockMessage(
             block_identifier=accounts_hash.hexdigest(),
             block_number=0,
             block_type=signed_change_request_message.request_type,
             signed_change_request=signed_change_request,
-            timestamp=datetime.now(),
+            timestamp=str(datetime.now()),
             updates={}
         )
 
-        self.mongo.insert_block(block=genesis_block)
+        self.blockchain.add(block_message=asdict(genesis_block_message))
         self.stdout.write(self.style.SUCCESS('Success'))
 
     def wipe_data(self):

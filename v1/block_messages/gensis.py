@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 from v1.signed_change_requests.genesis import GenesisSignedChangeRequest
-from .base import BaseBlock
+from .base import BaseBlockMessage
 
 
 @dataclass
-class GenesisBlock(BaseBlock):
+class GenesisBlockMessage(BaseBlockMessage):
     signed_change_request: GenesisSignedChangeRequest
