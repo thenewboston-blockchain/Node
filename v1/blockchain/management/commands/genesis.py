@@ -1,12 +1,13 @@
-from dataclasses import asdict
+from datetime import datetime
 from hashlib import sha3_256
 
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
 
-from v1.blockchain.models.account import Account
 from v1.blockchain.models.mongo import Mongo
-from v1.blockchain.models.snapshot import Snapshot
+from v1.blocks.models.gensis_block import GenesisBlock
+from v1.signed_change_requests.models.signed_change_request import GenesisSignedChangeRequest
+from v1.signed_change_requests.models.signed_change_request_message import GenesisSignedChangeRequestMessage
 from v1.utils.network import fetch
 from v1.utils.tools import sort_and_encode
 
@@ -37,33 +38,35 @@ class Command(BaseCommand):
             headers={}
         )
 
-        snapshot = self.snapshot_from_alpha_backup(alpha_backup=response)
-        snapshot = asdict(snapshot)
-        snapshot_bytes = sort_and_encode(snapshot)
+        response_bytes = sort_and_encode(response)
+        accounts_hash = sha3_256()
+        accounts_hash.update(response_bytes)
 
-        snapshot_hash = sha3_256()
-        snapshot_hash.update(snapshot_bytes)
-        block_identifier = snapshot_hash.hexdigest()
+        block_identifier = accounts_hash.hexdigest()
 
-        self.mongo.insert_block(
-            block_identifier=block_identifier,
-            block_number=0,
-            message=snapshot
+        message = GenesisSignedChangeRequestMessage(
+            account_lock='',
+            accounts=response,
+            request_type=''
         )
 
+        signed_change_request = GenesisSignedChangeRequest(
+            message=message,
+            signature='',
+            signer='',
+        )
+
+        genesis_block = GenesisBlock(
+            block_identifier=block_identifier,
+            block_number=0,
+            signed_change_request=signed_change_request,
+            timestamp=datetime.now(),
+            updates={}
+        )
+
+        print(genesis_block)
+
         self.stdout.write(self.style.SUCCESS('Success'))
-
-    @staticmethod
-    def snapshot_from_alpha_backup(*, alpha_backup):
-        accounts = {}
-
-        for account_number, account_data in alpha_backup.items():
-            accounts[account_number] = Account(
-                balance=account_data['balance'],
-                balance_lock=account_data['balance_lock']
-            )
-
-        return Snapshot(accounts=accounts, nodes={})
 
     def wipe_data(self):
         self.mongo.reset_blockchain()
