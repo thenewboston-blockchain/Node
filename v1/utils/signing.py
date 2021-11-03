@@ -3,8 +3,10 @@ import os
 from nacl.encoding import HexEncoder
 from nacl.signing import SigningKey, VerifyKey
 
+from .tools import sort_and_encode
 
-def encode_key(*, key):
+
+def encode_key(*, key: VerifyKey) -> str:
     """
     Return the hexadecimal representation of the binary public key data
     """
@@ -15,26 +17,27 @@ def encode_key(*, key):
     return key.encode(encoder=HexEncoder).decode('utf-8')
 
 
-def generate_signature(*, message, signing_key):
+def generate_signature(*, message: dict) -> str:
     """
     Sign message using signing key and return signature
     """
 
+    signing_key = get_signing_key()
+    message = sort_and_encode(message)
+
     return signing_key.sign(message).signature.hex()
 
 
-def get_public_key(*, signing_key):
+def get_public_key() -> VerifyKey:
     """
     Return the public key from the signing key
     """
 
-    if not isinstance(signing_key, SigningKey):
-        raise RuntimeError('signing_key must be of type nacl.signing.SigningKey')
-
+    signing_key = get_signing_key()
     return signing_key.verify_key
 
 
-def get_signing_key():
+def get_signing_key() -> SigningKey:
     """
     Return signing key
     """
@@ -43,7 +46,7 @@ def get_signing_key():
     return SigningKey(network_signing_key, encoder=HexEncoder)
 
 
-def verify_signature(*, message, signature, signer):
+def verify_signature(*, message: bytes, signature: str, signer: str) -> None:
     """
     Verify block signature
     """

@@ -6,5 +6,6 @@ from datetime import datetime
 class BaseBlock:
     block_identifier: str
     block_number: int
+    block_type: str
     timestamp: datetime
     updates: dict
