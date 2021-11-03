@@ -79,5 +79,5 @@ class Command(BaseCommand):
             updates={'accounts': self.get_updated_accounts(accounts)}
         )
 
-        self.blockchain.add(block_message=asdict(genesis_block_message))
+        self.blockchain.add(block_message=genesis_block_message)
         self.stdout.write(self.style.SUCCESS('Success'))
