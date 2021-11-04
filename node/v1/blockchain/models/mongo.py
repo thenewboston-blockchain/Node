@@ -60,7 +60,7 @@ class Mongo:
         updates = block_message['updates']
 
         self.blocks_collection.insert_one({
-            '_id': block_number,
+            '_id': str(block_number),
             'message': block_message,
             'signature': generate_signature(message=block_message),
             'signer': encode_key(key=get_public_key()),
@@ -76,11 +76,15 @@ class Mongo:
         self._update_schedule(validators=updates['validators'])
 
     def reset_blockchain(self):
+        self.accounts_collection.delete_many({})
         self.blocks_collection.delete_many({})
+        self.config_collection.delete_many({})
+        self.nodes_collection.delete_many({})
+        self.schedule_collection.delete_many({})
 
     def update_config(self, *, config: dict):
         self.config_collection.update_one(
-            {'_id': 0},
+            {'_id': '0'},
             {'$set': config},
             upsert=True
         )
