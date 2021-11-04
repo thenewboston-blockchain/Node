@@ -42,6 +42,17 @@ class Command(BaseCommand):
 
         return results
 
+    @staticmethod
+    def get_updated_nodes() -> dict[str, dict]:
+        public_key = encode_key(key=get_public_key())
+
+        return {
+            public_key: {
+                'fee_amount': 1,
+                'network_addresses': ['http://78.107.238.40:8555/']
+            }
+        }
+
     def handle(self, *args, **options):
         self.blockchain.reset()
 
@@ -71,7 +82,10 @@ class Command(BaseCommand):
             block_type=signed_change_request_message.request_type,
             signed_change_request=signed_change_request,
             timestamp=str(datetime.now()),
-            updates={'accounts': self.get_updated_accounts(accounts)}
+            updates={
+                'accounts': self.get_updated_accounts(accounts),
+                'nodes': self.get_updated_nodes()
+            }
         )
 
         self.blockchain.add(block_message=genesis_block_message)

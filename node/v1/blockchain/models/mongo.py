@@ -12,6 +12,7 @@ class Mongo:
         self.accounts_collection = self.database['accounts']
         self.blocks_collection = self.database['blocks']
         self.config_collection = self.database['config']
+        self.nodes_collection = self.database['nodes']
 
     def _update_accounts(self, accounts):
         for account_number, account_data in accounts.items():
@@ -36,6 +37,14 @@ class Mongo:
 
         self.update_config(config=config)
 
+    def _update_nodes(self, nodes):
+        for account_number, node_data in nodes.items():
+            self.nodes_collection.update_one(
+                {'_id': account_number},
+                {'$set': node_data},
+                upsert=True
+            )
+
     def insert_block(self, *, block_message: dict):
         block_identifier = block_message['block_identifier']
         block_number = block_message['block_number']
@@ -47,8 +56,14 @@ class Mongo:
             'signature': generate_signature(message=block_message),
             'signer': encode_key(key=get_public_key()),
         })
+
+        self._update_config_from_block_data(
+            block_identifier=block_identifier,
+            block_number=block_number
+        )
+
         self._update_accounts(accounts=updates['accounts'])
-        self._update_config_from_block_data(block_identifier=block_identifier, block_number=block_number)
+        self._update_nodes(nodes=updates['nodes'])
 
     def reset_blockchain(self):
         self.blocks_collection.delete_many({})
