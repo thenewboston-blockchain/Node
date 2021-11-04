@@ -1,6 +1,5 @@
 from dataclasses import asdict
 from datetime import datetime
-from hashlib import sha3_256
 
 from django.core.management.base import BaseCommand
 
@@ -13,7 +12,6 @@ from v1.signed_change_request_messages.models.genesis import GenesisSignedChange
 from v1.signed_change_requests.models.genesis import GenesisSignedChangeRequest
 from v1.utils.network import fetch
 from v1.utils.signing import encode_key, generate_signature, get_public_key
-from v1.utils.tools import sort_and_encode
 
 """
 python3 manage.py genesis
@@ -55,9 +53,6 @@ class Command(BaseCommand):
             headers={}
         )
 
-        accounts_bytes = sort_and_encode(accounts)
-        accounts_hash = sha3_256()
-        accounts_hash.update(accounts_bytes)
         public_key = encode_key(key=get_public_key())
 
         signed_change_request_message = GenesisSignedChangeRequestMessage(
@@ -71,7 +66,7 @@ class Command(BaseCommand):
             signer=public_key,
         )
         genesis_block_message = GenesisBlockMessage(
-            block_identifier=accounts_hash.hexdigest(),
+            block_identifier=None,
             block_number=0,
             block_type=signed_change_request_message.request_type,
             signed_change_request=signed_change_request,
