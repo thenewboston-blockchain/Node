@@ -18,11 +18,3 @@ DATABASES = {
 MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
 MONGO_HOST = os.getenv('MONGO_HOST')
 MONGO_PORT = 27017
-
-# Redis
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379',
-    }
-}
