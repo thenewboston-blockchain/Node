@@ -13,6 +13,7 @@ class Mongo:
         self.blocks_collection = self.database['blocks']
         self.config_collection = self.database['config']
         self.nodes_collection = self.database['nodes']
+        self.schedule_collection = self.database['schedule']
 
     def _update_accounts(self, accounts):
         for account_number, account_data in accounts.items():
@@ -45,6 +46,14 @@ class Mongo:
                 upsert=True
             )
 
+    def _update_schedule(self, validators):
+        for position, validator in validators.items():
+            self.schedule_collection.update_one(
+                {'_id': position},
+                {'$set': validator},
+                upsert=True
+            )
+
     def insert_block(self, *, block_message: dict):
         block_identifier = block_message['block_identifier']
         block_number = block_message['block_number']
@@ -64,6 +73,7 @@ class Mongo:
 
         self._update_accounts(accounts=updates['accounts'])
         self._update_nodes(nodes=updates['nodes'])
+        self._update_schedule(validators=updates['validators'])
 
     def reset_blockchain(self):
         self.blocks_collection.delete_many({})

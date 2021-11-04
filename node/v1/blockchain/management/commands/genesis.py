@@ -84,7 +84,14 @@ class Command(BaseCommand):
             timestamp=str(datetime.now()),
             updates={
                 'accounts': self.get_updated_accounts(accounts),
-                'nodes': self.get_updated_nodes()
+                'nodes': self.get_updated_nodes(),
+                'validators': {
+                    '0': {
+                        'first_block': 0,
+                        'last_block': 99,
+                        'node': public_key
+                    }
+                }
             }
         )
 
