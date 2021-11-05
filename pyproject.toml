@@ -15,6 +15,7 @@ requests = "2.26.0"
 PyNaCl = "1.4.0"
 
 [tool.poetry.dev-dependencies]
+pre-commit = "^2.15.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

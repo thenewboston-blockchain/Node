@@ -17,3 +17,7 @@ Follow the steps below to set up the project on your environment.
     POSTGRES_USER=thenewboston
     SECRET_KEY=django-insecure-^m3d4yj1zic931$2t3z_b()(xz-_34c3sjeh_4v41rf#-2j8qs
 
+Install the pre-commit script
++++++++++++++++++++++++++++++::
+
+    poetry run pre-commit install
