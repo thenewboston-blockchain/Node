@@ -1,0 +1,13 @@
+[flake8]
+ignore = W503,W504,F403,F405,E501,D403,C101,I100,I201
+exclude =
+    .git,
+    __pycache__,
+    venv
+filename = *.py
+accept-encodings = utf-8
+inline-quotes = single
+max-complexity = 12
+max-line-length = 119
+max-linenumber = 500
+multiline-quotes = double
