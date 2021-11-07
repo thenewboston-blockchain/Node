@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -17,9 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
-    'v1.accounts.apps.AccountsConfig',
-    'v1.blockchain.apps.BlockchainConfig',
-
+    'node.blockchain.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -32,7 +30,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = 'node.config.urls'
 
 TEMPLATES = [
     {
@@ -50,7 +48,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = 'node.config.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -66,6 +64,15 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# TODO(dmu) CRITICAL: Replace sqlite with Mongo for default Django database
+#                     https://thenewboston.atlassian.net/browse/BC-135
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
