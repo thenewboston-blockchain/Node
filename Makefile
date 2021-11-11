@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	poetry run pytest -v -rs -n auto --cov=thenewboston_node --cov-report=html --show-capture=no
+	poetry run pytest -v -rs -n auto --cov=node --cov-report=html --show-capture=no
 
 .PHONY: up-dependencies-only
 up-dependencies-only:
