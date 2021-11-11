@@ -13,6 +13,7 @@ python = "^3.9"
 python-dotenv = "0.19.1"
 requests = "2.26.0"
 Django = "^3.2.9"
+django-split-settings = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.15.0"
@@ -20,10 +21,12 @@ pytest = "^6.2.5"
 pytest-django = "^4.4.0"
 pytest-cov = "^3.0.0"
 pytest-xdist = "^2.4.0"
+colorlog = "^6.6.0"
 
-[tool.isort]
-known_django = "django"
-sections = "FUTURE,STDLIB,DJANGO,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "node.config.settings"
+python_files = "test_*.py"
+testpaths = ["node"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

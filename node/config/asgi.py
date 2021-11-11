@@ -10,10 +10,7 @@ https://docs.djangoproject.com/en/dev/howto/deployment/asgi/
 import os
 
 from django.core.asgi import get_asgi_application
-from dotenv import load_dotenv
 
-load_dotenv(override=True)
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.getenv('DJANGO_SETTINGS_MODULE'))  # type: ignore
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'node.config.settings')  # type: ignore
 
 application = get_asgi_application()

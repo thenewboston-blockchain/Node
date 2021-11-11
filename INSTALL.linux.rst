@@ -66,15 +66,22 @@ to get the latest version for development.
     poetry config virtualenvs.path ${HOME}/.virtualenvs && \
     poetry run pip install pip==${PIP_REQUIRED_VERSION}
 
-#. Create a `.env` file containing the following variables::
+#. Setup local configuration for running code on host::
 
-    cat <<EOF > .env
-    DJANGO_SETTINGS_MODULE=node.config.settings.local
-    MONGO_DB_NAME=blockchain
-    MONGO_HOST=127.0.0.1
-    NODE_SIGNING_KEY=a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126f
-    SECRET_KEY=django-insecure-^m3d4yj1zic931$2t3z_b()(xz-_34c3sjeh_4v41rf-2j8qs
-    EOF
+    mkdir -p local && \
+    cp node/config/settings/templates/settings.dev.py ./local/settings.dev.py && \
+    cp node/config/settings/templates/settings.unittests.py ./local/settings.unittests.py
+
+    # Edit files if needed
+    vim ./local/settings.dev.py
+    vim ./local/settings.unittests.py
+
+#. [Optional] If you prefer override settings with environment variables defined in `.env` file::
+
+    cp node/config/settings/templates/dotenv.dev .env
+
+    # Edit file if needed
+    vim .env
 
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 

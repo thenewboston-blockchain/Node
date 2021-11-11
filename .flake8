@@ -11,3 +11,6 @@ max-complexity = 12
 max-linenumber = 500
 max-line-length = 119
 multiline-quotes = double
+per-file-ignores =
+    node/config/settings/templates/settings.dev.py:F821
+    node/config/settings/templates/settings.unittests.py:F821
