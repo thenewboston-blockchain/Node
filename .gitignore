@@ -55,6 +55,7 @@ nosetests.xml
 .pytest_cache
 
 # Environments
+/local
 .env
 .venv
 ENV/

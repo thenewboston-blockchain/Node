@@ -2,6 +2,10 @@
 test:
 	poetry run pytest -v -rs -n auto --cov=node --cov-report=html --show-capture=no
 
+.PHONY: test-stepwise
+test-stepwise:
+	poetry run pytest --reuse-db --sw -vv --show-capture=no
+
 .PHONY: up-dependencies-only
 up-dependencies-only:
 	docker-compose -f docker-compose.yml up --force-recreate mongo mongo-express
