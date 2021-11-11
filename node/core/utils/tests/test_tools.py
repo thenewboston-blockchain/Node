@@ -1,4 +1,4 @@
-from ..tools import sort_and_encode
+from node.core.utils.tools import sort_and_encode
 
 
 def test_sort_and_encode():
