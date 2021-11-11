@@ -1,5 +1,5 @@
 [flake8]
-ignore = W503,W504,F403,F405,E501,D403,C101,I100,I201
+ignore = C101,D403,F403,F405,I100,I201,W503,W504
 exclude =
     .git,
     __pycache__,
@@ -8,6 +8,6 @@ filename = *.py
 accept-encodings = utf-8
 inline-quotes = single
 max-complexity = 12
-max-line-length = 119
 max-linenumber = 500
+max-line-length = 119
 multiline-quotes = double
