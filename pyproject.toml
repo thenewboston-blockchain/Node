@@ -6,13 +6,13 @@ name = "Node"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
-Django = "4.0b1"
 PyNaCl = "1.4.0"
 psycopg2 = "2.9.1"
 pymongo = "3.12.1"
 python = "^3.9"
 python-dotenv = "0.19.1"
 requests = "2.26.0"
+Django = "^3.2.9"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.15.0"
