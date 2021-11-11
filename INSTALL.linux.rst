@@ -45,7 +45,7 @@ to get the latest version for development.
 
 #. Ensure you have Python 3.9.x installed and it will be used for running the project (you can
    do it with optional steps below)
-#. [Optional] Install Python 3.10.x with ``pyenv``
+#. [Optional] Install Python 3.9.x with ``pyenv``
 
     #. Install and configure `pyenv` according to
        https://github.com/pyenv/pyenv#basic-github-checkout
