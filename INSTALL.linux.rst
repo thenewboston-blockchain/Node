@@ -2,34 +2,31 @@ Local development environment setup
 ===================================
 
 This section describes how to setup development environment for Debian-based distributions
-(tested on Linux Mint 18.3 specifically)
+(tested on Linux Mint 20.2 specifically)
 
 Initial setup
 +++++++++++++
 Once initial setup is done only corresponding `Update`_ section should be performed
 to get the latest version for development.
 
-#. Install prerequisites::
-
-    apt update
-    apt install git
-
 #. Install prerequisites (
-   as prescribed at https://github.com/pyenv/pyenv/wiki/Common-build-problems )::
+   as prescribed at https://github.com/pyenv/pyenv/wiki/Common-build-problems and some other)::
 
     # TODO(dmu) MEDIUM: Remove dependencies that are not really needed
-    apt update && \
-    apt install make build-essential libssl-dev zlib1g-dev libbz2-dev \
-                libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-                libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev \
-                python-openssl libpq-dev
+    # TODO(dmu) MEDIUM: These dependencies seem to be candidates for removal: tk-dev wget curl llvm
+    sudo apt update && \
+    apt install git make build-essential libssl-dev zlib1g-dev libbz2-dev \
+                libreadline-dev libsqlite3-dev libncurses5-dev \
+                libncursesw5-dev xz-utils libffi-dev liblzma-dev \
+                python-openssl
 
 #. Install Docker according to https://docs.docker.com/engine/install/
    (known working: Docker version 20.10.1, build 831ebea)
+
 #. Add your user to docker group::
 
     sudo usermod -aG docker $USER
-    exit
+    exit  # you may actually need to reboot for group membership to take effect
 
 #. Install Docker Compose according to https://docs.docker.com/compose/install/
    (known working: docker-compose version 1.27.4, build 40524192)
@@ -50,12 +47,10 @@ to get the latest version for development.
     #. Install and configure `pyenv` according to
        https://github.com/pyenv/pyenv#basic-github-checkout
 
-    #. Install Python 3.9.6::
+    #. Install Python 3.9.8::
 
-        # TODO(dmu) MEDIUM: Migrate to Python 3.10.x
-        #                   https://thenewboston.atlassian.net/browse/BC-133
-        pyenv install 3.9.6
-        pyenv local 3.9.6  # run from the root of this repo (`.python-version` file should appear)
+        pyenv install 3.9.8
+        pyenv local 3.9.8 # run from the root of this repo (`.python-version` file should appear)
 
 #. Install Poetry::
 
