@@ -9,6 +9,8 @@ services:
       #                   https://thenewboston.atlassian.net/browse/BC-134
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 127.0.0.1:27017:27017
     volumes:
       - mongo-db:/data/db
       - mongo-configdb:/data/configdb
