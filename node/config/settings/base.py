@@ -64,14 +64,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# TODO(dmu) CRITICAL: Replace sqlite with Mongo for default Django database
-#                     https://thenewboston.atlassian.net/browse/BC-135
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'main',
+        'CLIENT': {
+            'host': '127.0.0.1',
+            'port': 27017,
+            'username': 'root',
+            'password': 'root',
+        }
     }
 }
+
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
