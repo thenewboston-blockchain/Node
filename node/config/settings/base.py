@@ -64,12 +64,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# TODO(dmu) CRITICAL: Replace sqlite with Mongo for default Django database
-#                     https://thenewboston.atlassian.net/browse/BC-135
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'node',
+        'CLIENT': {
+            'host': '127.0.0.1',
+            'port': 27017,
+            'username': 'root',
+            # TODO(dmu) CRITICAL: Once we expose MongoDB for reading make the password generated on node deploy
+            #                     https://thenewboston.atlassian.net/browse/BC-144
+            'password': 'root',
+        }
     }
 }
 

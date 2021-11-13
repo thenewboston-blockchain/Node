@@ -42,6 +42,7 @@ class Command(BaseCommand):
         return {public_key: {'fee_amount': 1, 'network_addresses': ['http://78.107.238.40:8555/']}}
 
     def handle(self, *args, **options):
+        raise NotImplementedError('The code is broken')
         self.blockchain.reset()
 
         accounts: dict[str, AlphaAccount] = fetch(

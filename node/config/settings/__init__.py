@@ -11,7 +11,6 @@ load_dotenv(override=True)
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 ENVVAR_SETTINGS_PREFIX = 'NODE_'
-os.environ[f'{ENVVAR_SETTINGS_PREFIX}FOR_UNITTESTS_DISREGARD_OTHERWISE'] = '{1: "for unittests"}'
 
 LOCAL_SETTINGS_PATH = os.getenv(f'{ENVVAR_SETTINGS_PREFIX}LOCAL_SETTINGS_PATH')
 if not LOCAL_SETTINGS_PATH:
@@ -23,7 +22,6 @@ if not LOCAL_SETTINGS_PATH:
 include(
     'base.py',
     'logging.py',
-    'mongo.py',
     'rest_framework.py',
     'celery.py',
     'custom.py',
