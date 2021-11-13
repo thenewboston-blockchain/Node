@@ -8,7 +8,7 @@ test-stepwise:
 
 .PHONY: up-dependencies-only
 up-dependencies-only:
-	docker-compose -f docker-compose.yml up --force-recreate mongo mongo-express
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate mongo mongo-express
 
 .PHONY: install
 install:
