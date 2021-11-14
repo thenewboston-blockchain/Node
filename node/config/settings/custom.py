@@ -1,1 +1,1 @@
-NODE_SIGNING_KEY = None
+SIGNING_KEY = None

@@ -1,0 +1,46 @@
+name: Continuous integration
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+# github does not support dependencies on other workflows therefore we have to duplicate the code
+# QUALITY-ASSURANCE-START
+  quality-assurance:
+    name: Quality Assurance
+
+    runs-on: ubuntu-latest
+    container: python:3.9.8
+
+    services:
+      # TODO(dmu) LOW: This section duplicates services already defined in `docker-compose.yml`.
+      #                Is there a way to make it DRY?
+      mongo:
+        image: mongo:5.0.3-focal
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Poetry image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.1.11
+
+      - name: Install
+        run: make install && make install-pre-commit
+
+      - name: Lint
+        run: make lint
+
+      - name: Test
+        run: make test
+        env:
+          NODE_DATABASES: '{"default":{"CLIENT":{"host":"mongo"}}}'
+          NODE_SECRET_KEY: dummy
+          NODE_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+# QUALITY-ASSURANCE-END
