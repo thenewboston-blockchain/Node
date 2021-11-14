@@ -122,3 +122,10 @@ Run
     make create-superuser
     # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
     poetry run python -m node.manage runserver 127.0.0.1:8556
+
+Development tools
++++++++++++++++++
+
+#. Make migrations::
+
+    make migrations

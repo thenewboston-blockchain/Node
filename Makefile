@@ -39,6 +39,7 @@ shell:
 
 .PHONY: dbshell
 dbshell:
+	# TODO(dmu) LOW: Does it work with Djongo/MongoDB?
 	poetry run python -m node.manage dbshell
 
 .PHONY: lint
@@ -47,3 +48,7 @@ lint:
 
 .PHONY: lint-and-test
 lint-and-test: lint test ;
+
+.PHONY: migrations
+migrations:
+	 poetry run python -m node.manage makemigrations

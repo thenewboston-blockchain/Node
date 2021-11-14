@@ -11,7 +11,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
-    'node.blockchain.apps.AccountsConfig',
+    'node.blockchain.apps.BlockchainConfig',
 ]
 
 MIDDLEWARE = [
