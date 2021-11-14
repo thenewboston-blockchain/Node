@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	poetry run pytest -v -rs -n auto --cov=node --cov-report=html --show-capture=no
+	NODE_FOR_UNITTESTS_DISREGARD_OTHERWISE='{1: "for unittests"}' poetry run pytest -v -rs -n auto --cov=node --cov-report=html --show-capture=no
 
 .PHONY: test-stepwise
 test-stepwise:

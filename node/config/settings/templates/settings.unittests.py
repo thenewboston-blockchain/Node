@@ -4,9 +4,6 @@ DEBUG = True
 
 SECRET_KEY = 'django-insecure-^m3d4yj1zic931t3z_b()(xz-_34c3sjeh_4v41rf-2j8qs'
 
-MONGO_DB_NAME = 'blockchain_test'
-MONGO_HOST = '127.0.0.1'
-
 MIDDLEWARE += ('node.core.middleware.LoggingMiddleware',)
 LOGGING['formatters']['colored'] = {
     '()': 'colorlog.ColoredFormatter',
