@@ -47,3 +47,7 @@ lint:
 
 .PHONY: lint-and-test
 lint-and-test: lint test ;
+
+.PHONY: run-celery
+run-celery:
+	poetry run celery -A node.config.celery worker --loglevel=INFO
