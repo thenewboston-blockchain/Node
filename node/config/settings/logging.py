@@ -20,7 +20,7 @@ LOGGING = {
             'propagate': True,
         } for logger_name in (
             'django', 'django.request', 'django.db.backends', 'django.template', 'node', 'node.core.logging',
-            'urllib3', 'asyncio'
+            'urllib3', 'asyncio', 'djongo'
         )
     },
     'root': {

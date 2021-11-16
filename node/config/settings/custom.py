@@ -1,1 +1,1 @@
-SIGNING_KEY = None
+SIGNING_KEY = NotImplemented
