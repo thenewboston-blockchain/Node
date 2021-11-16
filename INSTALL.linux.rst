@@ -71,14 +71,11 @@ to get the latest version for development.
     vim ./local/settings.dev.py
     vim ./local/settings.unittests.py
 
-#. [Optional] If you prefer override settings with environment variables defined in `.env` file::
-
-    cp node/config/settings/templates/dotenv.dev .env
-
-    # Edit file if needed
-    vim .env
-
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
+
+#. Create superuser::
+
+    make create-superuser
 
 Update
 ++++++
@@ -112,6 +109,16 @@ Run
 
     make up-dependencies-only
 
-#. (in a separate terminal) Run Node::
+#. (in a separate terminal) Run node::
 
     make run-server
+
+#. [Optional] (in a separate terminal) Run another Node for testing and debugging communications between nodes::
+
+    cp node/config/settings/templates/settings.dev.py ./local/settings.dev.node2.py
+    # Add `DATABASES['default']['NAME'] = 'node2'` to ./local/settings.dev.node2.py
+    export NODE_LOCAL_SETTINGS_PATH=./local/settings.dev.node2.py
+    make migrate
+    make create-superuser
+    # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
+    poetry run python -m node.manage runserver 127.0.0.1:8556
