@@ -1,12 +1,6 @@
-import os
-from pathlib import Path
+SECRET_KEY = NotImplemented
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-SECRET_KEY = os.getenv('SECRET_KEY')
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -15,6 +9,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Apps
+    'node.blockchain.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -27,7 +24,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = 'node.config.urls'
 
 TEMPLATES = [
     {
@@ -45,14 +42,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+WSGI_APPLICATION = 'node.config.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -68,6 +58,21 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'djongo',
+        'NAME': 'node',
+        'CLIENT': {
+            'host': '127.0.0.1',
+            'port': 27017,
+            'username': 'root',
+            # TODO(dmu) CRITICAL: Once we expose MongoDB for reading make the password generated on node deploy
+            #                     https://thenewboston.atlassian.net/browse/BC-144
+            'password': 'root',
+        }
+    }
+}
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
