@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 from django.conf import settings
 
 UNITTEST_ENV_VAR_NAME = 'NODE_FOR_UNITTESTS_DISREGARD_OTHERWISE'
