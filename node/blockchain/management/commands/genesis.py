@@ -1,21 +1,21 @@
+# python3 manage.py genesis
+#
+# Running this script will:
+# - Download the latest alpha backup file
+# - Create the genesis block
+
 from dataclasses import asdict
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from ...models import (
-    AlphaAccount, Blockchain, GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage, Mongo
-)
 from node.core.constants.block_types import GENESIS
 from node.core.utils.network import fetch
 from node.core.utils.signing import encode_key, generate_signature, get_public_key
-"""
-python3 manage.py genesis
 
-Running this script will:
-- Download the latest alpha backup file
-- Create the genesis block
-"""
+from ...models import (
+    AlphaAccount, Blockchain, GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage, Mongo
+)
 
 
 class Command(BaseCommand):

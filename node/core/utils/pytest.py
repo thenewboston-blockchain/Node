@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 
 def is_pytest_running():

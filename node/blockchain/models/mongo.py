@@ -1,5 +1,4 @@
 from django.conf import settings
-
 from pymongo import MongoClient
 
 from node.core.utils.signing import encode_key, generate_signature, get_public_key
