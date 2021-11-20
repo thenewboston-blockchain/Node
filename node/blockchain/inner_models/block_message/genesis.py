@@ -7,7 +7,7 @@ from pydantic import Field
 
 from node.blockchain.inner_models.account_state import AccountState
 from node.blockchain.inner_models.node import Node
-from node.blockchain.inner_models.signed_change_request import SignedChangeRequest
+from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
 from node.blockchain.inner_models.signed_change_request_message import GenesisSignedChangeRequestMessage
 from node.core.utils.types import BlockIdentifier, Type
 
@@ -51,9 +51,10 @@ class GenesisBlockMessage(BlockMessage):
     number: int = Field(default=0, const=True)
     identifier: Optional[BlockIdentifier] = Field(default=None, const=True)
     type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
+    request: GenesisSignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(
+    def create_from_signed_change_request(  # type: ignore
         cls: TypingType[T], *, request: SignedChangeRequest, primary_validator_node: Node
     ) -> T:
         assert request.message.type == Type.GENESIS

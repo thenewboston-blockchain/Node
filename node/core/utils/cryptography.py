@@ -1,6 +1,7 @@
 import json
 from hashlib import sha3_256
 
+from django.conf import settings
 from nacl.signing import SigningKey as NaClSigningKey
 
 from .misc import bytes_to_hex, hex_to_bytes
@@ -21,3 +22,7 @@ def normalize_dict(dict_: dict) -> bytes:
 
 def hash_binary_data(binary_data: bytes) -> Hash:
     return Hash(sha3_256(binary_data).digest().hex())
+
+
+def get_signing_key():
+    return settings.SIGNING_KEY

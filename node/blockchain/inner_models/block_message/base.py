@@ -1,12 +1,18 @@
 from datetime import datetime
 from typing import Optional
+from typing import Type as TypingType
+from typing import TypeVar
 
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.mixins.message import MessageMixin
-from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
+from node.blockchain.inner_models.signed_change_request import (
+    GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
+)
 from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
+
+T = TypeVar('T', bound='BlockMessage')
 
 
 class BlockMessageUpdate(BaseModel):
@@ -23,9 +29,27 @@ class BlockMessage(BaseModel, MessageMixin):
     request: SignedChangeRequest
 
     @classmethod
+    def create_from_signed_change_request(cls: TypingType[T], *, request: SignedChangeRequest) -> T:
+        if isinstance(request, GenesisSignedChangeRequest):
+            raise TypeError(
+                'GenesisSignedChangeRequest is special since it does not contain all required information '
+                'to construct a block message. Use GenesisBlockMessage.create_from_signed_change_request()'
+            )
+
+        if isinstance(request, NodeDeclarationSignedChangeRequest):
+            from .node_declaration import NodeDeclarationBlockMessage
+
+            # TODO(dmu) MEDIUM: Automatically apply this assert to all subclasses of BlockMessage
+            assert 'create_from_signed_change_request' in NodeDeclarationBlockMessage.__dict__
+            return NodeDeclarationBlockMessage.create_from_signed_change_request(request=request)
+
+        raise TypeError(f'Unknown type of {request}')
+
+    @classmethod
     def parse_obj(cls, *args, **kwargs):
         obj = super().parse_obj(*args, **kwargs)
         type_ = obj.type
+        from .type_map import TYPE_MAP
         class_ = TYPE_MAP.get(type_)
         if not class_:
             # TODO(dmu) MEDIUM: Raise validation error instead
@@ -35,10 +59,3 @@ class BlockMessage(BaseModel, MessageMixin):
             return obj
 
         return class_.parse_obj(*args, **kwargs)
-
-
-class GenesisBlockMessage(BlockMessage):
-    request: GenesisSignedChangeRequest
-
-
-TYPE_MAP = {Type.GENESIS: GenesisBlockMessage}
