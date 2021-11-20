@@ -111,6 +111,9 @@ Run
 
 #. (in a separate terminal) Run node::
 
+    # TODO(dmu) HIGH: We need to be able initialize blockchain with known signing keys for testing
+    #                 https://thenewboston.atlassian.net/browse/BC-153
+    make genesis
     make run-server
 
 #. [Optional] (in a separate terminal) Run another Node for testing and debugging communications between nodes::
