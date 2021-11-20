@@ -51,4 +51,8 @@ lint-and-test: lint test ;
 
 .PHONY: migrations
 migrations:
-	 poetry run python -m node.manage makemigrations
+	poetry run python -m node.manage makemigrations
+
+.PHONY: genesis
+genesis:
+	poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json

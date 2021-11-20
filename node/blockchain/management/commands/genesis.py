@@ -1,4 +1,5 @@
 import json
+import sys
 from contextlib import closing
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -36,10 +37,16 @@ class Command(BaseCommand):
     help = 'Create genesis block'  # noqa: A003
 
     def add_arguments(self, parser):
-        parser.add_argument('source', help='file paths or/and URLs to serialized blockchain state or URL')
+        # TODO(dmu) MEDIUM: We may need simpler blockchains and with known private key for local testing. Implement
+        parser.add_argument('source', help='file path or URL to alpha account root file')
+        parser.add_argument('-f', '--force', action='store_true', help='remove existing blockchain if any')
 
-    def handle(self, *args, **options):
-        source = options['source']
+    def handle(self, source, force, **options):
+        does_exist = Block.objects.exists()
+        if does_exist and not force:
+            self.stdout.write(self.style.ERROR('Blockchain already exists'))
+            sys.exit(1)
+
         account_root_file = read_source(source)
         signing_key = settings.SIGNING_KEY
         account_number = derive_public_key(signing_key)
@@ -66,6 +73,10 @@ class Command(BaseCommand):
             request=request,
             primary_validator_node=primary_validator_node,
         )
+
+        # TODO(dmu) MEDIUM: Does happen in transaction?
+        if does_exist:
+            Block.objects.all().delete()
 
         Block.objects.create_from_block_message(
             message=block_message,
