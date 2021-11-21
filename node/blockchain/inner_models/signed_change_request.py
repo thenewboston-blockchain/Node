@@ -7,6 +7,7 @@ from node.core.utils.types import AccountNumber, Signature, SigningKey, Type
 from .base import BaseModel
 from .signed_change_request_message.base import SignedChangeRequestMessage
 from .signed_change_request_message.genesis import GenesisSignedChangeRequestMessage
+from .signed_change_request_message.node_declaration import NodeDeclarationSignedChangeRequestMessage
 
 T = TypeVar('T', bound='SignedChangeRequest')
 
@@ -45,4 +46,8 @@ class GenesisSignedChangeRequest(SignedChangeRequest):
     message: GenesisSignedChangeRequestMessage
 
 
-TYPE_MAP = {Type.GENESIS: GenesisSignedChangeRequest}
+class NodeDeclarationSignedChangeRequest(SignedChangeRequest):
+    message: NodeDeclarationSignedChangeRequestMessage
+
+
+TYPE_MAP = {Type.GENESIS: GenesisSignedChangeRequest, Type.NODE_DECLARATION: NodeDeclarationSignedChangeRequest}
