@@ -28,6 +28,7 @@ pdbpp = "^0.10.3"
 DJANGO_SETTINGS_MODULE = "node.config.settings"
 python_files = "test_*.py"
 testpaths = ["node"]
+filterwarnings = "ignore::DeprecationWarning:^(?!node\\.).*:"
 
 [tool.isort]
 multi_line_output = 5
