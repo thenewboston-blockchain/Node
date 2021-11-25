@@ -8,7 +8,7 @@ from node.core.utils.pytest import is_pytest_running
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
-ENVVAR_SETTINGS_PREFIX = 'NODE_'
+ENVVAR_SETTINGS_PREFIX = 'TNB_'
 
 LOCAL_SETTINGS_PATH = os.getenv(f'{ENVVAR_SETTINGS_PREFIX}LOCAL_SETTINGS_PATH')
 if not LOCAL_SETTINGS_PATH:
