@@ -9,7 +9,7 @@ from node.core.utils.types import SigningKey
 class BlockManager(models.DjongoManager):
 
     def create_from_block_message(self, *, message: BlockMessage, signing_key: SigningKey):
-        binary_data, signature = message.get_binary_data_and_signature(signing_key)
+        binary_data, signature = message.make_binary_data_and_signature(signing_key)
         return self.create(
             _id=message.number,
             signer=derive_public_key(signing_key),

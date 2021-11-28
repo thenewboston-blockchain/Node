@@ -2,7 +2,9 @@ import json
 from hashlib import sha3_256
 
 from django.conf import settings
+from nacl.exceptions import CryptoError
 from nacl.signing import SigningKey as NaClSigningKey
+from nacl.signing import VerifyKey
 
 from .misc import bytes_to_hex, hex_to_bytes
 from .types import AccountNumber, Hash, Signature, SigningKey
@@ -26,3 +28,18 @@ def hash_binary_data(binary_data: bytes) -> Hash:
 
 def get_signing_key():
     return settings.SIGNING_KEY
+
+
+def is_signature_valid(verify_key: AccountNumber, message: bytes, signature: Signature) -> bool:
+    try:
+        verify_key_bytes = hex_to_bytes(verify_key)
+        signature_bytes = hex_to_bytes(signature)
+    except ValueError:
+        return False
+
+    try:
+        VerifyKey(verify_key_bytes).verify(message, signature_bytes)
+    except CryptoError:
+        return False
+
+    return True
