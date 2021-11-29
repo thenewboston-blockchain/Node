@@ -12,5 +12,5 @@ class NodeDeclarationBlockMessage(BlockMessage):
     request: NodeDeclarationSignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(cls: TypingType[T], *, request: NodeDeclarationSignedChangeRequest) -> T:
+    def create_from_signed_change_request(cls: TypingType[T], request: NodeDeclarationSignedChangeRequest) -> T:
         raise NotImplementedError

@@ -29,7 +29,7 @@ class BlockMessage(BaseModel, MessageMixin):
     request: SignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(cls: TypingType[T], *, request: SignedChangeRequest) -> T:
+    def create_from_signed_change_request(cls: TypingType[T], request: SignedChangeRequest) -> T:
         if isinstance(request, GenesisSignedChangeRequest):
             raise TypeError(
                 'GenesisSignedChangeRequest is special since it does not contain all required information '
@@ -41,7 +41,7 @@ class BlockMessage(BaseModel, MessageMixin):
 
             # TODO(dmu) MEDIUM: Automatically apply this assert to all subclasses of BlockMessage
             assert 'create_from_signed_change_request' in NodeDeclarationBlockMessage.__dict__
-            return NodeDeclarationBlockMessage.create_from_signed_change_request(request=request)
+            return NodeDeclarationBlockMessage.create_from_signed_change_request(request)
 
         raise TypeError(f'Unknown type of {request}')
 
