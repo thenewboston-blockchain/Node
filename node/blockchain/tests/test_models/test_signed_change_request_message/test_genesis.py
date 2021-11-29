@@ -34,7 +34,7 @@ def test_create_from_alpha_account_root_file(primary_validator_key_pair, account
 
 
 def test_serialize_to_dict_for_cryptography(genesis_signed_change_request_message):
-    serialized = genesis_signed_change_request_message.get_binary_data_for_cryptography()
+    serialized = genesis_signed_change_request_message.make_binary_data_for_cryptography()
     accounts = genesis_signed_change_request_message.accounts
     assert len(accounts) == 1
     account_number, account = accounts.popitem()

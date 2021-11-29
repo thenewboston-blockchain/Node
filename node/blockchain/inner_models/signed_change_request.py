@@ -1,7 +1,9 @@
 from typing import Type as TypingType
-from typing import TypeVar
+from typing import TypeVar, cast
 
-from node.core.utils.cryptography import derive_public_key
+from pydantic import root_validator
+
+from node.core.utils.cryptography import derive_public_key, is_signature_valid
 from node.core.utils.types import AccountNumber, Signature, SigningKey, Type
 
 from .base import BaseModel
@@ -21,9 +23,13 @@ class SignedChangeRequest(BaseModel):
     def create_from_signed_change_request_message(
         cls: TypingType[T], *, message: SignedChangeRequestMessage, signing_key: SigningKey
     ) -> T:
-        return cls(
+        class_ = TYPE_MAP.get(message.type)
+        assert class_  # because message.type should be validated by now
+        class_ = cast(TypingType[T], class_)
+
+        return class_(
             signer=derive_public_key(signing_key),
-            signature=message.get_signature(signing_key),
+            signature=message.make_signature(signing_key),
             message=message,
         )
 
@@ -32,14 +38,33 @@ class SignedChangeRequest(BaseModel):
         obj = super().parse_obj(*args, **kwargs)
         type_ = obj.message.type
         class_ = TYPE_MAP.get(type_)
-        if not class_:
-            # TODO(dmu) MEDIUM: Raise validation error instead
-            raise Exception(f'Unknown type: {type_}')
+        assert class_  # because message.type should be validated by now
 
         if cls == class_:  # avoid recursion
             return obj
 
         return class_.parse_obj(*args, **kwargs)
+
+    @root_validator
+    def validate_signature(cls, values):
+        if cls == SignedChangeRequest:
+            # This workaround is fine because we never validate signature for `SignedChangeRequest` instances.
+            # Signature validation makes sense for child classes only since they define the actual structure being
+            # signed
+            # TODO(dmu) MEDIUM: Why should we just return values in this case?
+            return values
+
+        signer = values.get('signer')
+        message = values.get('message')
+        signature = values.get('signature')
+        if (
+            # TODO(dmu) MEDIUM: How is it possible that signer, signature, message can be empty?
+            not all((signer, signature, message)) or
+            not is_signature_valid(signer, message.make_binary_data_for_cryptography(), signature)
+        ):
+            raise ValueError('invalid signature')
+
+        return values
 
 
 class GenesisSignedChangeRequest(SignedChangeRequest):
