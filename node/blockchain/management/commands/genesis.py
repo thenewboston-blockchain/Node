@@ -1,9 +1,11 @@
 import json
+import logging
 import sys
 from contextlib import closing
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
+import stun
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -11,8 +13,10 @@ from node.blockchain.inner_models import (
     GenesisBlockMessage, GenesisSignedChangeRequestMessage, Node, SignedChangeRequest
 )
 from node.blockchain.models.block import Block
-from node.core.utils.cryptography import derive_public_key
+from node.core.utils.cryptography import derive_public_key, get_signing_key
 from node.core.utils.types import AccountLock
+
+logger = logging.getLogger(__name__)
 
 
 def is_valid_url(source):
@@ -33,6 +37,31 @@ def read_source(source):
         return json.load(fo)
 
 
+def get_own_network_addresses():
+    network_addresses = settings.NODE_NETWORK_ADDRESSES
+
+    if not settings.APPEND_AUTO_DETECTED_NETWORK_ADDRESS:
+        return network_addresses
+
+    logger.info('Detecting external IP address')
+    try:
+        _, external_ip_address, _ = stun.get_ip_info()
+    except Exception:
+        logger.warning('Unable to detect external IP address')
+    else:
+        network_address = f'http://{external_ip_address}:{settings.NODE_PORT}/'
+        network_addresses = list(network_addresses)
+        network_addresses.append(network_address)
+    logger.info('External IP address: %s', external_ip_address)
+    return network_addresses
+
+
+def make_own_node():
+    return Node(
+        identifier=derive_public_key(get_signing_key()), addresses=get_own_network_addresses(), fee=settings.NODE_FEE
+    )
+
+
 class Command(BaseCommand):
     help = 'Create genesis block'  # noqa: A003
 
@@ -47,26 +76,18 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR('Blockchain already exists'))
             sys.exit(1)
 
-        account_root_file = read_source(source)
-        signing_key = settings.SIGNING_KEY
-        account_number = derive_public_key(signing_key)
+        signing_key = get_signing_key()
 
+        account_root_file = read_source(source)
+        primary_validator_node = make_own_node()
         request_message = GenesisSignedChangeRequestMessage.create_from_alpha_account_root_file(
-            account_lock=AccountLock(account_number),
+            account_lock=AccountLock(primary_validator_node.identifier),
             account_root_file=account_root_file,
         )
 
         request = SignedChangeRequest.create_from_signed_change_request_message(
             message=request_message,
             signing_key=signing_key,
-        )
-
-        # TODO(dmu) CRITICAL: Autodetect node address
-        #                     https://thenewboston.atlassian.net/browse/BC-150
-        primary_validator_node = Node(
-            identifier=account_number,
-            addresses=['http://non-existing-address-4643256.com:8555/'],
-            fee=4,
         )
 
         block_message = GenesisBlockMessage.create_from_signed_change_request(

@@ -33,4 +33,4 @@ include(
 logging.captureWarnings(True)
 
 assert SECRET_KEY is not NotImplemented  # type: ignore # noqa: F821
-assert SIGNING_KEY is not NotImplemented  # type: ignore # noqa: F821
+assert NODE_SIGNING_KEY is not NotImplemented  # type: ignore # noqa: F821

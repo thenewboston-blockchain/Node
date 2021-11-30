@@ -27,7 +27,7 @@ def hash_binary_data(binary_data: bytes) -> Hash:
 
 
 def get_signing_key():
-    return settings.SIGNING_KEY
+    return settings.NODE_SIGNING_KEY
 
 
 def is_signature_valid(verify_key: AccountNumber, message: bytes, signature: Signature) -> bool:
