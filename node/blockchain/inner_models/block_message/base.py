@@ -29,7 +29,7 @@ class BlockMessage(BaseModel, MessageMixin):
     request: SignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(cls: TypingType[T], *, request: SignedChangeRequest) -> T:
+    def create_from_signed_change_request(cls: TypingType[T], request: SignedChangeRequest) -> T:
         if isinstance(request, GenesisSignedChangeRequest):
             raise TypeError(
                 'GenesisSignedChangeRequest is special since it does not contain all required information '
@@ -49,11 +49,9 @@ class BlockMessage(BaseModel, MessageMixin):
     def parse_obj(cls, *args, **kwargs):
         obj = super().parse_obj(*args, **kwargs)
         type_ = obj.type
-        from .type_map import TYPE_MAP
-        class_ = TYPE_MAP.get(type_)
-        if not class_:
-            # TODO(dmu) MEDIUM: Raise validation error instead
-            raise Exception(f'Unknown type: {type_}')
+        from node.blockchain.inner_models.type_map import get_block_message_subclass
+        class_ = get_block_message_subclass(type_)
+        assert class_
 
         if cls == class_:  # avoid recursion
             return obj

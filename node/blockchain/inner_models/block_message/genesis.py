@@ -13,16 +13,16 @@ from node.core.utils.types import BlockIdentifier, Type
 
 from .base import BlockMessage, BlockMessageUpdate
 
-T = TypeVar('T', bound='GenesisBlockMessage')
-U = TypeVar('U', bound='GenesisBlockMessage')
+GenesisBlockMessageT = TypeVar('GenesisBlockMessageT', bound='GenesisBlockMessage')
+GenesisBlockMessageUpdateU = TypeVar('GenesisBlockMessageUpdateU', bound='GenesisBlockMessageUpdate')
 
 
 class GenesisBlockMessageUpdate(BlockMessageUpdate):
 
     @classmethod
     def create_from_signed_change_request(
-        cls: TypingType[U], *, request: SignedChangeRequest, primary_validator_node: Node
-    ) -> U:
+        cls: TypingType[GenesisBlockMessageUpdateU], *, request: SignedChangeRequest, primary_validator_node: Node
+    ) -> GenesisBlockMessageUpdateU:
         assert request.message.type == Type.GENESIS
         assert isinstance(request.message, GenesisSignedChangeRequestMessage)
 
@@ -55,8 +55,8 @@ class GenesisBlockMessage(BlockMessage):
 
     @classmethod
     def create_from_signed_change_request(  # type: ignore
-        cls: TypingType[T], *, request: SignedChangeRequest, primary_validator_node: Node
-    ) -> T:
+        cls: TypingType[GenesisBlockMessageT], request: SignedChangeRequest, primary_validator_node: Node
+    ) -> GenesisBlockMessageT:
         assert request.message.type == Type.GENESIS
         assert isinstance(request.message, GenesisSignedChangeRequestMessage)
 

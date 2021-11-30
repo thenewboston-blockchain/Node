@@ -4,7 +4,7 @@ from typing import TypeVar, cast
 from pydantic import root_validator
 
 from node.core.utils.cryptography import derive_public_key, is_signature_valid
-from node.core.utils.types import AccountNumber, Signature, SigningKey, Type
+from node.core.utils.types import AccountNumber, Signature, SigningKey
 
 from .base import BaseModel
 from .signed_change_request_message.base import SignedChangeRequestMessage
@@ -23,7 +23,8 @@ class SignedChangeRequest(BaseModel):
     def create_from_signed_change_request_message(
         cls: TypingType[T], *, message: SignedChangeRequestMessage, signing_key: SigningKey
     ) -> T:
-        class_ = TYPE_MAP.get(message.type)
+        from node.blockchain.inner_models.type_map import get_signed_change_request_subclass
+        class_ = get_signed_change_request_subclass(message.type)
         assert class_  # because message.type should be validated by now
         class_ = cast(TypingType[T], class_)
 
@@ -37,7 +38,8 @@ class SignedChangeRequest(BaseModel):
     def parse_obj(cls, *args, **kwargs):
         obj = super().parse_obj(*args, **kwargs)
         type_ = obj.message.type
-        class_ = TYPE_MAP.get(type_)
+        from node.blockchain.inner_models.type_map import get_signed_change_request_subclass
+        class_ = get_signed_change_request_subclass(type_)
         assert class_  # because message.type should be validated by now
 
         if cls == class_:  # avoid recursion
@@ -73,6 +75,3 @@ class GenesisSignedChangeRequest(SignedChangeRequest):
 
 class NodeDeclarationSignedChangeRequest(SignedChangeRequest):
     message: NodeDeclarationSignedChangeRequestMessage
-
-
-TYPE_MAP = {Type.GENESIS: GenesisSignedChangeRequest, Type.NODE_DECLARATION: NodeDeclarationSignedChangeRequest}
