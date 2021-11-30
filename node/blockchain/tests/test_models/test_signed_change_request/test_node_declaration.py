@@ -4,15 +4,24 @@ import re
 import pytest
 from pydantic import ValidationError
 
-from node.blockchain.inner_models import SignedChangeRequest
+from node.blockchain.inner_models import SignedChangeRequest, NodeDeclarationSignedChangeRequest
 from node.blockchain.tests.test_models.base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 
 
-@pytest.mark.skip('Not implemented yet')
-def test_create_from_node_declaration_signed_change_request_message():
-    # TODO(dmu) HIGH: Implement similar to `.test_genesis.test_create_from_genesis_signed_change_request_message`
-    #                 https://thenewboston.atlassian.net/browse/BC-169
-    raise NotImplementedError
+def test_create_from_node_declaration_signed_change_request_message(
+    node_declaration_signed_change_request_message, regular_node_key_pair
+):
+    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message,
+        signing_key=regular_node_key_pair.private,
+    )
+    assert isinstance(signed_change_request, NodeDeclarationSignedChangeRequest)
+    assert signed_change_request.message == node_declaration_signed_change_request_message
+    assert signed_change_request.signer == regular_node_key_pair.public
+    assert signed_change_request.signature == (
+        '375a38f1934a3480e9db256d41b4dc19dfcbaaa5e7d8d6a1669e13bf5839bdbc'
+        'b3c14b986beae1be2d10b855e1ab07a85699e61c87ff349f4ab8d55a1a67ef0c'
+    )
 
 
 @pytest.mark.skip('Not implemented yet')

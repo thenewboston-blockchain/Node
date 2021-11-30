@@ -8,16 +8,25 @@ from node.blockchain.inner_models.mixins.message import MessageMixin
 from node.blockchain.inner_models.signed_change_request import (
     GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
 )
-from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
+from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr, AccountLock
 
 from ..account_state import AccountState
 
 T = TypeVar('T', bound='BlockMessage')
+U = TypeVar('U', bound='BlockMessageUpdate')
 
 
 class BlockMessageUpdate(BaseModel):
     accounts: dict[AccountNumber, AccountState]
     schedule: dict[intstr, AccountNumber]
+
+    @classmethod
+    def get_account_lock(cls, account_number: AccountNumber) -> AccountLock:
+        raise NotImplementedError
+
+    @classmethod
+    def create_from_signed_change_request(cls: TypingType[U], request: SignedChangeRequest) -> U:
+        raise NotImplementedError('Must be implemented in child classes')
 
 
 class BlockMessage(BaseModel, MessageMixin):
@@ -36,14 +45,14 @@ class BlockMessage(BaseModel, MessageMixin):
                 'to construct a block message. Use GenesisBlockMessage.create_from_signed_change_request()'
             )
 
-        if isinstance(request, NodeDeclarationSignedChangeRequest):
-            from .node_declaration import NodeDeclarationBlockMessage
+        from .type_map import TYPE_MAP
+        class_ = TYPE_MAP.get(request.message.type)
+        assert class_  # because message.type should be validated by now
 
-            # TODO(dmu) MEDIUM: Automatically apply this assert to all subclasses of BlockMessage
-            assert 'create_from_signed_change_request' in NodeDeclarationBlockMessage.__dict__
-            return NodeDeclarationBlockMessage.create_from_signed_change_request(request)
-
-        raise TypeError(f'Unknown type of {request}')
+        assert 'create_from_signed_change_request' in class_.__dict__, (
+            f'create_from_signed_change_request() must be implemented in {class_}'
+        )
+        return class_.create_from_signed_change_request(request)
 
     @classmethod
     def parse_obj(cls, *args, **kwargs):
@@ -51,9 +60,7 @@ class BlockMessage(BaseModel, MessageMixin):
         type_ = obj.type
         from .type_map import TYPE_MAP
         class_ = TYPE_MAP.get(type_)
-        if not class_:
-            # TODO(dmu) MEDIUM: Raise validation error instead
-            raise Exception(f'Unknown type: {type_}')
+        assert class_  # because message.type should be validated by now
 
         if cls == class_:  # avoid recursion
             return obj

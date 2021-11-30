@@ -21,7 +21,7 @@ class GenesisBlockMessageUpdate(BlockMessageUpdate):
 
     @classmethod
     def create_from_signed_change_request(
-        cls: TypingType[U], *, request: SignedChangeRequest, primary_validator_node: Node
+        cls: TypingType[U], request: GenesisSignedChangeRequest, primary_validator_node: Node
     ) -> U:
         assert request.message.type == Type.GENESIS
         assert isinstance(request.message, GenesisSignedChangeRequestMessage)
@@ -51,11 +51,12 @@ class GenesisBlockMessage(BlockMessage):
     number: int = Field(default=0, const=True)
     identifier: Optional[BlockIdentifier] = Field(default=None, const=True)
     type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
+    update: GenesisBlockMessageUpdate
     request: GenesisSignedChangeRequest
 
     @classmethod
     def create_from_signed_change_request(  # type: ignore
-        cls: TypingType[T], *, request: SignedChangeRequest, primary_validator_node: Node
+        cls: TypingType[T], request: GenesisSignedChangeRequest, primary_validator_node: Node
     ) -> T:
         assert request.message.type == Type.GENESIS
         assert isinstance(request.message, GenesisSignedChangeRequestMessage)
