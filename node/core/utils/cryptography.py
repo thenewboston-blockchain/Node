@@ -30,6 +30,10 @@ def get_signing_key():
     return settings.NODE_SIGNING_KEY
 
 
+def get_node_identifier():
+    return derive_public_key(get_signing_key())
+
+
 def is_signature_valid(verify_key: AccountNumber, message: bytes, signature: Signature) -> bool:
     try:
         verify_key_bytes = hex_to_bytes(verify_key)

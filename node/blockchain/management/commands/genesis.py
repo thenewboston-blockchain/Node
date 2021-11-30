@@ -13,7 +13,7 @@ from node.blockchain.inner_models import (
     GenesisBlockMessage, GenesisSignedChangeRequestMessage, Node, SignedChangeRequest
 )
 from node.blockchain.models.block import Block
-from node.core.utils.cryptography import derive_public_key, get_signing_key
+from node.core.utils.cryptography import get_node_identifier, get_signing_key
 from node.core.utils.types import AccountLock
 
 logger = logging.getLogger(__name__)
@@ -49,17 +49,16 @@ def get_own_network_addresses():
     except Exception:
         logger.warning('Unable to detect external IP address')
     else:
+        logger.info('External IP address: %s', external_ip_address)
         network_address = f'http://{external_ip_address}:{settings.NODE_PORT}/'
         network_addresses = list(network_addresses)
         network_addresses.append(network_address)
-    logger.info('External IP address: %s', external_ip_address)
+
     return network_addresses
 
 
 def make_own_node():
-    return Node(
-        identifier=derive_public_key(get_signing_key()), addresses=get_own_network_addresses(), fee=settings.NODE_FEE
-    )
+    return Node(identifier=get_node_identifier(), addresses=get_own_network_addresses(), fee=settings.NODE_FEE)
 
 
 class Command(BaseCommand):
