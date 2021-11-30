@@ -13,9 +13,7 @@ def make_block_message_update_from_signed_change_request(
 
     accounts = {}
     for account_number, alpha_account in request.message.accounts.items():
-        accounts[account_number] = AccountState(
-            balance=alpha_account.balance, account_lock=alpha_account.balance_lock
-        )
+        accounts[account_number] = AccountState(balance=alpha_account.balance, account_lock=alpha_account.balance_lock)
 
     primary_validator_node_identifier = primary_validator_node.identifier
     primary_validator_account_state = accounts.get(primary_validator_node_identifier)

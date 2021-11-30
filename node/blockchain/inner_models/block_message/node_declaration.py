@@ -10,6 +10,7 @@ U = TypeVar('U', bound='NodeDeclarationBlockMessageUpdate')
 
 
 class NodeDeclarationBlockMessageUpdate(BlockMessageUpdate):
+
     @classmethod
     def create_from_signed_change_request(cls: TypingType[U], request: NodeDeclarationSignedChangeRequest) -> U:
         raise NotImplementedError

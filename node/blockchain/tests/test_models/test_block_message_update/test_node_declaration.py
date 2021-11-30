@@ -1,5 +1,6 @@
 from node.blockchain.inner_models import (
-    AccountState, BlockMessageUpdate, SignedChangeRequest, NodeDeclarationBlockMessageUpdate, NodeDeclarationSignedChangeRequest
+    AccountState, BlockMessageUpdate, NodeDeclarationBlockMessageUpdate, NodeDeclarationSignedChangeRequest,
+    SignedChangeRequest
 )
 
 

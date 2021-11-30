@@ -1,11 +1,12 @@
 from datetime import datetime
+
+from node.blockchain.inner_models.block_message.base import BlockMessage, BlockMessageUpdate
 from node.blockchain.inner_models.signed_change_request import (
     GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
 )
-from node.blockchain.inner_models.block_message.base import BlockMessage, BlockMessageUpdate
-from . import genesis, node_declaration
 from node.core.utils.types import Type
 
+from . import genesis, node_declaration
 
 TYPE_MAP = {
     Type.GENESIS: genesis.make_block_message_update_from_signed_change_request,

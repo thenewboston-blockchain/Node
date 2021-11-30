@@ -1,6 +1,6 @@
 import pytest
 
-from node.blockchain.inner_models import SignedChangeRequest, GenesisBlockMessage, GenesisSignedChangeRequestMessage
+from node.blockchain.inner_models import GenesisBlockMessage, GenesisSignedChangeRequestMessage, SignedChangeRequest
 from node.core.utils.types import AccountLock
 
 

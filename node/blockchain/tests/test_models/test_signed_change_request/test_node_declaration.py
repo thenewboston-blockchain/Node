@@ -4,7 +4,7 @@ import re
 import pytest
 from pydantic import ValidationError
 
-from node.blockchain.inner_models import SignedChangeRequest, NodeDeclarationSignedChangeRequest
+from node.blockchain.inner_models import NodeDeclarationSignedChangeRequest, SignedChangeRequest
 from node.blockchain.tests.test_models.base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 
 

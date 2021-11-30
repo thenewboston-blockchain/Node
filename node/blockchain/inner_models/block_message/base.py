@@ -8,7 +8,7 @@ from node.blockchain.inner_models.mixins.message import MessageMixin
 from node.blockchain.inner_models.signed_change_request import (
     GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
 )
-from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr, AccountLock
+from node.core.utils.types import AccountLock, AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
 
