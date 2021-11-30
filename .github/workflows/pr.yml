@@ -38,5 +38,5 @@ jobs:
         env:
           TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo"}}}'
           TNB_SECRET_KEY: dummy
-          TNB_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+          TNB_NODE_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # QUALITY-ASSURANCE-END

@@ -7,7 +7,7 @@ UNITTEST_ENV_VAR_NAME = 'TNB_FOR_UNITTESTS_DISREGARD_OTHERWISE'
 
 
 def test_settings_smoke():
-    assert hasattr(settings, 'SIGNING_KEY')
+    assert hasattr(settings, 'NODE_SIGNING_KEY')
 
 
 @pytest.mark.skipif(UNITTEST_ENV_VAR_NAME not in os.environ, reason=f'{UNITTEST_ENV_VAR_NAME} env var is not set')

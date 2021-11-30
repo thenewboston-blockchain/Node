@@ -1,20 +1,19 @@
 from datetime import datetime
 
-from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, Node, SignedChangeRequest
+from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, SignedChangeRequest
 from node.core.utils.types import Type
 
 
-def test_create_from_signed_change_request(genesis_signed_change_request_message, primary_validator_key_pair):
+def test_create_from_signed_change_request(
+    genesis_signed_change_request_message, primary_validator_key_pair, primary_validator_node
+):
     request = SignedChangeRequest.create_from_signed_change_request_message(
         message=genesis_signed_change_request_message,
         signing_key=primary_validator_key_pair.private,
     )
-    node = Node(
-        identifier=primary_validator_key_pair.public,
-        addresses=['http://non-existing-address-4643256.com:8555/'],
-        fee=4,
+    message = GenesisBlockMessage.create_from_signed_change_request(
+        request=request, primary_validator_node=primary_validator_node
     )
-    message = GenesisBlockMessage.create_from_signed_change_request(request=request, primary_validator_node=node)
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS
@@ -29,7 +28,7 @@ def test_create_from_signed_change_request(genesis_signed_change_request_message
         account_lock=expect_treasury_alpha_account.balance_lock,
     )
 
-    assert message.update.accounts.get(primary_validator_key_pair.public) == AccountState(node=node)
+    assert message.update.accounts.get(primary_validator_key_pair.public) == AccountState(node=primary_validator_node)
     assert message.update.schedule == {'0': primary_validator_key_pair.public}
 
 
