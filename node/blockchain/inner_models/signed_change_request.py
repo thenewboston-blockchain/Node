@@ -53,7 +53,6 @@ class SignedChangeRequest(BaseModel):
             # This workaround is fine because we never validate signature for `SignedChangeRequest` instances.
             # Signature validation makes sense for child classes only since they define the actual structure being
             # signed
-            # TODO(dmu) MEDIUM: Why should we just return values in this case?
             return values
 
         signer = values.get('signer')
@@ -67,6 +66,9 @@ class SignedChangeRequest(BaseModel):
             raise ValueError('invalid signature')
 
         return values
+
+    def get_type(self):
+        return self.message.type
 
 
 class GenesisSignedChangeRequest(SignedChangeRequest):
