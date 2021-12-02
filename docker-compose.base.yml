@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:5.0.3-focal
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+    env_file:
+      - .env
+    volumes:
+      - mongo-db:/data/db
+      - mongo-configdb:/data/configdb
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root
+      ME_CONFIG_MONGODB_URL: mongodb://root:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
+    depends_on:
+      - mongo
+
+  node:
+    image: node:current
+    build:
+      context: .
+      target: node
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+      TNB_IN_DOCKER: 1
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+
+  reverse-proxy:
+    image: node-reverse-proxy:current
+    build:
+      context: .
+      target: reverse-proxy
+    depends_on:
+      - node
+
+volumes:
+  mongo-db:
+    driver: local
+  mongo-configdb:
+    driver: local

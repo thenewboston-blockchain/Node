@@ -1,6 +1,11 @@
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY = NotImplemented
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -12,6 +17,7 @@ INSTALLED_APPS = [
 
     # Apps
     'node.blockchain.apps.BlockchainConfig',
+    'node.web.apps.WebConfig',
 ]
 
 MIDDLEWARE = [
@@ -80,5 +86,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

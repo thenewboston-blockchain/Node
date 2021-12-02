@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  mongo:
+    ports:
+      - 27017:27017
+
+  node:
+    environment:
+      TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+
+  reverse-proxy:
+    ports:
+      - 8555:8555

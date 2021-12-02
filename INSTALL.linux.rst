@@ -47,17 +47,17 @@ to get the latest version for development.
     #. Install and configure `pyenv` according to
        https://github.com/pyenv/pyenv#basic-github-checkout
 
-    #. Install Python 3.9.8::
+    #. Install Python 3.9.9::
 
-        pyenv install 3.9.8
-        pyenv local 3.9.8 # run from the root of this repo (`.python-version` file should appear)
+        pyenv install 3.9.9
+        pyenv local 3.9.9 # run from the root of this repo (`.python-version` file should appear)
 
 #. Install Poetry::
 
     export PIP_REQUIRED_VERSION=21.3.1
     pip install pip==${PIP_REQUIRED_VERSION} && \
     pip install virtualenvwrapper && \
-    pip install poetry==1.1.11 && \
+    pip install poetry==1.1.12 && \
     poetry config virtualenvs.path ${HOME}/.virtualenvs && \
     poetry run pip install pip==${PIP_REQUIRED_VERSION}
 
@@ -102,8 +102,8 @@ Run quality assurance tools
 
     make lint-and-test
 
-Run
-+++
+Run Local environment
++++++++++++++++++++++
 
 #. (in a separate terminal) Run only dependency services with Docker::
 
@@ -125,6 +125,31 @@ Run
     make create-superuser
     # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
     poetry run python -m node.manage runserver 127.0.0.1:8556
+
+#. [Optional] (in a separate terminal) Run Node for local development purposes with Docker
+
+Create a `.env` file containing the following variables.
+Update TNB_SIGNING_KEY, TNB_SECRET_KEY and MONGO_INITDB_ROOT_PASSWORD variables with your own values::
+
+    # TODO HIGH: Need to generate TNB_NODE_SIGNING_KEY and TNB_SECRET_KEY variables automatically
+    #                     during first deploy (https://thenewboston.atlassian.net/browse/BC-171).
+    # TODO HIGH: Need to generate MONGO_INITDB_ROOT_PASSWORD variable automatically
+    #     during first deploy. Root password should be unique on each running Node.
+    #                           (https://thenewboston.atlassian.net/browse/BC-172).
+    cat <<EOF > .env
+    TNB_SIGNING_KEY=0000000000000000000000000000000000000000000000000000000000000000
+    TNB_SECRET_KEY=0000000000000000000000000000000000000000000000000000000000000000
+    MONGO_INITDB_ROOT_PASSWORD=0000000000000000000
+    EOF
+
+    make up-local
+
+Run Development environment
++++++++++++++++++++++++++++
+
+#. (in a separate terminal) Run Node in development mode with Docker::
+
+    make up-dev
 
 Development tools
 +++++++++++++++++
