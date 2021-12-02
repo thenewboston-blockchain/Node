@@ -1,3 +1,28 @@
+.PHONY: build
+build: build-node build-reverse-proxy ;
+
+.PHONY: build-node
+build-node:
+	docker build . --build-arg RESET_DOCKER_CACHE="$$(date)" --target=node -t node:current
+
+.PHONY: build-reverse-proxy
+build-reverse-proxy:
+	docker build . --target=reverse-proxy -t node-reverse-proxy:current
+
+.PHONY: up-dependencies-only
+up-dependencies-only:
+	docker-compose -f docker-compose.yml up --force-recreate mongo mongo-express
+
+.PHONY: up
+# TODO(dmu) HIGH: No longer depend on `build` once images are taken from docker registry
+#                 https://thenewboston.atlassian.net/browse/BC-70
+up: build
+	docker-compose -f docker-compose.yml up --force-recreate
+
+.PHONY: up-dev
+up-dev: build
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate
+
 .PHONY: test
 test:
 	TNB_FOR_UNITTESTS_DISREGARD_OTHERWISE='{"test": 1}' poetry run pytest -v -rs -n auto --cov=node --cov-report=html --show-capture=no
@@ -5,10 +30,6 @@ test:
 .PHONY: test-stepwise
 test-stepwise:
 	poetry run pytest --reuse-db --sw -vv --show-capture=no
-
-.PHONY: up-dependencies-only
-up-dependencies-only:
-	docker-compose -f docker-compose.yml up --force-recreate mongo mongo-express
 
 .PHONY: install
 install:

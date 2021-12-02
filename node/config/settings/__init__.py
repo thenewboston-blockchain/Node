@@ -26,6 +26,7 @@ include(
     'celery.py',
     'custom.py',
     optional(LOCAL_SETTINGS_PATH),
+    'docker.py',
     'envvars.py',
 )
 # yapf: enable

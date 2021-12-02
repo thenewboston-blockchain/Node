@@ -5,10 +5,9 @@ services:
     image: mongo:5.0.3-focal
     restart: always
     environment:
-      # TODO(dmu) MEDIUM: We might need a better security here
-      #                   https://thenewboston.atlassian.net/browse/BC-134
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
+    env_file:
+      - .env
     ports:
       - 127.0.0.1:27017:27017
     volumes:
@@ -26,9 +25,30 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: root
-      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://root:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
     depends_on:
       - mongo
+
+  node:
+    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
+    #                     https://thenewboston.atlassian.net/browse/BC-70
+    image: node:current
+    command: ./run.sh
+    environment:
+      TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+
+  reverse-proxy:
+    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
+    #                     https://thenewboston.atlassian.net/browse/BC-70
+    image: node-reverse-proxy:current
+    ports:
+      - 8555:8555
+    depends_on:
+      - node
 
 volumes:
   mongo-db:

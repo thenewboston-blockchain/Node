@@ -47,17 +47,17 @@ to get the latest version for development.
     #. Install and configure `pyenv` according to
        https://github.com/pyenv/pyenv#basic-github-checkout
 
-    #. Install Python 3.9.8::
+    #. Install Python 3.9.9::
 
-        pyenv install 3.9.8
-        pyenv local 3.9.8 # run from the root of this repo (`.python-version` file should appear)
+        pyenv install 3.9.9
+        pyenv local 3.9.9 # run from the root of this repo (`.python-version` file should appear)
 
 #. Install Poetry::
 
     export PIP_REQUIRED_VERSION=21.3.1
     pip install pip==${PIP_REQUIRED_VERSION} && \
     pip install virtualenvwrapper && \
-    pip install poetry==1.1.11 && \
+    pip install poetry==1.1.12 && \
     poetry config virtualenvs.path ${HOME}/.virtualenvs && \
     poetry run pip install pip==${PIP_REQUIRED_VERSION}
 
@@ -70,6 +70,12 @@ to get the latest version for development.
     # Edit files if needed
     vim ./local/settings.dev.py
     vim ./local/settings.unittests.py
+
+#. Configure settings for running dockerized node::
+
+    cp node/config/settings/templates/.env .
+    # Optionally modify:
+    vim .env
 
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 
@@ -126,9 +132,34 @@ Run
     # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
     poetry run python -m node.manage runserver 127.0.0.1:8556
 
+#. [Optional] (in a separate terminal) Run Node for local development purposes with Docker
+
+    make up-dev
+
 Development tools
 +++++++++++++++++
 
 #. Make migrations::
 
     make migrations
+
+Run production Node
+===================
+
+Common configuration
+--------------------
+
+#. Install Docker on target machine according to https://docs.docker.com/engine/install/
+   (known working: Docker version 20.10.7, build f0df350)
+#. Add your user to docker group::
+
+    sudo usermod -aG docker $USER
+    exit
+
+#. Install Docker Compose  on target machine according to https://docs.docker.com/compose/install/
+   (known working: docker-compose version 1.29.2, build 5becea4c)
+
+Manual deployment
+-----------------
+
+#. TODO(dmu) HIGH: Describe "Manual deployment" section ( https://thenewboston.atlassian.net/browse/BC-70 )
