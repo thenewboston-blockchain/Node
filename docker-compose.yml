@@ -8,6 +8,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
     env_file:
       - .env
+    ports:
+      - 127.0.0.1:27017:27017
     volumes:
       - mongo-db:/data/db
       - mongo-configdb:/data/configdb
@@ -15,6 +17,11 @@ services:
   mongo-express:
     image: mongo-express
     restart: always
+    ports:
+      # Because this container will be used for production we do not expose port on
+      # public interface (use `ssh` proxying for secure access to Mongo Admin if you need it
+      # in production)
+      - 127.0.0.1:8081:8081
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: root
@@ -23,24 +30,23 @@ services:
       - mongo
 
   node:
+    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
+    #                     https://thenewboston.atlassian.net/browse/BC-70
     image: node:current
-    build:
-      context: .
-      target: node
+    command: ./run.sh
     environment:
-      PYTHONDONTWRITEBYTECODE: 1
-      PYTHONUNBUFFERED: 1
-      TNB_IN_DOCKER: 1
+      TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
     env_file:
       - .env
     depends_on:
       - mongo
 
   reverse-proxy:
+    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
+    #                     https://thenewboston.atlassian.net/browse/BC-70
     image: node-reverse-proxy:current
-    build:
-      context: .
-      target: reverse-proxy
+    ports:
+      - 8555:8555
     depends_on:
       - node
 

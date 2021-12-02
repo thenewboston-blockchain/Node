@@ -1,7 +1,6 @@
 import os
 
-IN_DOCKER = str(os.getenv(f'{ENVVAR_SETTINGS_PREFIX}IN_DOCKER')).lower() in ['true', '1']  # type: ignore # noqa: F821
-if IN_DOCKER or os.path.isfile('/.dockerenv'):
+if IN_DOCKER or os.path.isfile('/.dockerenv'):  # type: ignore # noqa: F821
     # We need it to serve static files with DEBUG=False
     assert MIDDLEWARE[:1] == [  # type: ignore # noqa: F821
         'django.middleware.security.SecurityMiddleware'

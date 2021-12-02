@@ -71,6 +71,12 @@ to get the latest version for development.
     vim ./local/settings.dev.py
     vim ./local/settings.unittests.py
 
+#. Configure settings for running dockerized node::
+
+    cp node/config/settings/templates/.env .
+    # Optionally modify:
+    vim .env
+
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 
 #. Create superuser::
@@ -102,8 +108,8 @@ Run quality assurance tools
 
     make lint-and-test
 
-Run Local environment
-+++++++++++++++++++++
+Run
++++
 
 #. (in a separate terminal) Run only dependency services with Docker::
 
@@ -128,27 +134,6 @@ Run Local environment
 
 #. [Optional] (in a separate terminal) Run Node for local development purposes with Docker
 
-Create a `.env` file containing the following variables.
-Update TNB_SIGNING_KEY, TNB_SECRET_KEY and MONGO_INITDB_ROOT_PASSWORD variables with your own values::
-
-    # TODO HIGH: Need to generate TNB_NODE_SIGNING_KEY and TNB_SECRET_KEY variables automatically
-    #                     during first deploy (https://thenewboston.atlassian.net/browse/BC-171).
-    # TODO HIGH: Need to generate MONGO_INITDB_ROOT_PASSWORD variable automatically
-    #     during first deploy. Root password should be unique on each running Node.
-    #                           (https://thenewboston.atlassian.net/browse/BC-172).
-    cat <<EOF > .env
-    TNB_SIGNING_KEY=0000000000000000000000000000000000000000000000000000000000000000
-    TNB_SECRET_KEY=0000000000000000000000000000000000000000000000000000000000000000
-    MONGO_INITDB_ROOT_PASSWORD=0000000000000000000
-    EOF
-
-    make up-local
-
-Run Development environment
-+++++++++++++++++++++++++++
-
-#. (in a separate terminal) Run Node in development mode with Docker::
-
     make up-dev
 
 Development tools
@@ -157,3 +142,24 @@ Development tools
 #. Make migrations::
 
     make migrations
+
+Run production Node
+===================
+
+Common configuration
+--------------------
+
+#. Install Docker on target machine according to https://docs.docker.com/engine/install/
+   (known working: Docker version 20.10.7, build f0df350)
+#. Add your user to docker group::
+
+    sudo usermod -aG docker $USER
+    exit
+
+#. Install Docker Compose  on target machine according to https://docs.docker.com/compose/install/
+   (known working: docker-compose version 1.29.2, build 5becea4c)
+
+Manual deployment
+-----------------
+
+#. TODO(dmu) HIGH: Describe "Manual deployment" section ( https://thenewboston.atlassian.net/browse/BC-70 )

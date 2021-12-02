@@ -2,13 +2,23 @@ version: '3.9'
 
 services:
   mongo:
-    ports:
-      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_PASSWORD: root
+
+  mongo-express:
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/
 
   node:
-    environment:
-      TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+    image: node:current
+    build:
+      context: .
+      target: node
+    ports:
+      - 127.0.0.1:8000:8555
 
   reverse-proxy:
-    ports:
-      - 8555:8555
+    image: node-reverse-proxy:current
+    build:
+      context: .
+      target: reverse-proxy
