@@ -7,25 +7,24 @@ from pydantic import Field
 
 from node.blockchain.inner_models.account_state import AccountState
 from node.blockchain.inner_models.node import Node
-from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
-from node.blockchain.inner_models.signed_change_request_message import GenesisSignedChangeRequestMessage
+from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest
 from node.core.utils.types import BlockIdentifier, Type
 
 from .base import BlockMessage, BlockMessageUpdate
 
 GenesisBlockMessageT = TypeVar('GenesisBlockMessageT', bound='GenesisBlockMessage')
-GenesisBlockMessageUpdateU = TypeVar('GenesisBlockMessageUpdateU', bound='GenesisBlockMessageUpdate')
 
 
-class GenesisBlockMessageUpdate(BlockMessageUpdate):
+class GenesisBlockMessage(BlockMessage):
+    number: int = Field(default=0, const=True)
+    identifier: Optional[BlockIdentifier] = Field(default=None, const=True)
+    type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
+    request: GenesisSignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(
-        cls: TypingType[GenesisBlockMessageUpdateU], *, request: SignedChangeRequest, primary_validator_node: Node
-    ) -> GenesisBlockMessageUpdateU:
-        assert request.message.type == Type.GENESIS
-        assert isinstance(request.message, GenesisSignedChangeRequestMessage)
-
+    def make_genesis_block_message_update(
+        cls, request: GenesisSignedChangeRequest, primary_validator_node: Node
+    ) -> BlockMessageUpdate:
         accounts = {}
         for account_number, alpha_account in request.message.accounts.items():
             accounts[account_number] = AccountState(
@@ -41,31 +40,17 @@ class GenesisBlockMessageUpdate(BlockMessageUpdate):
 
         schedule = {'0': primary_validator_node_identifier}
 
-        return cls(
+        return BlockMessageUpdate(
             accounts=accounts,
             schedule=schedule,
         )
 
-
-class GenesisBlockMessage(BlockMessage):
-    number: int = Field(default=0, const=True)
-    identifier: Optional[BlockIdentifier] = Field(default=None, const=True)
-    type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
-    request: GenesisSignedChangeRequest
-
     @classmethod
     def create_from_signed_change_request(  # type: ignore
-        cls: TypingType[GenesisBlockMessageT], request: SignedChangeRequest, primary_validator_node: Node
+        cls: TypingType[GenesisBlockMessageT], request: GenesisSignedChangeRequest, primary_validator_node: Node
     ) -> GenesisBlockMessageT:
-        assert request.message.type == Type.GENESIS
-        assert isinstance(request.message, GenesisSignedChangeRequestMessage)
-
         now = datetime.utcnow()
-
-        update = GenesisBlockMessageUpdate.create_from_signed_change_request(
-            request=request, primary_validator_node=primary_validator_node
-        )
-
+        update = cls.make_genesis_block_message_update(request, primary_validator_node)
         return cls(
             timestamp=now,
             request=request,

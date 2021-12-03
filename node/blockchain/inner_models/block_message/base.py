@@ -3,11 +3,10 @@ from typing import Optional
 from typing import Type as TypingType
 from typing import TypeVar
 
+from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.mixins.message import MessageMixin
-from node.blockchain.inner_models.signed_change_request import (
-    GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
-)
+from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
 from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
@@ -23,27 +22,45 @@ class BlockMessageUpdate(BaseModel):
 class BlockMessage(BaseModel, MessageMixin):
     type: Type  # noqa: A003
     number: int
+    # TODO(dmu) HIGH: Make identifier not optional, so it is properly validated
     identifier: Optional[BlockIdentifier]
     timestamp: datetime
     update: BlockMessageUpdate
     request: SignedChangeRequest
 
     @classmethod
-    def create_from_signed_change_request(cls: TypingType[T], request: SignedChangeRequest) -> T:
+    def make_block_message_update(
+        cls, request: SignedChangeRequest, blockchain_facade: BlockchainFacade
+    ) -> BlockMessageUpdate:
+        raise NotImplementedError('Must be implement in child class')
+
+    @classmethod
+    def create_from_signed_change_request(
+        cls: TypingType[T],
+        request: SignedChangeRequest,
+        blockchain_facade: BlockchainFacade,
+    ) -> T:
+        now = datetime.utcnow()
         if isinstance(request, GenesisSignedChangeRequest):
             raise TypeError(
                 'GenesisSignedChangeRequest is special since it does not contain all required information '
                 'to construct a block message. Use GenesisBlockMessage.create_from_signed_change_request()'
             )
 
-        if isinstance(request, NodeDeclarationSignedChangeRequest):
-            from .node_declaration import NodeDeclarationBlockMessage
+        from node.blockchain.inner_models.type_map import get_block_message_subclass
+        class_ = get_block_message_subclass(request.get_type())
 
-            # TODO(dmu) MEDIUM: Automatically apply this assert to all subclasses of BlockMessage
-            assert 'create_from_signed_change_request' in NodeDeclarationBlockMessage.__dict__
-            return NodeDeclarationBlockMessage.create_from_signed_change_request(request=request)
+        number = blockchain_facade.get_next_block_number()
+        identifier = blockchain_facade.get_next_block_identifier()
+        update = class_.make_block_message_update(request)
 
-        raise TypeError(f'Unknown type of {request}')
+        return class_(
+            number=number,
+            identifier=identifier,
+            timestamp=now,
+            request=request,
+            update=update,
+        )
 
     @classmethod
     def parse_obj(cls, *args, **kwargs):

@@ -1,8 +1,7 @@
 from typing import Type, TypeVar
 
-from node.blockchain.models.block import Block
 from node.core.utils.cryptography import get_signing_key
-from node.core.utils.types import SigningKey
+from node.core.utils.types import BlockIdentifier, SigningKey
 
 T = TypeVar('T', bound='BlockchainFacade')
 
@@ -31,6 +30,12 @@ class BlockchainFacade:
     def clear_instance_cache(cls):
         cls._instance = None
 
+    def get_next_block_number(self) -> int:
+        raise NotImplementedError
+
+    def get_next_block_identifier(self) -> BlockIdentifier:
+        raise NotImplementedError
+
     # TODO(dmu) CRITICAL: Lock blockchain for the period of validation and adding blocks
     #                     https://thenewboston.atlassian.net/browse/BC-158
     def add_block_from_signed_change_request(self, signed_change_request):
@@ -48,4 +53,5 @@ class BlockchainFacade:
 
     @staticmethod
     def clear():
+        from node.blockchain.models.block import Block
         Block.objects.all().delete()
