@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from node.blockchain.facade import BlockchainFacade
+from node.blockchain.inner_models import AccountState
 from node.blockchain.inner_models.signed_change_request import NodeDeclarationSignedChangeRequest
 from node.core.utils.types import Type
 
@@ -12,9 +12,11 @@ class NodeDeclarationBlockMessage(BlockMessage):
     request: NodeDeclarationSignedChangeRequest
 
     @classmethod
-    def make_block_message_update(
-        cls, request: NodeDeclarationSignedChangeRequest, blockchain_facade: BlockchainFacade
-    ) -> BlockMessageUpdate:
-        # TODO(dmu) CRITICAL: Implement this method
-        #                     https://thenewboston.atlassian.net/browse/BC-77
-        raise NotImplementedError()
+    def make_block_message_update(cls, request: NodeDeclarationSignedChangeRequest) -> BlockMessageUpdate:
+        message = request.message
+        account_state = AccountState(
+            account_lock=message.make_hash(),
+            node=message.node,
+        )
+        accounts = {request.signer: account_state}
+        return BlockMessageUpdate(accounts=accounts)

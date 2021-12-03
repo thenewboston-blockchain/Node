@@ -29,9 +29,7 @@ class BlockMessage(BaseModel, MessageMixin):
     request: SignedChangeRequest
 
     @classmethod
-    def make_block_message_update(
-        cls, request: SignedChangeRequest, blockchain_facade: BlockchainFacade
-    ) -> BlockMessageUpdate:
+    def make_block_message_update(cls, request: SignedChangeRequest) -> BlockMessageUpdate:
         raise NotImplementedError('Must be implement in child class')
 
     @classmethod
