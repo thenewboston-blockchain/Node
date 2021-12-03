@@ -10,6 +10,8 @@ ENV PYTHONPATH .
 ENV TNB_IN_DOCKER true
 
 # TODO(dmu) LOW: Optimize images size by deleting no longer needed files after installation
+# We added build-essential to avoid hard to track issues later if add some package that requires it.
+# Need to remove it later (when we stabilize list of dependencies) for the sake of image size optimization.
 RUN set -xe \
     && apt-get update \
     && apt-get install build-essential \
