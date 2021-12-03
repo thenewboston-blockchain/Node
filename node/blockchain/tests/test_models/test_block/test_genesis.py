@@ -7,9 +7,10 @@ from node.core.utils.types import Type
 
 @pytest.mark.django_db
 def test_create_from_block_message(genesis_block_message, primary_validator_key_pair):
-    block = Block.objects.create_from_block_message(
+    block = Block.objects.add_block_from_block_message(
         message=genesis_block_message,
         signing_key=primary_validator_key_pair.private,
+        validate=False,
     )
     assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.signature, str)

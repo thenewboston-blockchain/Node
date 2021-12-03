@@ -17,5 +17,7 @@ def test_create_from_signed_change_request(
         account_lock=expect_treasury_alpha_account.balance_lock,
     )
 
-    assert update.accounts.get(primary_validator_key_pair.public) == AccountState(node=primary_validator_node)
+    assert update.accounts.get(
+        primary_validator_key_pair.public
+    ) == AccountState(node=primary_validator_node, account_lock=primary_validator_key_pair.public)
     assert update.schedule == {'0': primary_validator_key_pair.public}

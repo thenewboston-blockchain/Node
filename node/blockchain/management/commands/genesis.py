@@ -98,7 +98,7 @@ class Command(BaseCommand):
         if does_exist:
             Block.objects.all().delete()
 
-        Block.objects.create_from_block_message(
+        Block.objects.add_block_from_block_message(
             message=block_message,
             signing_key=signing_key,
         )
