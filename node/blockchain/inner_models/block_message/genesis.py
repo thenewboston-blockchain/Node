@@ -28,7 +28,9 @@ class GenesisBlockMessage(BlockMessage):
         accounts = {}
         for account_number, alpha_account in request.message.accounts.items():
             accounts[account_number] = AccountState(
-                balance=alpha_account.balance, account_lock=alpha_account.balance_lock
+                # TODO(dmu) MEDIUM: Consider not storing account_lock if it is equal to account_number
+                balance=alpha_account.balance,
+                account_lock=alpha_account.balance_lock
             )
 
         primary_validator_node_identifier = primary_validator_node.identifier
@@ -36,13 +38,22 @@ class GenesisBlockMessage(BlockMessage):
         if primary_validator_account_state:
             primary_validator_account_state.node = primary_validator_node
         else:
-            accounts[primary_validator_node_identifier] = AccountState(node=primary_validator_node)
+            accounts[primary_validator_node_identifier] = AccountState(
+                node=primary_validator_node, account_lock=primary_validator_node_identifier
+            )
 
         schedule = {'0': primary_validator_node_identifier}
 
         return BlockMessageUpdate(
             accounts=accounts,
             schedule=schedule,
+        )
+
+    @classmethod
+    def make_block_message_update(cls, request: GenesisSignedChangeRequest) -> BlockMessageUpdate:
+        raise NotImplementedError(
+            f'Genesis block is a special block therefore {cls.make_genesis_block_message_update.__name__}() method '
+            f'must be used instead'
         )
 
     @classmethod

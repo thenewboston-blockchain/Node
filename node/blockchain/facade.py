@@ -35,23 +35,3 @@ class BlockchainFacade:
 
     def get_next_block_identifier(self) -> BlockIdentifier:
         raise NotImplementedError
-
-    # TODO(dmu) CRITICAL: Lock blockchain for the period of validation and adding blocks
-    #                     https://thenewboston.atlassian.net/browse/BC-158
-    def add_block_from_signed_change_request(self, signed_change_request):
-        # TODO(dmu) CRITICAL: Validate signed change request
-        #                     https://thenewboston.atlassian.net/browse/BC-159
-        raise NotImplementedError
-
-    def add_block(self, block, validate=True):
-        if validate:
-            # TODO(dmu) CRITICAL: Validate block
-            #                     https://thenewboston.atlassian.net/browse/BC-160
-            raise NotImplementedError
-
-        raise NotImplementedError
-
-    @staticmethod
-    def clear():
-        from node.blockchain.models.block import Block
-        Block.objects.all().delete()
