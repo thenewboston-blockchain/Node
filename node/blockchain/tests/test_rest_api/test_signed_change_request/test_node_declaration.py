@@ -3,6 +3,7 @@ import pytest
 from node.blockchain.inner_models import NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
 
 
+@pytest.mark.django_db
 def test_node_declaration_signed_change_request_can_be_sent_via_api(api_client, regular_node, regular_node_key_pair):
     message = NodeDeclarationSignedChangeRequestMessage(
         node=regular_node,

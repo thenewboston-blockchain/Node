@@ -1,5 +1,5 @@
 from node.blockchain.inner_models.base import BaseModel
-from node.blockchain.inner_models.mixins.message import MessageMixin
+from node.blockchain.mixins.message import MessageMixin
 
 
 def test_make_binary_data_for_cryptography_key_order():
@@ -20,4 +20,4 @@ def test_make_binary_data_for_cryptography_key_order():
     assert outer.json() == '{"key3": {"key2": "v2", "key1": "v1"}, "key2": "v2", "key1": 1}'
 
     # ordered key for cryptography
-    assert outer.make_binary_data_for_cryptography() == b'{"key1":1,"key2":"v2","key3":{"key1":"v1","key2":"v2"}}'
+    assert outer.make_binary_message_for_cryptography() == b'{"key1":1,"key2":"v2","key3":{"key1":"v1","key2":"v2"}}'

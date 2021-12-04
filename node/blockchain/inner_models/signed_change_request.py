@@ -61,7 +61,7 @@ class SignedChangeRequest(BaseModel):
         if (
             # TODO(dmu) MEDIUM: How is it possible that signer, signature, message can be empty?
             not all((signer, signature, message)) or
-            not is_signature_valid(signer, message.make_binary_data_for_cryptography(), signature)
+            not is_signature_valid(signer, message.make_binary_message_for_cryptography(), signature)
         ):
             raise ValueError('invalid signature')
 

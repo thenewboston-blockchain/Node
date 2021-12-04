@@ -1,5 +1,5 @@
 from node.blockchain.inner_models.base import BaseModel
-from node.blockchain.inner_models.mixins.message import MessageMixin
+from node.blockchain.mixins.message import MessageMixin
 from node.core.utils.types import AccountLock, Type
 
 

@@ -4,6 +4,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     AccountState, BlockMessage, BlockMessageUpdate, NodeDeclarationSignedChangeRequest
 )
+from node.blockchain.models import AccountState as DBAccountState
 from node.blockchain.models.block import Block
 from node.core.utils.cryptography import get_node_identifier, is_signature_valid
 from node.core.utils.types import Signature, Type
@@ -18,6 +19,7 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
 
     block = Block.objects.add_block_from_block_message(
         message=node_declaration_block_message,
+        blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
@@ -31,6 +33,7 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     assert message.type == Type.NODE_DECLARATION
     assert message == node_declaration_block_message
 
+    # Test rereading the block from the database
     block = Block.objects.get(_id=expected_block_number)
     assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.message, str)
@@ -41,6 +44,13 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     assert message.identifier == expected_identifier
     assert message.type == Type.NODE_DECLARATION
     assert message == node_declaration_block_message
+
+    # Test write-through cache
+    assert DBAccountState.objects.count() == 1
+    account_state = DBAccountState.objects.get(_id=node_declaration_block_message.request.signer)
+    assert account_state.account_lock == node_declaration_block_message.request.message.make_hash()
+    assert account_state.balance == 0
+    assert account_state.node == node_declaration_block_message.request.message.node
 
 
 @pytest.mark.django_db

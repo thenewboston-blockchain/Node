@@ -16,7 +16,7 @@ def genesis_block_message(genesis_signed_change_request_message, primary_validat
 
 
 @pytest.fixture
-def node_declaration_block_message(node_declaration_signed_change_request_message, regular_node_key_pair):
+def node_declaration_block_message(node_declaration_signed_change_request_message, regular_node_key_pair, db):
     request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
         message=node_declaration_signed_change_request_message,
         signing_key=regular_node_key_pair.private,
