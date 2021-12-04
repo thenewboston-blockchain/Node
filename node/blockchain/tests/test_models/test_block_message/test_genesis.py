@@ -1,19 +1,17 @@
 from datetime import datetime
 
-from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, SignedChangeRequest
+from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, GenesisSignedChangeRequest
 from node.core.utils.types import Type
 
 
 def test_create_from_signed_change_request(
     genesis_signed_change_request_message, primary_validator_key_pair, primary_validator_node
 ):
-    request = SignedChangeRequest.create_from_signed_change_request_message(
+    request = GenesisSignedChangeRequest.create_from_signed_change_request_message(
         message=genesis_signed_change_request_message,
         signing_key=primary_validator_key_pair.private,
     )
-    message = GenesisBlockMessage.create_from_signed_change_request(
-        request=request, primary_validator_node=primary_validator_node
-    )
+    message = GenesisBlockMessage.create_from_signed_change_request(request, primary_validator_node)
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS

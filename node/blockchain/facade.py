@@ -31,7 +31,11 @@ class BlockchainFacade:
         cls._instance = None
 
     def get_next_block_number(self) -> int:
-        raise NotImplementedError
+        # TODO(dmu) CRITICAL: Implement with write-through cache
+        #                     https://thenewboston.atlassian.net/browse/BC-154
+        return 1
 
     def get_next_block_identifier(self) -> BlockIdentifier:
-        raise NotImplementedError
+        # TODO(dmu) CRITICAL: Implement with write-through cache
+        #                     https://thenewboston.atlassian.net/browse/BC-154
+        return BlockIdentifier('fa1e' * 16)
