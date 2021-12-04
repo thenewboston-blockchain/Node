@@ -2,10 +2,12 @@ version: '3.9'
 
 services:
   mongo:
+    restart: 'no'
     environment:
       MONGO_INITDB_ROOT_PASSWORD: root
 
   mongo-express:
+    restart: 'no'
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/
 
