@@ -1,4 +1,6 @@
-from node.blockchain.inner_models import AccountState, GenesisBlockMessage, GenesisSignedChangeRequest
+from node.blockchain.inner_models import (
+    AccountState, BlockMessageUpdate, GenesisBlockMessage, GenesisSignedChangeRequest
+)
 
 
 def test_create_from_signed_change_request(
@@ -12,12 +14,15 @@ def test_create_from_signed_change_request(
     accounts = genesis_signed_change_request_message.accounts
     assert len(accounts) == 1
     treasury_account_number, expect_treasury_alpha_account = accounts.popitem()
-    assert update.accounts.get(treasury_account_number) == AccountState(
-        balance=expect_treasury_alpha_account.balance,
-        account_lock=expect_treasury_alpha_account.balance_lock,
+    assert update == BlockMessageUpdate(
+        accounts={
+            treasury_account_number:
+                AccountState(
+                    balance=expect_treasury_alpha_account.balance,
+                    account_lock=expect_treasury_alpha_account.balance_lock,
+                ),
+            primary_validator_key_pair.public:
+                AccountState(node=primary_validator_node, account_lock=primary_validator_key_pair.public)
+        },
+        schedule={'0': primary_validator_key_pair.public}
     )
-
-    assert update.accounts.get(
-        primary_validator_key_pair.public
-    ) == AccountState(node=primary_validator_node, account_lock=primary_validator_key_pair.public)
-    assert update.schedule == {'0': primary_validator_key_pair.public}
