@@ -50,6 +50,13 @@ class GenesisBlockMessage(BlockMessage):
         )
 
     @classmethod
+    def make_block_message_update(cls, request: GenesisSignedChangeRequest) -> BlockMessageUpdate:
+        raise NotImplementedError(
+            f'Genesis block is a special block therefore {cls.make_genesis_block_message_update.__name__}() method '
+            f'must be used instead'
+        )
+
+    @classmethod
     def create_from_signed_change_request(  # type: ignore
         cls: TypingType[GenesisBlockMessageT], request: GenesisSignedChangeRequest, primary_validator_node: Node
     ) -> GenesisBlockMessageT:

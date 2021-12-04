@@ -15,8 +15,11 @@ T = TypeVar('T', bound='BlockMessage')
 
 
 class BlockMessageUpdate(BaseModel):
-    accounts: dict[AccountNumber, AccountState]
-    schedule: dict[intstr, AccountNumber]
+    accounts: Optional[dict[AccountNumber, AccountState]]
+    # TODO(dmu) MEDIUM: Consider removing `schedule` field since it will be equal to `null` in  most blocks
+    #                   Or subclass `BlockMessageUpdate` for certain block types (genesis and schedule) and
+    #                   have that field just there
+    schedule: Optional[dict[intstr, AccountNumber]]
 
 
 class BlockMessage(BaseModel, MessageMixin):
