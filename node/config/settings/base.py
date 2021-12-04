@@ -76,7 +76,8 @@ DATABASES = {
             # TODO(dmu) CRITICAL: Once we expose MongoDB for reading make the password generated on node deploy
             #                     https://thenewboston.atlassian.net/browse/BC-144
             'password': 'root',
-        }
+        },
+        'ATOMIC_REQUESTS': True,
     }
 }
 

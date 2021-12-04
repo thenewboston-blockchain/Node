@@ -1,6 +1,8 @@
 from typing import Type, TypeVar
 
+from node.blockchain.models import AccountState
 from node.core.utils.cryptography import get_signing_key
+from node.core.utils.misc import set_if_not_none
 from node.core.utils.types import BlockIdentifier, SigningKey
 
 T = TypeVar('T', bound='BlockchainFacade')
@@ -31,11 +33,34 @@ class BlockchainFacade:
         cls._instance = None
 
     def get_next_block_number(self) -> int:
-        # TODO(dmu) CRITICAL: Implement with write-through cache
-        #                     https://thenewboston.atlassian.net/browse/BC-154
-        return 1
+        # TODO(dmu) HIGH: Implement method via write-through cache
+        #                 https://thenewboston.atlassian.net/browse/BC-175
+        from node.blockchain.models import Block
+        last_block = Block.objects.get_last_block()
+        return last_block._id + 1 if last_block else 0
 
     def get_next_block_identifier(self) -> BlockIdentifier:
-        # TODO(dmu) CRITICAL: Implement with write-through cache
-        #                     https://thenewboston.atlassian.net/browse/BC-154
-        return BlockIdentifier('fa1e' * 16)
+        # TODO(dmu) HIGH: Implement method via write-through cache
+        #                 https://thenewboston.atlassian.net/browse/BC-175
+        from node.blockchain.models import Block
+        last_block = Block.objects.get_last_block()
+        return last_block.get_message().make_hash() if last_block else None  # Genesis block has identifier of `null`
+
+    def update_write_through_cache(self, block_message):
+        # TODO(dmu) CRITICAL: Implement updating `schedule`
+        #                     https://thenewboston.atlassian.net/browse/BC-176
+        for account_number, account_state in block_message.update.accounts.items():
+            fields_for_update = {}
+            set_if_not_none(fields_for_update, 'account_lock', account_state.account_lock)
+            set_if_not_none(fields_for_update, 'balance', account_state.balance)
+            node = None if account_state.node is None else account_state.node.dict()
+            set_if_not_none(fields_for_update, 'node', node)
+            assert fields_for_update
+
+            account_state, is_created = AccountState.objects.get_or_create(
+                _id=account_number, defaults=fields_for_update
+            )
+            if not is_created:
+                for field, value in fields_for_update.items():
+                    setattr(account_state, field, value)
+                account_state.save()

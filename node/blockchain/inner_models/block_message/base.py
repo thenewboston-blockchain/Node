@@ -5,8 +5,8 @@ from typing import TypeVar
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
-from node.blockchain.inner_models.mixins.message import MessageMixin
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
+from node.blockchain.mixins.message import MessageMixin
 from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
@@ -26,6 +26,7 @@ class BlockMessage(BaseModel, MessageMixin):
     type: Type  # noqa: A003
     number: int
     # TODO(dmu) HIGH: Make identifier not optional, so it is properly validated
+    #                 https://thenewboston.atlassian.net/browse/BC-178
     identifier: Optional[BlockIdentifier]
     timestamp: datetime
     update: BlockMessageUpdate
