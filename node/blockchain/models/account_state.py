@@ -2,6 +2,7 @@ from djongo import models
 
 from node.blockchain.validators import HexStringValidator
 from node.core.fields import NullableJSONField
+from node.core.managers import CustomManager
 
 
 class AccountState(models.Model):
@@ -13,4 +14,4 @@ class AccountState(models.Model):
     # TODO(dmu) MEDIUM: Should we have node as models.TextField() instead and deserialize it with Pydantic model
     node = NullableJSONField(blank=True, null=True)
 
-    objects = models.DjongoManager()
+    objects = CustomManager()

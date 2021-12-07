@@ -3,7 +3,7 @@ from typing import Type, TypeVar
 from node.blockchain.models import AccountState
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.misc import set_if_not_none
-from node.core.utils.types import BlockIdentifier, SigningKey
+from node.core.utils.types import AccountLock, BlockIdentifier, SigningKey
 
 T = TypeVar('T', bound='BlockchainFacade')
 
@@ -45,6 +45,10 @@ class BlockchainFacade:
         from node.blockchain.models import Block
         last_block = Block.objects.get_last_block()
         return last_block.get_message().make_hash() if last_block else None  # Genesis block has identifier of `null`
+
+    def get_account_lock(self, account_number) -> AccountLock:
+        account_state = AccountState.objects.get_or_none(_id=account_number)
+        return AccountLock(account_state.account_lock) if account_state else account_number
 
     def update_write_through_cache(self, block_message):
         # TODO(dmu) CRITICAL: Implement updating `schedule`
