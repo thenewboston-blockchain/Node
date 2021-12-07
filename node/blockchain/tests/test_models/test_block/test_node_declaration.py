@@ -2,12 +2,14 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
-    AccountState, BlockMessage, BlockMessageUpdate, NodeDeclarationSignedChangeRequest
+    AccountState, BlockMessage, BlockMessageUpdate, Node, NodeDeclarationSignedChangeRequest,
+    NodeDeclarationSignedChangeRequestMessage
 )
 from node.blockchain.models import AccountState as DBAccountState
 from node.blockchain.models.block import Block
+from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import get_node_identifier, is_signature_valid
-from node.core.utils.types import Signature, Type
+from node.core.utils.types import AccountLock, AccountNumber, Signature, Type
 
 
 @pytest.mark.django_db
@@ -94,3 +96,47 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
     assert message.type == Type.NODE_DECLARATION
     assert message.request == request
     assert message.update == expected_message_update
+
+
+@pytest.mark.django_db
+def test_add_block_from_signed_change_request_account_lock_validation(regular_node_key_pair, regular_node):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    account_lock = AccountLock('0' * 64)
+    assert blockchain_facade.get_account_lock(regular_node_key_pair) != account_lock
+    message = NodeDeclarationSignedChangeRequestMessage(
+        account_lock=AccountLock('0' * 64),
+        node=regular_node,
+    )
+
+    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=message,
+        signing_key=regular_node_key_pair.private,
+    )
+
+    with pytest.raises(ValidationError, match='Invalid account lock'):
+        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+
+
+@pytest.mark.django_db
+def test_add_block_from_signed_change_request_node_identifier_validation(regular_node_key_pair, regular_node):
+    account_number = AccountNumber('0' * 64)
+    regular_node = Node(
+        identifier=account_number,
+        addresses=['http://not-existing-node-address-674898923.com:8555/'],
+        fee=4,
+    )
+
+    message = NodeDeclarationSignedChangeRequestMessage(
+        account_lock=regular_node_key_pair.public,
+        node=regular_node,
+    )
+
+    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=message,
+        signing_key=regular_node_key_pair.private,
+    )
+
+    blockchain_facade = BlockchainFacade.get_instance()
+    with pytest.raises(ValidationError, match='Signer does not match with node identifier'):
+        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)

@@ -3,6 +3,8 @@ from typing import TypeVar, cast
 
 from pydantic import root_validator
 
+from node.blockchain.facade import BlockchainFacade
+from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key, is_signature_valid
 from node.core.utils.types import AccountNumber, Signature, SigningKey
 
@@ -63,9 +65,21 @@ class SignedChangeRequest(BaseModel):
             not all((signer, signature, message)) or
             not is_signature_valid(signer, message.make_binary_message_for_cryptography(), signature)
         ):
-            raise ValueError('invalid signature')
+            # TODO(dmu) LOW: Pydantic does not recognize custom ValidationError. Fix?
+            raise ValueError('Invalid signature')
 
         return values
+
+    def validate_account_lock(self, blockchain_facade: BlockchainFacade):
+        if blockchain_facade.get_account_lock(self.signer) != self.message.account_lock:
+            raise ValidationError('Invalid account lock')
+
+    def validate_type_specific_attributes(self, blockchain_facade: BlockchainFacade):
+        pass  # this method is to be overridden if needed
+
+    def validate_business_logic(self, blockchain_facade: BlockchainFacade):  # validate() is used by pydantic
+        self.validate_account_lock(blockchain_facade)
+        self.validate_type_specific_attributes(blockchain_facade)
 
     def get_type(self):
         return self.message.type
@@ -77,3 +91,7 @@ class GenesisSignedChangeRequest(SignedChangeRequest):
 
 class NodeDeclarationSignedChangeRequest(SignedChangeRequest):
     message: NodeDeclarationSignedChangeRequestMessage
+
+    def validate_type_specific_attributes(self, blockchain_facade: BlockchainFacade):
+        if self.signer != self.message.node.identifier:
+            raise ValidationError('Signer does not match with node identifier')

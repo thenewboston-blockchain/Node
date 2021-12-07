@@ -53,7 +53,7 @@ def test_signature_validation_genesis_type(genesis_signed_change_request_message
             signature='0' * 128,
             message=signed_change_request_template.message,
         )
-    assert re.search(r'__root__.*invalid signature', str(exc_info.value), flags=re.DOTALL)
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
 
     with pytest.raises(ValidationError) as exc_info:
         GenesisSignedChangeRequest(
@@ -61,7 +61,7 @@ def test_signature_validation_genesis_type(genesis_signed_change_request_message
             signature=signed_change_request_template.signature,
             message=signed_change_request_template.message,
         )
-    assert re.search(r'__root__.*invalid signature', str(exc_info.value), flags=re.DOTALL)
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
 
     message = GenesisSignedChangeRequestMessage(
         accounts=signed_change_request_template.message.accounts,
@@ -74,4 +74,4 @@ def test_signature_validation_genesis_type(genesis_signed_change_request_message
             signature=signed_change_request_template.signature,
             message=message,
         )
-    assert re.search(r'__root__.*invalid signature', str(exc_info.value), flags=re.DOTALL)
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)

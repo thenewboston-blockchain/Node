@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Optional  # noqa: I101
 
 from django.db import transaction
-from djongo import models
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, SignedChangeRequest
+from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
 from node.core.utils.types import SigningKey
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .model import Block
 
 
-class BlockManager(models.DjongoManager):
+class BlockManager(CustomManager):
     # TODO(dmu) CRITICAL: Lock blockchain for the period of validation and adding blocks
     #                     https://thenewboston.atlassian.net/browse/BC-158
     def add_block_from_signed_change_request(
@@ -24,9 +24,7 @@ class BlockManager(models.DjongoManager):
         validate=True
     ) -> 'Block':
         if validate:
-            # TODO(dmu) CRITICAL: Validate signed change request
-            #                     https://thenewboston.atlassian.net/browse/BC-159
-            pass
+            signed_change_request.validate_business_logic(blockchain_facade)
 
         block_message = BlockMessage.create_from_signed_change_request(signed_change_request, blockchain_facade)
         # no need to validate the block message since we produced a valid one
