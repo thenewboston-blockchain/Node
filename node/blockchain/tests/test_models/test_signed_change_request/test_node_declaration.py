@@ -4,7 +4,9 @@ import re
 import pytest
 from pydantic import ValidationError
 
-from node.blockchain.inner_models import NodeDeclarationSignedChangeRequest, SignedChangeRequest
+from node.blockchain.inner_models import (
+    NodeDeclarationSignedChangeRequest, NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
+)
 from node.blockchain.tests.test_models.base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 
 
@@ -24,18 +26,61 @@ def test_create_from_node_declaration_signed_change_request_message(
     )
 
 
-@pytest.mark.skip('Not implemented yet')
-def test_serialize_and_deserialize_node_declaration():
-    # TODO(dmu) HIGH: Implement similar to `.test_genesis.test_serialize_and_deserialize_genesis_type`
-    #                 https://thenewboston.atlassian.net/browse/BC-169
-    raise NotImplementedError
+def test_serialize_and_deserialize_node_declaration(
+    node_declaration_signed_change_request_message, regular_node_key_pair
+):
+    signed_change_request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message,
+        signing_key=regular_node_key_pair.private,
+    )
+    assert isinstance(signed_change_request, NodeDeclarationSignedChangeRequest)
+    serialized = signed_change_request.json()
+    deserialized = SignedChangeRequest.parse_raw(serialized)
+    assert isinstance(deserialized, NodeDeclarationSignedChangeRequest)
+    assert deserialized.signer == signed_change_request.signer
+    assert deserialized.signature == signed_change_request.signature
+    assert deserialized.message == signed_change_request.message
+    assert deserialized == signed_change_request
+
+    serialized2 = deserialized.json()
+    assert serialized == serialized2
 
 
-@pytest.mark.skip('Not implemented yet')
-def test_signature_validation_node_declaration():
-    # TODO(dmu) HIGH: Implement similar to `.test_genesis.test_signature_validation_genesis_type`
-    #                 https://thenewboston.atlassian.net/browse/BC-169
-    raise NotImplementedError
+def test_signature_validation_node_declaration(
+    node_declaration_signed_change_request_message, primary_validator_key_pair
+):
+    signed_change_request_template = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message,
+        signing_key=primary_validator_key_pair.private,
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        NodeDeclarationSignedChangeRequest(
+            signer=signed_change_request_template.signer,
+            signature='0' * 128,
+            message=signed_change_request_template.message,
+        )
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
+
+    with pytest.raises(ValidationError) as exc_info:
+        NodeDeclarationSignedChangeRequest(
+            signer='0' * 64,
+            signature=signed_change_request_template.signature,
+            message=signed_change_request_template.message,
+        )
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
+
+    message = NodeDeclarationSignedChangeRequestMessage(
+        node=signed_change_request_template.message.node,
+        account_lock='0' * 64,
+        type=signed_change_request_template.message.type,
+    )
+    with pytest.raises(ValidationError) as exc_info:
+        NodeDeclarationSignedChangeRequest(
+            signer=signed_change_request_template.signer,
+            signature=signed_change_request_template.signature,
+            message=message,
+        )
+    assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
 
 
 @node_declaration_message_type_validation_parametrizer
