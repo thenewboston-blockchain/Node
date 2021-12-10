@@ -22,7 +22,7 @@ def test_node_declaration_signed_change_request_can_be_sent_via_api(api_client, 
     payload = signed_change_request.dict()
     # TODO(dmu) CRITICAL: Expect `assert response.status_code == 204` instead once `perform_create()` is implemented
     #                     https://thenewboston.atlassian.net/browse/BC-167
-    with pytest.raises(NotImplementedError, match=f'"identifier": "{regular_node.identifier}"'):
+    with pytest.raises(NotImplementedError, match=f'"signer":"{regular_node.identifier}"'):
         api_client.post('/api/signed-change-request/', payload)
 
 
