@@ -2,6 +2,8 @@ import yaml
 
 from .types import hexstr
 
+SENTINEL = object()
+
 
 def yaml_coerce(value):
     if isinstance(value, str):

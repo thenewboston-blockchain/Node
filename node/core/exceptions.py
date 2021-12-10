@@ -15,3 +15,7 @@ def convert_to_drf_validation_error(exception: PydanticValidationError):
 
 class ValidationError(DjangoValidationError):
     pass
+
+
+class NotEnoughNestingError(ValueError):
+    pass

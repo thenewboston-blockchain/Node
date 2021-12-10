@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 import pytest
@@ -50,3 +51,12 @@ def test_serialize_deserialize_works(node_declaration_block_message):
 
     serialized2 = deserialized.json()
     assert serialized == serialized2
+
+
+def test_node_does_not_serialize_identifier(node_declaration_block_message, regular_node_key_pair):
+    serialized = node_declaration_block_message.dict()
+    assert 'identifier' not in serialized['request']['message']['node']
+
+    serialized_json = node_declaration_block_message.json()
+    serialized = json.loads(serialized_json)
+    assert 'identifier' not in serialized['request']['message']['node']

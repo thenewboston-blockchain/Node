@@ -1,15 +1,9 @@
 from djongo import models
 
-from node.blockchain.mixins.message import MessageMixin
+from node.blockchain.mixins.message import MessageMixin, MessageWrapper
 from node.blockchain.validators import HexStringValidator
 
 from .manager import BlockManager
-
-
-class MessageWrapper(str, MessageMixin):
-
-    def make_binary_message_for_cryptography(self) -> bytes:
-        return self.encode('utf-8')  # type: ignore
 
 
 class Block(models.Model, MessageMixin):

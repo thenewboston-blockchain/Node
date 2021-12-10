@@ -20,3 +20,7 @@ class NodeDeclarationBlockMessage(BlockMessage):
         )
         accounts = {request.signer: account_state}
         return BlockMessageUpdate(accounts=accounts)
+
+    class Config(BlockMessage.Config):
+        exclude = {'request': {'message': {'node': {'identifier': ...}}}}
+        enrich = {'request.message.node.identifier': 'request.signer'}

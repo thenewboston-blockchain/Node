@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 class MessageMixin:
 
     def make_binary_message_for_cryptography(self) -> bytes:
-        return self.json(separators=(',', ':'), sort_keys=True).encode('utf-8')  # type: ignore
+        exclude_crypto = self.Config.exclude_crypto  # type: ignore
+        kwargs = {'exclude': exclude_crypto} if exclude_crypto else {}
+        return self.json(**kwargs).encode('utf-8')  # type: ignore
 
     def make_hash(self) -> Hash:
         normalized_message = self.make_binary_message_for_cryptography()
@@ -24,3 +26,9 @@ class MessageMixin:
     def make_binary_data_and_signature(self, signing_key: SigningKey):
         binary_data = self.make_binary_message_for_cryptography()
         return binary_data, generate_signature(signing_key, binary_data)
+
+
+class MessageWrapper(str, MessageMixin):
+
+    def make_binary_message_for_cryptography(self) -> bytes:
+        return self.encode('utf-8')  # type: ignore
