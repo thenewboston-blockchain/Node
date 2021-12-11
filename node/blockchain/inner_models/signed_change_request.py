@@ -23,7 +23,7 @@ class SignedChangeRequest(BaseModel):
 
     @classmethod
     def create_from_signed_change_request_message(
-        cls: TypingType[T], *, message: SignedChangeRequestMessage, signing_key: SigningKey
+        cls: TypingType[T], message: SignedChangeRequestMessage, signing_key: SigningKey
     ) -> T:
         from node.blockchain.inner_models.type_map import get_signed_change_request_subclass
         class_ = get_signed_change_request_subclass(message.type)
