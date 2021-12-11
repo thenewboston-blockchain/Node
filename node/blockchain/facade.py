@@ -50,10 +50,9 @@ class BlockchainFacade:
         account_state = AccountState.objects.get_or_none(_id=account_number)
         return AccountLock(account_state.account_lock) if account_state else account_number
 
-    def update_write_through_cache(self, block_message):
-        # TODO(dmu) CRITICAL: Implement updating `schedule`
-        #                     https://thenewboston.atlassian.net/browse/BC-176
-        for account_number, account_state in block_message.update.accounts.items():
+    @staticmethod
+    def update_write_through_cache_accounts(accounts):
+        for account_number, account_state in accounts.items():
             fields_for_update = {}
             set_if_not_none(fields_for_update, 'account_lock', account_state.account_lock)
             set_if_not_none(fields_for_update, 'balance', account_state.balance)
@@ -68,3 +67,27 @@ class BlockchainFacade:
                 for field, value in fields_for_update.items():
                     setattr(account_state, field, value)
                 account_state.save()
+
+    def update_write_through_cache_schedule(self, schedule):
+        # TODO(dmu) HIGH: Add more unittests once PV schedule block is implemented
+        #                 - Add PV
+        #                 - Remove PV
+        #                 - Replace PV
+        #                 https://thenewboston.atlassian.net/browse/BC-193
+        from node.blockchain.models import Schedule
+
+        # TODO(dmu) LOW: More optimal algorithm would not delete all schedule record, but only what should be deleted
+        Schedule.objects.all().delete()
+        for block_number, node_identifier in schedule.items():
+            Schedule.objects.create(_id=block_number, node_identifier=node_identifier)
+
+    def update_write_through_cache(self, block_message):
+        block_message_update = block_message.update
+
+        accounts = block_message_update.accounts
+        if accounts:
+            self.update_write_through_cache_accounts(accounts)
+
+        schedule = block_message_update.schedule
+        if schedule:
+            self.update_write_through_cache_schedule(schedule)

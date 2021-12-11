@@ -2,7 +2,7 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage
-from node.blockchain.models import AccountState, Block
+from node.blockchain.models import AccountState, Block, Schedule
 from node.core.utils.cryptography import is_signature_valid
 from node.core.utils.types import Signature, Type
 
@@ -44,7 +44,7 @@ def test_create_from_block_message(
     assert message.type == Type.GENESIS
     assert message == genesis_block_message
 
-    # Test write-through cache
+    # Test account state write-through cache
     assert AccountState.objects.count() == 2
     account_state = AccountState.objects.get(_id=primary_validator_key_pair.public)
     assert account_state.account_lock == primary_validator_key_pair.public
@@ -54,3 +54,7 @@ def test_create_from_block_message(
     account_state = AccountState.objects.get(_id=treasury_account_key_pair.public)
     assert account_state.account_lock == treasury_account_key_pair.public
     assert account_state.balance == treasury_amount
+
+    # Test schedule write-through cache
+    schedule = Schedule.objects.order_by('_id').all()
+    assert tuple((item._id, item.node_identifier) for item in schedule) == ((0, primary_validator_key_pair.public),)
