@@ -7,7 +7,7 @@ def convert_to_drf_validation_error(exception: PydanticValidationError):
     errors = {}
     for error in exception.errors():
         loc = error['loc']
-        key = 'non_field_errors' if loc == ('__root__',) else '.'.join(loc)
+        key = 'non_field_errors' if loc == ('__root__',) else '.'.join(map(str, loc))
         errors[key] = [error['msg']]
 
     return DRFValidationError(errors)
