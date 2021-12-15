@@ -22,7 +22,7 @@ def test_create_from_block_message(
         message=genesis_block_message,
         blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
-        validate=False,
+        validate=False
     )
     assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.message, str)

@@ -42,3 +42,7 @@ class ValidationError(DjangoValidationError):
 
 class NotEnoughNestingError(ValueError):
     pass
+
+
+class BlockchainLockedError(Exception):
+    pass
