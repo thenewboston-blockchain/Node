@@ -30,9 +30,7 @@ services:
       - mongo
 
   node:
-    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
-    #                     https://thenewboston.atlassian.net/browse/BC-70
-    image: node:current
+    image: ghcr.io/thenewboston-developers/node/node:latest
     command: ./run.sh
     environment:
       TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
@@ -42,9 +40,7 @@ services:
       - mongo
 
   reverse-proxy:
-    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
-    #                     https://thenewboston.atlassian.net/browse/BC-70
-    image: node-reverse-proxy:current
+    image: ghcr.io/thenewboston-developers/node/node-reverse-proxy:latest
     ports:
       - 8555:8555
     depends_on:

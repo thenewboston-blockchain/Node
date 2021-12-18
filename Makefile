@@ -14,9 +14,7 @@ up-dependencies-only:
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate mongo mongo-express
 
 .PHONY: up
-# TODO(dmu) HIGH: No longer depend on `build` once images are taken from docker registry
-#                 https://thenewboston.atlassian.net/browse/BC-70
-up: build
+up:
 	docker-compose -f docker-compose.yml up --force-recreate
 
 .PHONY: up-dev
