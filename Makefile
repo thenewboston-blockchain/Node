@@ -7,7 +7,7 @@ build-node:
 
 .PHONY: build-reverse-proxy
 build-reverse-proxy:
-	docker build . --target=reverse-proxy -t node-reverse-proxy:current
+	docker build . --target=reverse-proxy -t reverse-proxy:current
 
 .PHONY: up-dependencies-only
 up-dependencies-only:

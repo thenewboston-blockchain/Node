@@ -30,7 +30,7 @@ services:
       - mongo
 
   node:
-    image: ghcr.io/thenewboston-developers/node/node:latest
+    image: ghcr.io/thenewboston-developers/node:latest
     command: ./run.sh
     environment:
       TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
@@ -40,7 +40,7 @@ services:
       - mongo
 
   reverse-proxy:
-    image: ghcr.io/thenewboston-developers/node/node-reverse-proxy:latest
+    image: ghcr.io/thenewboston-developers/reverse-proxy:latest
     ports:
       - 8555:8555
     depends_on:

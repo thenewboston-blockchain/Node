@@ -8,7 +8,7 @@ jobs:
     name: Quality Assurance
 
     runs-on: ubuntu-latest
-    container: python:3.9.8
+    container: python:3.9.9-buster
 
     services:
       # TODO(dmu) LOW: This section duplicates services already defined in `docker-compose.yml`.

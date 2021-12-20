@@ -20,7 +20,7 @@ services:
       - 127.0.0.1:8000:8555
 
   reverse-proxy:
-    image: node-reverse-proxy:current
+    image: reverse-proxy:current
     build:
       context: .
       target: reverse-proxy
