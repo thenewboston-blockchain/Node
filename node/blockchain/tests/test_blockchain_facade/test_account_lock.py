@@ -6,6 +6,7 @@ from node.blockchain.models.block import Block
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
 def test_account_lock_change_when_block_is_added(
     node_declaration_signed_change_request_message, regular_node_key_pair
 ):

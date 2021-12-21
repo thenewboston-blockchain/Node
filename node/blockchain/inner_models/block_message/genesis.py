@@ -17,7 +17,7 @@ GenesisBlockMessageT = TypeVar('GenesisBlockMessageT', bound='GenesisBlockMessag
 
 class GenesisBlockMessage(BlockMessage):
     number: int = Field(default=0, const=True)
-    identifier: Optional[BlockIdentifier] = Field(default=None, const=True)
+    identifier: Optional[BlockIdentifier] = Field(default=None, const=True)  # type: ignore
     type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
     request: GenesisSignedChangeRequest
 
