@@ -1,5 +1,5 @@
 from node.blockchain.inner_models.base import BaseModel
-from node.blockchain.mixins.message import MessageMixin
+from node.blockchain.mixins.crypto import CryptoAuxiliaryMixin
 
 
 def test_make_binary_data_for_cryptography_key_order():
@@ -8,7 +8,7 @@ def test_make_binary_data_for_cryptography_key_order():
         key2: str
         key1: str
 
-    class Outer(BaseModel, MessageMixin):
+    class Outer(BaseModel, CryptoAuxiliaryMixin):
         key3: Inner
         key2: str
         key1: int

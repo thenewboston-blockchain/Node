@@ -5,7 +5,7 @@ import pytest
 from pydantic.error_wrappers import ValidationError
 
 from node.blockchain.inner_models import Node, NodeDeclarationSignedChangeRequestMessage
-from node.blockchain.mixins.message import MessageWrapper
+from node.blockchain.mixins.crypto import SignableStringWrapper
 from node.core.utils.types import Type
 
 from ..base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
@@ -97,5 +97,5 @@ def test_signing_does_not_include_node_identifier(
     message_string = json.dumps(message, separators=(',', ':'), sort_keys=True)
 
     signing_key = regular_node_key_pair.private
-    expected_signature = MessageWrapper(message_string).make_signature(signing_key)
+    expected_signature = SignableStringWrapper(message_string).make_signature(signing_key)
     assert node_declaration_signed_change_request_message.make_signature(signing_key) == expected_signature

@@ -6,7 +6,7 @@ from typing import TypeVar
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
-from node.blockchain.mixins.message import MessageMixin
+from node.blockchain.mixins.crypto import SignableMixin
 from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
@@ -22,7 +22,7 @@ class BlockMessageUpdate(BaseModel):
     schedule: Optional[dict[intstr, AccountNumber]]
 
 
-class BlockMessage(BaseModel, MessageMixin):
+class BlockMessage(BaseModel, SignableMixin):
     type: Type  # noqa: A003
     number: int
     # TODO(dmu) HIGH: Make identifier not optional, so it is properly validated

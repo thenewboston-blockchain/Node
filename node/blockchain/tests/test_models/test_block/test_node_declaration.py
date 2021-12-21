@@ -50,7 +50,7 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     # Test account state write-through cache
     assert DBAccountState.objects.count() == 1
     account_state = DBAccountState.objects.get(_id=node_declaration_block_message.request.signer)
-    assert account_state.account_lock == node_declaration_block_message.request.message.make_hash()
+    assert account_state.account_lock == node_declaration_block_message.request.make_hash()
     assert account_state.balance == 0
     assert account_state.node == node_declaration_block_message.request.message.node
 
@@ -80,7 +80,7 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
     expected_message_update = BlockMessageUpdate(
         accounts={request.signer: AccountState(
             node=request.message.node,
-            account_lock=request.message.make_hash(),
+            account_lock=request.make_hash(),
         )}
     )
     assert message.update == expected_message_update

@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from node.blockchain.inner_models import (
     NodeDeclarationSignedChangeRequest, NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
 )
+from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.tests.test_models.base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 
 
@@ -171,3 +172,19 @@ def test_type_validation_for_node_declaration_on_parsing(id_, regular_node, sign
         SignedChangeRequest.parse_raw(serialized_json)
 
     assert re.search(search_re, str(exc_info.value), flags=re.DOTALL)
+
+
+def test_hashing_does_not_include_node_identifier(
+    node_declaration_signed_change_request_message, regular_node_key_pair
+):
+    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message,
+        signing_key=regular_node_key_pair.private,
+    )
+    request_dict = request.dict()
+
+    assert 'identifier' not in request_dict['message']['node']
+    hashing_string = json.dumps(request_dict, separators=(',', ':'), sort_keys=True)
+    expected_hash = HashableStringWrapper(hashing_string).make_hash()
+
+    assert request.make_hash() == expected_hash

@@ -10,7 +10,7 @@ def test_create_from_signed_change_request(
     )
     update = NodeDeclarationBlockMessage.make_block_message_update(request)
     assert update.accounts.get(request.signer) == AccountState(
-        account_lock=node_declaration_signed_change_request_message.make_hash(),
+        account_lock=request.make_hash(),
         node=node_declaration_signed_change_request_message.node,
     )
     assert update.schedule is None

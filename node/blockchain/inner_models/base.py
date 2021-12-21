@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import root_validator
 
+from node.blockchain.constants import JSON_CRYPTO_KWARGS
 from node.core.exceptions import NotEnoughNestingError
 from node.core.utils.collections import deep_get, deep_set, deep_update
 
@@ -18,9 +19,7 @@ class BaseModel(PydanticBaseModel):
 
     def json(self, **kwargs):
         # Always serialize in cryptographic friendly manner
-        kwargs['separators'] = (',', ':')
-        kwargs['sort_keys'] = True
-        return super().json(**kwargs)
+        return super().json(**dict(kwargs, **JSON_CRYPTO_KWARGS))
 
     @root_validator(pre=True)
     def enrich(cls, values):
