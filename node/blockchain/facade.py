@@ -8,6 +8,12 @@ from node.core.utils.types import AccountLock, BlockIdentifier, SigningKey
 T = TypeVar('T', bound='BlockchainFacade')
 
 
+def get_block_model():
+    # We need it to resolve circular imports
+    from node.blockchain.models import Block
+    return Block
+
+
 class BlockchainFacade:
 
     _instance = None
@@ -32,18 +38,19 @@ class BlockchainFacade:
     def clear_instance_cache(cls):
         cls._instance = None
 
+    def get_block_count(self):
+        return get_block_model().objects.count()
+
     def get_next_block_number(self) -> int:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        from node.blockchain.models import Block
-        last_block = Block.objects.get_last_block()
+        last_block = get_block_model().objects.get_last_block()
         return last_block._id + 1 if last_block else 0
 
     def get_next_block_identifier(self) -> BlockIdentifier:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        from node.blockchain.models import Block
-        last_block = Block.objects.get_last_block()
+        last_block = get_block_model().objects.get_last_block()
         return last_block.make_hash() if last_block else None  # Genesis block has identifier of `null`
 
     def get_account_lock(self, account_number) -> AccountLock:

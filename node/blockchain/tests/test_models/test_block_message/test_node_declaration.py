@@ -1,14 +1,19 @@
 import json
+import re
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import AccountState, BlockMessage, NodeDeclarationSignedChangeRequest
+from node.blockchain.inner_models import (
+    AccountState, BlockMessage, BlockMessageUpdate, NodeDeclarationBlockMessage, NodeDeclarationSignedChangeRequest
+)
 from node.core.utils.types import Type
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
 def test_create_from_signed_change_request(
     node_declaration_signed_change_request_message, regular_node_key_pair, regular_node
 ):
@@ -60,3 +65,28 @@ def test_node_does_not_serialize_identifier(node_declaration_block_message, regu
     serialized_json = node_declaration_block_message.json()
     serialized = json.loads(serialized_json)
     assert 'identifier' not in serialized['request']['message']['node']
+
+
+def test_block_identifier_is_mandatory(node_declaration_signed_change_request_message, regular_node_key_pair):
+    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message,
+        signing_key=regular_node_key_pair.private,
+    )
+    NodeDeclarationBlockMessage(
+        number=1,
+        identifier='01' * 32,
+        timestamp=datetime.utcnow(),
+        request=request,
+        update=BlockMessageUpdate(),
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        NodeDeclarationBlockMessage(
+            number=1,
+            identifier=None,
+            timestamp=datetime.utcnow(),
+            request=request,
+            update=BlockMessageUpdate(),
+        )
+
+    assert re.search(r'identifier.*none is not an allowed value', str(exc_info.value), flags=re.DOTALL)

@@ -22,12 +22,13 @@ class BlockMessageUpdate(BaseModel):
     schedule: Optional[dict[intstr, AccountNumber]]
 
 
-class BlockMessage(BaseModel, SignableMixin):
+class BlockMessageType(BaseModel):
     type: Type  # noqa: A003
+
+
+class BlockMessage(BlockMessageType, SignableMixin):
     number: int
-    # TODO(dmu) HIGH: Make identifier not optional, so it is properly validated
-    #                 https://thenewboston.atlassian.net/browse/BC-178
-    identifier: Optional[BlockIdentifier]
+    identifier: BlockIdentifier
     timestamp: datetime
     update: BlockMessageUpdate
     request: SignedChangeRequest
@@ -53,6 +54,9 @@ class BlockMessage(BaseModel, SignableMixin):
         class_ = get_block_message_subclass(request.get_type())
 
         number = blockchain_facade.get_next_block_number()
+        if number == 0:
+            raise ValueError(f'Block number 0 must be {Type.GENESIS.name}, got {request.get_type().name}')
+
         identifier = blockchain_facade.get_next_block_identifier()
         update = class_.make_block_message_update(request)
 
@@ -66,13 +70,12 @@ class BlockMessage(BaseModel, SignableMixin):
 
     @classmethod
     def parse_obj(cls, *args, **kwargs):
-        obj = super().parse_obj(*args, **kwargs)
+        if cls is not BlockMessage and issubclass(cls, BlockMessage):
+            return super().parse_obj(*args, **kwargs)
+
+        obj = BlockMessageType.parse_obj(*args, **kwargs)
         type_ = obj.type
         from node.blockchain.inner_models.type_map import get_block_message_subclass
         class_ = get_block_message_subclass(type_)
         assert class_
-
-        if cls == class_:  # avoid recursion
-            return obj
-
         return class_.parse_obj(*args, **kwargs)

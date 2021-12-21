@@ -48,7 +48,7 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     assert message == node_declaration_block_message
 
     # Test account state write-through cache
-    assert DBAccountState.objects.count() == 1
+    assert DBAccountState.objects.count() == 3
     account_state = DBAccountState.objects.get(_id=node_declaration_block_message.request.signer)
     assert account_state.account_lock == node_declaration_block_message.request.make_hash()
     assert account_state.balance == 0
@@ -56,6 +56,7 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request(node_declaration_signed_change_request_message, regular_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
