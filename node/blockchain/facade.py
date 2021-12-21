@@ -44,7 +44,7 @@ class BlockchainFacade:
         #                 https://thenewboston.atlassian.net/browse/BC-175
         from node.blockchain.models import Block
         last_block = Block.objects.get_last_block()
-        return last_block.get_message().make_hash() if last_block else None  # Genesis block has identifier of `null`
+        return last_block.make_hash() if last_block else None  # Genesis block has identifier of `null`
 
     def get_account_lock(self, account_number) -> AccountLock:
         account_state = AccountState.objects.get_or_none(_id=account_number)

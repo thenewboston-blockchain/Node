@@ -22,4 +22,4 @@ def test_account_lock_change_when_block_is_added(
 
     account_lock = blockchain_facade.get_account_lock(regular_node_key_pair.public)
     assert account_lock != regular_node_key_pair.public
-    assert account_lock == node_declaration_signed_change_request_message.make_hash()
+    assert account_lock == request.make_hash()

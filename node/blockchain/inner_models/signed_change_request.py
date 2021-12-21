@@ -4,6 +4,7 @@ from typing import TypeVar, cast
 from pydantic import root_validator
 
 from node.blockchain.facade import BlockchainFacade
+from node.blockchain.mixins.crypto import HashableMixin
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key, is_signature_valid
 from node.core.utils.types import AccountNumber, Signature, SigningKey
@@ -16,7 +17,7 @@ from .signed_change_request_message.node_declaration import NodeDeclarationSigne
 T = TypeVar('T', bound='SignedChangeRequest')
 
 
-class SignedChangeRequest(BaseModel):
+class SignedChangeRequest(BaseModel, HashableMixin):
     signer: AccountNumber
     signature: Signature
     message: SignedChangeRequestMessage
