@@ -35,7 +35,7 @@ services:
     image: node:current
     command: ./run.sh
     environment:
-      TNB_DATABASES: '{"default": {"CLIENT": {"host": "mongo", "password": "${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
     env_file:
       - .env
     depends_on:

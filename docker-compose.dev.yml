@@ -16,6 +16,8 @@ services:
     build:
       context: .
       target: node
+    environment:
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo","password":"root"}}}'
     ports:
       - 127.0.0.1:8000:8555
 
