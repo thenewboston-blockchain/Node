@@ -78,10 +78,9 @@ migrations:
 genesis:
 	poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 
-.PHONY: generate-node-signing-key
-generate-node-signing-key:
-	poetry run python -m node.manage generate_node_signing_key
-
-.PHONY: generate-random-string
-generate-random-string:
-	poetry run python -m node.manage generate_random_string $(LENGTH) $(SPECIAL)
+.PHONY: dot-env
+dot-env:
+	test -f .env || touch .env
+	grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$$(xxd -l 16 -p /dev/urandom)" >> .env
+	grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$$(xxd -c 48 -l 48 -p /dev/urandom)" >> .env
+	grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$$(poetry run python -m node.manage generate_signing_key)" >> .env
