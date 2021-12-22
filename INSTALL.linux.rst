@@ -73,9 +73,7 @@ to get the latest version for development.
 
 #. Configure settings for running dockerized node::
 
-    cp node/config/settings/templates/.env .
-    # Optionally modify:
-    vim .env
+    make dot-env
 
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 
