@@ -7,7 +7,7 @@ from nacl.signing import SigningKey as NaClSigningKey
 from nacl.signing import VerifyKey
 
 from .misc import bytes_to_hex, hex_to_bytes
-from .types import AccountNumber, Hash, Signature, SigningKey
+from .types import AccountNumber, Hash, KeyPair, Signature, SigningKey
 
 
 def generate_signature(signing_key: SigningKey, message: bytes) -> Signature:
@@ -47,3 +47,8 @@ def is_signature_valid(verify_key: AccountNumber, message: bytes, signature: Sig
         return False
 
     return True
+
+
+def generate_key_pair() -> KeyPair:
+    signing_key = NaClSigningKey.generate()
+    return KeyPair(bytes_to_hex(signing_key.verify_key), bytes_to_hex(signing_key))

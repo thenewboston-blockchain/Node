@@ -73,9 +73,10 @@ to get the latest version for development.
 
 #. Configure settings for running dockerized node::
 
-    cp node/config/settings/templates/.env .
-    # Optionally modify:
-    vim .env
+	test -f .env || touch .env
+	grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=`make -s generate-random-string LENGTH=30`" >> .env
+	grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(make -s generate-random-string LENGTH=50 SPECIAL=--special)" >> .env
+    grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(make -s generate-node-signing-key)" >> .env
 
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 

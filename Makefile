@@ -77,3 +77,11 @@ migrations:
 .PHONY: genesis
 genesis:
 	poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+
+.PHONY: generate-node-signing-key
+generate-node-signing-key:
+	poetry run python -m node.manage generate_node_signing_key
+
+.PHONY: generate-random-string
+generate-random-string:
+	poetry run python -m node.manage generate_random_string $(LENGTH) $(SPECIAL)
