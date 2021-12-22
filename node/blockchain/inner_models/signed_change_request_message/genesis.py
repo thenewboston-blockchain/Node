@@ -5,7 +5,7 @@ from typing import TypeVar
 from pydantic import Field
 
 from node.blockchain.inner_models.base import BaseModel
-from node.core.utils.types import AccountLock, AccountNumber, Type
+from node.core.utils.types import AlphaAccountLock, AlphaAccountNumber, Type
 
 from .base import SignedChangeRequestMessage
 
@@ -14,19 +14,19 @@ T = TypeVar('T', bound='GenesisSignedChangeRequestMessage')
 
 class AlphaAccount(BaseModel):
     balance: int
-    balance_lock: AccountLock
+    balance_lock: AlphaAccountLock
 
 
 class GenesisSignedChangeRequestMessage(SignedChangeRequestMessage):
-    accounts: dict[AccountNumber, AlphaAccount]
+    accounts: dict[AlphaAccountNumber, AlphaAccount]
     type: Type = Field(default=Type.GENESIS, const=True)  # noqa: A003
 
     @classmethod
     def create_from_treasury_account(
         cls: TypingType[T],
         *,
-        account_lock: AccountLock,
-        treasury_account_number: AccountNumber,
+        account_lock: AlphaAccountLock,
+        treasury_account_number: AlphaAccountNumber,
         treasury_amount: int = 281474976710656
     ) -> T:
         return cls(
@@ -38,7 +38,7 @@ class GenesisSignedChangeRequestMessage(SignedChangeRequestMessage):
 
     @classmethod
     def create_from_alpha_account_root_file(
-        cls: TypingType[T], *, account_lock: AccountLock, account_root_file: dict[str, Any]
+        cls: TypingType[T], *, account_lock: AlphaAccountLock, account_root_file: dict[str, Any]
     ):
         accounts = {}
         for account_number, account_state in account_root_file.items():
