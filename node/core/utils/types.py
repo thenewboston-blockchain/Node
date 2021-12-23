@@ -11,6 +11,13 @@ class Type(IntEnum):
     NODE_DECLARATION = 1
 
 
+@unique
+class NodeRole(IntEnum):
+    PRIMARY_VALIDATOR = 1
+    CONFIRMATION_VALIDATOR = 2
+    REGULAR_NODE = 3
+
+
 hexstr = constr(regex=r'^[0-9a-f]+$', strict=True)
 hexstr_i = constr(regex=r'^[0-9a-fA-F]+$', strict=True)  # case-insensitive hexstr
 
