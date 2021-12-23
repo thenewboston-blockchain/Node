@@ -27,10 +27,10 @@ class GenesisBlockMessage(BlockMessage):
     ) -> BlockMessageUpdate:
         accounts = {}
         for account_number, alpha_account in request.message.accounts.items():
-            accounts[account_number] = AccountState(
+            accounts[account_number.lower()] = AccountState(
                 # TODO(dmu) MEDIUM: Consider not storing account_lock if it is equal to account_number
                 balance=alpha_account.balance,
-                account_lock=alpha_account.balance_lock
+                account_lock=alpha_account.balance_lock.lower()
             )
 
         primary_validator_node_identifier = primary_validator_node.identifier
