@@ -5,7 +5,7 @@ import pytest
 def account_root_file():
     return {
         '8BF7DF36676ADBC294BA1A78FF9565DD65E2DA73E4D46D5E11C7C3A6C803DFF7': {
-            'balance': 47202,
+            'balance': 34524,
             'balance_lock': '8BF7DF36676ADBC294BA1A78FF9565DD65E2DA73E4D46D5E11C7C3A6C803DFF7'
         },
         '0067a4d2b153f62041a9cca5454aebd06ea1d0827828da889ddaad991d077401': {

@@ -11,19 +11,19 @@ class Type(IntEnum):
     NODE_DECLARATION = 1
 
 
-hexstr_alpha = constr(regex=r'^[0-9a-fA-F]+$', strict=True)
 hexstr = constr(regex=r'^[0-9a-f]+$', strict=True)
+hexstr_i = constr(regex=r'^[0-9a-fA-F]+$', strict=True)  # case-insensitive hexstr
 
 intstr = constr(regex=r'^(?:0|[1-9][0-9]*)$', strict=True)
 positive_int = conint(ge=0, strict=True)
 
 
-class hexstr64_alpha(hexstr_alpha):  # type: ignore
+class hexstr64(hexstr):  # type: ignore
     min_length = 64
     max_length = 64
 
 
-class hexstr64(hexstr):  # type: ignore
+class hexstr64_i(hexstr_i):  # type: ignore
     min_length = 64
     max_length = 64
 
@@ -34,17 +34,12 @@ class hexstr128(hexstr):  # type: ignore
 
 
 @_registered
-class AlphaAccountNumber(hexstr64_alpha):
-    pass
-
-
-@_registered
 class AccountNumber(hexstr64):
     pass
 
 
 @_registered
-class AlphaHash(hexstr64_alpha):
+class AlphaAccountNumber(hexstr64_i, AccountNumber):
     pass
 
 
@@ -54,12 +49,12 @@ class Hash(hexstr64):
 
 
 @_registered
-class AlphaAccountLock(AlphaHash):
+class AccountLock(Hash):
     pass
 
 
 @_registered
-class AccountLock(Hash):
+class AlphaAccountLock(hexstr64_i, AccountLock):
     pass
 
 
