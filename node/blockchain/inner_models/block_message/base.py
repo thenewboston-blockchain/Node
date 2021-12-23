@@ -7,7 +7,6 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
 from node.blockchain.mixins.crypto import SignableMixin
-from node.core.exceptions import ValidationError
 from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
 
 from ..account_state import AccountState
@@ -46,7 +45,7 @@ class BlockMessage(BlockMessageType, SignableMixin):
     ) -> T:
         now = datetime.utcnow()
         if isinstance(request, GenesisSignedChangeRequest):
-            raise ValidationError(
+            raise TypeError(
                 'GenesisSignedChangeRequest is special since it does not contain all required information '
                 'to construct a block message. Use GenesisBlockMessage.create_from_signed_change_request()'
             )

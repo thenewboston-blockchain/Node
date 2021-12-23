@@ -4,6 +4,8 @@ from typing import NamedTuple
 from pydantic import conint, constr
 from pydantic.types import _registered
 
+# TODO(dmu) MEDIUM: Move business logic related types to `node.blockchain.types`
+
 
 @unique
 class Type(IntEnum):

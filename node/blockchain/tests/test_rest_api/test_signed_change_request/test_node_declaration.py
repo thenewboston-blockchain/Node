@@ -64,13 +64,7 @@ def test_restrict_genesis_signed_change_request(
     payload = signed_change_request.dict()
     response = api_client.post('/api/signed-change-request/', payload)
     assert response.status_code == 400
-    assert response.json() == {
-        'non_field_errors': [
-            'GenesisSignedChangeRequest is special since it does not contain all required '
-            'information to construct a block message. '
-            'Use GenesisBlockMessage.create_from_signed_change_request()'
-        ]
-    }
+    assert response.json() == {'message.type': ['Invalid value.']}
 
 
 @pytest.mark.django_db
