@@ -15,7 +15,6 @@ class SignedChangeRequestSerializer(serializers.Serializer, ValidateUnknownField
     message = PydanticModelBackedJSONField()
 
     def validate(self, attrs):
-        # TODO(dmu) MEDIUM: Test that attrs always have `message` attribute
         message = attrs['message']
         type_ = message.get('type')
         if type_ not in API_SUPPORTED_TYPES:
