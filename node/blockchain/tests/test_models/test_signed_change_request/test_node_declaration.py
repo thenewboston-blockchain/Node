@@ -147,9 +147,7 @@ def test_type_validation_for_node_declaration_message_on_parsing(
         # type_
         (9, '0' * 64, '0' * 128, None, r'type.*none is not an allowed value'),
         (10, '0' * 64, '0' * 128, '', r'type.*value is not a valid integer'),
-        # TODO(dmu) HIGH: Make enum strict, so coerce strings are not allowed
-        #                 https://thenewboston.atlassian.net/browse/BC-162
-        # (11, '0' * 64, '0' * 128, '1', r'type.*value is not a valid integer'),
+        (11, '0' * 64, '0' * 128, '1', r'type.*value is not a valid integer'),
         (12, '0' * 64, '0' * 128, 0, r'GenesisSignedChangeRequest.*field required'),
         (13, '0' * 64, '0' * 128, 1000, r'type.*value is not a valid enumeration member'),
         (14, '0' * 64, '0' * 128, -1, r'type.*value is not a valid enumeration member'),
