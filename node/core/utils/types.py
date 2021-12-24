@@ -4,11 +4,20 @@ from typing import NamedTuple
 from pydantic import conint, constr
 from pydantic.types import _registered
 
+# TODO(dmu) MEDIUM: Move business logic related types to `node.blockchain.types`
+
 
 @unique
 class Type(IntEnum):
     GENESIS = 0
     NODE_DECLARATION = 1
+
+
+@unique
+class NodeRole(IntEnum):
+    PRIMARY_VALIDATOR = 1
+    CONFIRMATION_VALIDATOR = 2
+    REGULAR_NODE = 3
 
 
 hexstr = constr(regex=r'^[0-9a-f]+$', strict=True)

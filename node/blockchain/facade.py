@@ -3,7 +3,7 @@ from typing import Type, TypeVar
 from node.blockchain.models import AccountState
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.misc import set_if_not_none
-from node.core.utils.types import AccountLock, BlockIdentifier, SigningKey
+from node.core.utils.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
 
 T = TypeVar('T', bound='BlockchainFacade')
 
@@ -98,3 +98,8 @@ class BlockchainFacade:
         schedule = block_message_update.schedule
         if schedule:
             self.update_write_through_cache_schedule(schedule)
+
+    def get_node_role(self):
+        # TODO CRITICAL: Implement method to determine which role has Node.
+        #                https://thenewboston.atlassian.net/browse/BC-191
+        return NodeRole.PRIMARY_VALIDATOR
