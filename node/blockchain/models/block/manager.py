@@ -4,6 +4,7 @@ from django.db import transaction
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, SignedChangeRequest
+from node.blockchain.utils.lock import lock
 from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
 
@@ -12,10 +13,12 @@ from ...types import SigningKey
 if TYPE_CHECKING:
     from .model import Block
 
+BLOCK_LOCK = 'block'
+
 
 class BlockManager(CustomManager):
-    # TODO(dmu) CRITICAL: Lock blockchain for the period of validation and adding blocks
-    #                     https://thenewboston.atlassian.net/browse/BC-158
+
+    @lock(BLOCK_LOCK)
     def add_block_from_signed_change_request(
         self,
         signed_change_request: SignedChangeRequest,
@@ -30,9 +33,10 @@ class BlockManager(CustomManager):
         block_message = BlockMessage.create_from_signed_change_request(signed_change_request, blockchain_facade)
         # no need to validate the block message since we produced a valid one
         return self.add_block_from_block_message(
-            block_message, blockchain_facade, signing_key=signing_key, validate=False
+            block_message, blockchain_facade, signing_key=signing_key, validate=False, expect_locked=True
         )
 
+    @lock(BLOCK_LOCK)
     def add_block_from_block_message(
         self,
         message: BlockMessage,
@@ -49,8 +53,7 @@ class BlockManager(CustomManager):
         signing_key = signing_key or get_signing_key()
         binary_data, signature = message.make_binary_data_and_signature(signing_key)
 
-        from .model import Block
-        block = Block(
+        block = self.model(
             _id=message.number,
             signer=derive_public_key(signing_key),
             signature=signature,
@@ -64,8 +67,10 @@ class BlockManager(CustomManager):
             # We update write through cache here (not in add_block()), because otherwise we would need to
             # deserialize the block (again) to read the message
             blockchain_facade.update_write_through_cache(message)
-            return self.add_block(block, validate=False)  # no need to validate the block since we produced a valid one
+            # No need to validate the block since we produced a valid one
+            return self.add_block(block, validate=False, expect_locked=True)
 
+    @lock(BLOCK_LOCK)
     def add_block(self, block, *, validate=True) -> 'Block':
         if validate:
             # TODO(dmu) CRITICAL: Validate block
