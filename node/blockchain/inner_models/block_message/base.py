@@ -7,8 +7,9 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
 from node.blockchain.mixins.crypto import SignableMixin
-from node.core.utils.types import AccountNumber, BlockIdentifier, Type, intstr
+from node.core.utils.types import intstr
 
+from ...types import AccountNumber, BlockIdentifier, Type
 from ..account_state import AccountState
 
 T = TypeVar('T', bound='BlockMessage')

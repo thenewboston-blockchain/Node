@@ -7,9 +7,9 @@ from node.blockchain.inner_models import (
 )
 from node.blockchain.models import AccountState as DBAccountState
 from node.blockchain.models.block import Block
+from node.blockchain.types import AccountLock, AccountNumber, Signature, Type
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import get_node_identifier, is_signature_valid
-from node.core.utils.types import AccountLock, AccountNumber, Signature, Type
 
 
 @pytest.mark.django_db

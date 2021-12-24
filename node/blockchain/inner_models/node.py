@@ -1,7 +1,8 @@
 from pydantic import AnyUrl
 
-from node.core.utils.types import AccountNumber, positive_int
+from node.core.utils.types import positive_int
 
+from ..types import AccountNumber
 from .base import BaseModel
 
 

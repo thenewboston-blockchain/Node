@@ -1,7 +1,7 @@
 import logging
 
+from node.blockchain.types import Hash, SigningKey
 from node.core.utils.cryptography import generate_signature, hash_binary_data
-from node.core.utils.types import Hash, SigningKey
 
 logger = logging.getLogger(__name__)
 

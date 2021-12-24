@@ -1,7 +1,6 @@
 from pydantic import Field
 
-from node.core.utils.types import Type
-
+from ...types import Type
 from ..node import Node
 from .base import SignedChangeRequestMessage
 

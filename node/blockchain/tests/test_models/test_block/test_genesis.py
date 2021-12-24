@@ -5,8 +5,8 @@ from node.blockchain.inner_models import (
     BlockMessage, GenesisBlockMessage, GenesisSignedChangeRequestMessage, SignedChangeRequest
 )
 from node.blockchain.models import AccountState, Block, Schedule
+from node.blockchain.types import AccountLock, Signature, Type
 from node.core.utils.cryptography import is_signature_valid
-from node.core.utils.types import AccountLock, Signature, Type
 
 
 @pytest.mark.django_db

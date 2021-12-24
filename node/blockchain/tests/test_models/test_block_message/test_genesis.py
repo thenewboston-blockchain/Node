@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, GenesisSignedChangeRequest
-from node.core.utils.types import Type
+from node.blockchain.types import Type
 
 
 def test_create_from_signed_change_request(

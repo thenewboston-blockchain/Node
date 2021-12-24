@@ -1,6 +1,6 @@
 import pytest
 
-from node.core.utils.types import AccountNumber, KeyPair, SigningKey
+from node.blockchain.types import AccountNumber, KeyPair, SigningKey
 
 
 @pytest.fixture

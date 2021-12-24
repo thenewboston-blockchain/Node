@@ -6,7 +6,8 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, SignedChangeRequest
 from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
-from node.core.utils.types import SigningKey
+
+from ...types import SigningKey
 
 if TYPE_CHECKING:
     from .model import Block

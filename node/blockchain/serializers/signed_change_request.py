@@ -2,9 +2,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from node.blockchain.inner_models.signed_change_request import SignedChangeRequest
+from node.blockchain.types import Type
 from node.core.fields import PydanticModelBackedJSONField
 from node.core.serializers import ValidateUnknownFieldsMixin
-from node.core.utils.types import Type
 
 API_SUPPORTED_TYPES = {item for item in Type if item != Type.GENESIS}
 

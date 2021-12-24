@@ -6,10 +6,10 @@ from node.blockchain.inner_models import (
     GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage
 )
 from node.blockchain.models.block import Block
+from node.blockchain.types import AccountLock
 from node.core.management import CustomCommand
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.network import make_own_node, read_source
-from node.core.utils.types import AccountLock
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,8 @@ from pydantic import Field
 
 from node.blockchain.inner_models import AccountState
 from node.blockchain.inner_models.signed_change_request import NodeDeclarationSignedChangeRequest
-from node.core.utils.types import Type
 
+from ...types import Type
 from .base import BlockMessage, BlockMessageUpdate
 
 
