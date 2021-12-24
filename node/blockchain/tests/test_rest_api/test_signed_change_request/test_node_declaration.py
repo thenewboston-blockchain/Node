@@ -64,7 +64,7 @@ def test_restrict_genesis_signed_change_request(
     payload = signed_change_request.dict()
     response = api_client.post('/api/signed-change-request/', payload)
     assert response.status_code == 400
-    assert response.json() == {'message.type': ['Invalid value.']}
+    assert response.json() == {'message.type': [{'code': 'invalid', 'message': 'Invalid value.'}]}
 
 
 @pytest.mark.django_db
@@ -91,10 +91,9 @@ def test_type_validation_for_node_declaration(
     }
     response = api_client.post('/api/signed-change-request/', payload)
     assert response.status_code == 400
-    assert response.json() == expected_response_body or response.json() == dict(
-        expected_response_body,
-        non_field_errors=['Invalid signature'],
-    )
+    response_json = response.json()
+    response_json.pop('non_field_errors', None)
+    assert response_json == expected_response_body
 
 
 @pytest.mark.django_db
@@ -115,7 +114,7 @@ def test_node_declaration_signed_change_request_with_invalid_account_lock(
 
     response = api_client.post('/api/signed-change-request/', payload)
     assert response.status_code == 400
-    assert response.json() == {'non_field_errors': ['Invalid account lock']}
+    assert response.json() == {'non_field_errors': [{'code': 'invalid', 'message': 'Invalid account lock'}]}
 
 
 @pytest.mark.django_db
@@ -140,7 +139,7 @@ def test_signature_validation_for_node_declaration(
     payload = deep_update(signed_change_request.dict(), update_with)
     response = api_client.post('/api/signed-change-request/', payload)
     assert response.status_code == 400
-    assert response.json() == {'non_field_errors': ['Invalid signature']}
+    assert response.json() == {'non_field_errors': [{'code': 'invalid', 'message': 'Invalid signature'}]}
 
 
 @pytest.mark.skip('Not Implemented yet')

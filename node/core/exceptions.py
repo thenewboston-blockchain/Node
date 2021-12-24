@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from pydantic import ValidationError as PydanticValidationError
+from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import get_error_detail
 from rest_framework.views import exception_handler
@@ -26,6 +27,11 @@ def custom_exception_handler(exc, context):
         exc = convert_pydantic_validation_error(exc)
     elif isinstance(exc, DjangoValidationError):
         exc = convert_django_validation_error(exc)
+
+    if isinstance(exc, APIException):
+        # Adding machine readable error code.
+        # Original implementation copied from https://stackoverflow.com/a/50301325/1952977
+        exc.detail = exc.get_full_details()
 
     return exception_handler(exc, context)
 
