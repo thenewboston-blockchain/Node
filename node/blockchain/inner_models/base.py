@@ -1,10 +1,7 @@
-from enum import IntEnum
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import root_validator
-from pydantic.class_validators import prep_validators
-from pydantic.validators import enum_member_validator, strict_int_validator
 
 from node.blockchain.constants import JSON_CRYPTO_KWARGS
 from node.core.exceptions import NotEnoughNestingError
@@ -41,22 +38,8 @@ class BaseModel(PydanticBaseModel):
 
         return values
 
-    def __init__(self, **data: Any) -> None:
-        if getattr(self.__config__, 'strict', False):
-            self._transform_validators(data)
-        super().__init__(**data)
-
     class Config:
         exclude: Optional[dict] = None
         exclude_crypto: Optional[dict] = None
         enrich: Optional[dict] = None
         allow_mutation = False
-        strict = True
-
-    def _transform_validators(self, data):
-        for k, v in data.items():
-            if isinstance(v, dict) or k not in self.__fields__:
-                continue
-            field = self.__fields__.get(k)
-            if issubclass(field.type_, IntEnum):
-                field.validators = prep_validators([strict_int_validator, enum_member_validator])
