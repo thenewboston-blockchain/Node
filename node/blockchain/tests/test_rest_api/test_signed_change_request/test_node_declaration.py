@@ -27,7 +27,7 @@ def test_node_declaration_signed_change_request(api_client, regular_node, regula
     assert signed_change_request.signature
 
     payload = signed_change_request.dict()
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 201
     assert response.json() == {
         'message': {
@@ -62,7 +62,7 @@ def test_restrict_genesis_signed_change_request(
     )
 
     payload = signed_change_request.dict()
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 400
     assert response.json() == {'message.type': [{'code': 'invalid', 'message': 'Invalid value.'}]}
 
@@ -89,7 +89,7 @@ def test_type_validation_for_node_declaration(
                 } if node is CREATE else node)
         }
     }
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 400
     response_json = response.json()
     response_json.pop('non_field_errors', None)
@@ -103,7 +103,7 @@ def test_type_validation_for_node_declaration_no_message(api_client):
         'signer': '0' * 64,
         'signature': '0' * 128,
     }
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 400
     assert response.json() == {'message': [{'code': 'required', 'message': 'This field is required.'}]}
 
@@ -124,7 +124,7 @@ def test_node_declaration_signed_change_request_with_invalid_account_lock(
 
     payload = signed_change_request.dict()
 
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 400
     assert response.json() == {'non_field_errors': [{'code': 'invalid', 'message': 'Invalid account lock'}]}
 
@@ -149,7 +149,7 @@ def test_signature_validation_for_node_declaration(
         signing_key=primary_validator_key_pair.private,
     )
     payload = deep_update(signed_change_request.dict(), update_with)
-    response = api_client.post('/api/signed-change-request/', payload)
+    response = api_client.post('/api/signed-change-requests/', payload)
     assert response.status_code == 400
     assert response.json() == {'non_field_errors': [{'code': 'invalid', 'message': 'Invalid signature'}]}
 
