@@ -97,6 +97,18 @@ def test_type_validation_for_node_declaration(
 
 
 @pytest.mark.django_db
+def test_type_validation_for_node_declaration_no_message(api_client):
+    # TODO(dmu) MEDIUM: Rename and extend test (parametrize) to test absence of `signer` and `signature`
+    payload = {
+        'signer': '0' * 64,
+        'signature': '0' * 128,
+    }
+    response = api_client.post('/api/signed-change-request/', payload)
+    assert response.status_code == 400
+    assert response.json() == {'message': [{'code': 'required', 'message': 'This field is required.'}]}
+
+
+@pytest.mark.django_db
 def test_node_declaration_signed_change_request_with_invalid_account_lock(
     api_client, primary_validator_node, primary_validator_key_pair
 ):
