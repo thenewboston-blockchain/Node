@@ -1,24 +1,13 @@
 import pytest
-from django.db import transaction
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import NodeDeclarationSignedChangeRequest
+from node.blockchain.inner_models import BlockMessage, NodeDeclarationSignedChangeRequest
 from node.blockchain.models import Block, Lock
-from node.blockchain.utils import TableLocker
-from node.core.exceptions import BlockchainLockedError
+from node.core.exceptions import BlockchainLockingError
 
 
-@pytest.mark.django_db
-def test_lock_table():
-    with TableLocker('db_table'):
-        assert Lock.objects.count() == 1
-        table_lock = Lock.objects.first()
-        assert table_lock.name == 'db_table'
-    assert Lock.objects.count() == 0
-
-
-@pytest.mark.django_db
-def test_raise_error_when_table_was_locked_and_expect_locked_is_false(
+@pytest.mark.usefixtures('base_blockchain')
+def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
     node_declaration_signed_change_request_message, regular_node_key_pair
 ):
     blockchain_facade = BlockchainFacade.get_instance()
@@ -27,24 +16,17 @@ def test_raise_error_when_table_was_locked_and_expect_locked_is_false(
         message=node_declaration_signed_change_request_message, signing_key=regular_node_key_pair.private
     )
 
-    TableLocker('block').__enter__()
-    with pytest.raises(BlockchainLockedError):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade, expect_locked=False)
+    lock = Lock.objects.create(_id='block')
+    with pytest.raises(BlockchainLockingError):
+        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
-
-@pytest.mark.django_db
-def test_add_block_when_expect_locked_is_false(node_declaration_signed_change_request_message, regular_node_key_pair):
-    blockchain_facade = BlockchainFacade.get_instance()
-
-    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
-        message=node_declaration_signed_change_request_message, signing_key=regular_node_key_pair.private
-    )
+    lock.delete()
 
     Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
 
-@pytest.mark.django_db
-def test_raise_error_when_expect_locked_is_true_on_unlocked_table(
+@pytest.mark.usefixtures('base_blockchain')
+def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
     node_declaration_signed_change_request_message, regular_node_key_pair
 ):
     blockchain_facade = BlockchainFacade.get_instance()
@@ -52,28 +34,42 @@ def test_raise_error_when_expect_locked_is_true_on_unlocked_table(
     request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
         message=node_declaration_signed_change_request_message, signing_key=regular_node_key_pair.private
     )
+    block_message = BlockMessage.create_from_signed_change_request(request, blockchain_facade)
 
-    with pytest.raises(BlockchainLockedError):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade, expect_locked=True)
+    lock = Lock.objects.create(_id='block')
+    with pytest.raises(BlockchainLockingError):
+        Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
+
+    lock.delete()
+
+    Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
 
 
-# TODO(dmu) CRITICAL: Ensure that `with transaction.atomic()` results into transaction or
-#                     save point on MongoDB side
-#                     https://thenewboston.atlassian.net/browse/BC-174
-@pytest.mark.skip('Need to fix or implement transaction.atomic()')
-@pytest.mark.django_db
-def test_block_should_not_be_created_if_lock_object_was_deleted():
-    table_locker = TableLocker('block')
-    table_locker.__enter__()
+@pytest.mark.usefixtures('base_blockchain')
+def test_cannot_add_block_if_blockchain_is_locked(
+    node_declaration_signed_change_request_message, regular_node_key_pair, primary_validator_key_pair
+):
+    blockchain_facade = BlockchainFacade.get_instance()
 
-    Lock.objects.all().delete()
+    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
+        message=node_declaration_signed_change_request_message, signing_key=regular_node_key_pair.private
+    )
+    block_message = BlockMessage.create_from_signed_change_request(request, blockchain_facade)
+    signing_key = primary_validator_key_pair.private
+    binary_data, signature = block_message.make_binary_data_and_signature(signing_key)
 
-    with pytest.raises(BlockchainLockedError):
-        with transaction.atomic():
-            block = Block(_id=0, signer='0' * 64, signature='0' * 128)
-            Block.objects.add_block(block, validate=False, expect_locked=False)
-            assert Block.objects.count() == 1
+    block = Block(
+        _id=block_message.number,
+        signer=primary_validator_key_pair.public,
+        signature=signature,
+        message=binary_data.decode('utf-8'),
+    )
+    blockchain_facade.update_write_through_cache(block_message)
 
-            table_locker.__exit__(None, None, None)
+    lock = Lock.objects.create(_id='block')
+    with pytest.raises(BlockchainLockingError):
+        Block.objects.add_block(block, validate=False)
 
-    assert Block.objects.count() == 0
+    lock.delete()
+
+    Block.objects.add_block(block, validate=False)

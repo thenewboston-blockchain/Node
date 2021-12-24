@@ -77,7 +77,7 @@ DATABASES = {
             #                     https://thenewboston.atlassian.net/browse/BC-144
             'password': 'root',
         },
-        'ATOMIC_REQUESTS': True,
+        # We do not set `'ATOMIC_REQUESTS': True` because Djongo does not support transactions
     }
 }
 

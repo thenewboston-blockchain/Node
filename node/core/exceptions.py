@@ -44,5 +44,17 @@ class NotEnoughNestingError(ValueError):
     pass
 
 
-class BlockchainLockedError(Exception):
+class BlockchainError(Exception):
+    pass
+
+
+class BlockchainLockingError(BlockchainError):
+    pass
+
+
+class BlockchainIsNotLockedError(BlockchainError):
+    pass
+
+
+class BlockchainUnlockingError(BlockchainError):
     pass

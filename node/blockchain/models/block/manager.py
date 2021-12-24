@@ -4,7 +4,7 @@ from django.db import transaction
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, SignedChangeRequest
-from node.blockchain.utils import ensure_locked
+from node.blockchain.utils.lock import lock
 from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
 
@@ -13,13 +13,12 @@ from ...types import SigningKey
 if TYPE_CHECKING:
     from .model import Block
 
-BLOCK_LOCK_NAME = 'block'
+BLOCK_LOCK = 'block'
 
 
 class BlockManager(CustomManager):
 
-    @transaction.atomic
-    @ensure_locked(BLOCK_LOCK_NAME)
+    @lock(BLOCK_LOCK)
     def add_block_from_signed_change_request(
         self,
         signed_change_request: SignedChangeRequest,
@@ -37,7 +36,7 @@ class BlockManager(CustomManager):
             block_message, blockchain_facade, signing_key=signing_key, validate=False, expect_locked=True
         )
 
-    @ensure_locked(BLOCK_LOCK_NAME)
+    @lock(BLOCK_LOCK)
     def add_block_from_block_message(
         self,
         message: BlockMessage,
@@ -71,7 +70,7 @@ class BlockManager(CustomManager):
             # No need to validate the block since we produced a valid one
             return self.add_block(block, validate=False, expect_locked=True)
 
-    @ensure_locked(BLOCK_LOCK_NAME)
+    @lock(BLOCK_LOCK)
     def add_block(self, block, *, validate=True) -> 'Block':
         if validate:
             # TODO(dmu) CRITICAL: Validate block
