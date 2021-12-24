@@ -6,7 +6,7 @@ from pydantic.error_wrappers import ValidationError
 
 from node.blockchain.inner_models import Node, NodeDeclarationSignedChangeRequestMessage
 from node.blockchain.mixins.crypto import SignableStringWrapper
-from node.core.utils.types import Type
+from node.blockchain.types import Type
 
 from ..base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 

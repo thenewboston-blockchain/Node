@@ -6,8 +6,8 @@ from node.blockchain.inner_models import (
 from node.blockchain.tests.test_models.base import (
     CREATE, VALID, node_declaration_message_type_api_validation_parametrizer
 )
+from node.blockchain.types import AccountLock
 from node.core.utils.collections import deep_update
-from node.core.utils.types import AccountLock
 
 
 @pytest.mark.django_db

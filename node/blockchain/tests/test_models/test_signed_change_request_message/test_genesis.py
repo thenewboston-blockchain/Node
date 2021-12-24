@@ -1,6 +1,6 @@
 from node.blockchain.inner_models import GenesisSignedChangeRequestMessage
 from node.blockchain.inner_models.signed_change_request_message.genesis import AlphaAccount
-from node.core.utils.types import AccountLock, Type
+from node.blockchain.types import AccountLock, Type
 
 
 def test_create_from_treasury_account(primary_validator_key_pair, treasury_account_key_pair, treasury_amount):

@@ -1,9 +1,9 @@
 from typing import Type, TypeVar
 
 from node.blockchain.models import AccountState
+from node.blockchain.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.misc import set_if_not_none
-from node.core.utils.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
 
 T = TypeVar('T', bound='BlockchainFacade')
 

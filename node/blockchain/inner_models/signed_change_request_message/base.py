@@ -1,6 +1,6 @@
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.mixins.crypto import SignableMixin
-from node.core.utils.types import AccountLock, Type
+from node.blockchain.types import AccountLock, Type
 
 
 class SignedChangeRequestMessage(BaseModel, SignableMixin):

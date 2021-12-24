@@ -9,7 +9,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     AccountState, BlockMessage, BlockMessageUpdate, NodeDeclarationBlockMessage, NodeDeclarationSignedChangeRequest
 )
-from node.core.utils.types import Type
+from node.blockchain.types import Type
 
 
 @pytest.mark.django_db

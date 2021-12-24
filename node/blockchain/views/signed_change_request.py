@@ -4,8 +4,8 @@ from rest_framework.viewsets import GenericViewSet
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.models import Block
 from node.blockchain.serializers.signed_change_request import SignedChangeRequestSerializer
+from node.blockchain.types import NodeRole
 from node.core.utils.cryptography import get_signing_key
-from node.core.utils.types import NodeRole
 
 
 class SignedChangeRequestViewSet(CreateModelMixin, GenericViewSet):

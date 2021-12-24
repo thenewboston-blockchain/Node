@@ -7,8 +7,8 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.mixins.crypto import HashableMixin
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key, is_signature_valid
-from node.core.utils.types import AccountNumber, Signature, SigningKey
 
+from ..types import AccountNumber, Signature, SigningKey
 from .base import BaseModel
 from .signed_change_request_message.base import SignedChangeRequestMessage
 from .signed_change_request_message.genesis import GenesisSignedChangeRequestMessage

@@ -5,8 +5,8 @@ from typing import TypeVar
 from pydantic import Field
 
 from node.blockchain.inner_models.base import BaseModel
-from node.core.utils.types import AlphaAccountLock, AlphaAccountNumber, Type
 
+from ...types import AlphaAccountLock, AlphaAccountNumber, Type
 from .base import SignedChangeRequestMessage
 
 T = TypeVar('T', bound='GenesisSignedChangeRequestMessage')

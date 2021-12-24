@@ -8,8 +8,8 @@ from pydantic import Field
 from node.blockchain.inner_models.account_state import AccountState
 from node.blockchain.inner_models.node import Node
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest
-from node.core.utils.types import BlockIdentifier, Type
 
+from ...types import BlockIdentifier, Type
 from .base import BlockMessage, BlockMessageUpdate
 
 GenesisBlockMessageT = TypeVar('GenesisBlockMessageT', bound='GenesisBlockMessage')
