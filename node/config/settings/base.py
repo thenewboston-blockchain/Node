@@ -67,7 +67,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
+        'ENGINE': 'node.core.custom_djongo',
         'NAME': 'node',
         'CLIENT': {
             'host': '127.0.0.1',

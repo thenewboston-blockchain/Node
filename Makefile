@@ -1,5 +1,5 @@
 .PHONY: build
-build: build-node build-reverse-proxy ;
+build: build-node build-reverse-proxy build-node-mongo;
 
 .PHONY: build-node
 build-node:
@@ -9,9 +9,13 @@ build-node:
 build-reverse-proxy:
 	docker build . --target=reverse-proxy -t node-reverse-proxy:current
 
+.PHONY: build-node-mongo
+build-node-mongo:
+	docker build . --target=node-mongo -t node-mongo:current
+
 .PHONY: up-dependencies-only
-up-dependencies-only:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate mongo mongo-express
+up-dependencies-only: build-node-mongo
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate --build mongo mongo-express
 
 .PHONY: up
 # TODO(dmu) HIGH: No longer depend on `build` once images are taken from docker registry
