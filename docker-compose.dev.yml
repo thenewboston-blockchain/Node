@@ -3,6 +3,10 @@ version: '3.9'
 services:
   mongo:
     restart: 'no'
+    image: node-mongo:current
+    build:
+      context: .
+      target: node-mongo
     environment:
       MONGO_INITDB_ROOT_PASSWORD: root
 

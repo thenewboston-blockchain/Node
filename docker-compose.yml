@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   mongo:
-    image: mongo:5.0.3-focal
+    image: node-mongo:current
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root

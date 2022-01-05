@@ -25,7 +25,7 @@ RUN poetry install
 
 COPY ["LICENSE", "README.rst", "./"]
 COPY node node
-RUN poetry install  # this installs the source code itself, since depenencies are installed before
+RUN poetry install  # this installs just the source code itself, since dependencies are installed before
 
 COPY scripts/dockerized-node-run.sh ./run.sh
 RUN chmod a+x run.sh
@@ -34,3 +34,28 @@ FROM nginx:1.20.2-alpine AS reverse-proxy
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY ./node/config/settings/templates/nginx.conf /etc/nginx/conf.d/node.conf
+
+FROM mongo:5.0.5-focal AS node-mongo
+# Make MongoDB a replica set to support transactions. Based on https://stackoverflow.com/a/68621185/1952977
+RUN apt-get update && apt-get install patch
+RUN echo '12f900454e89facfb4c297f83c57b065  /usr/local/bin/docker-entrypoint.sh' > /tmp/docker-entrypoint.sh.md5 && \
+    md5sum -c /tmp/docker-entrypoint.sh.md5 || \
+    echo 'Looks like /usr/local/bin/docker-entrypoint.sh has been modified since scripts/docker-entrypoint.sh.patch was create. Please, validate and recalculate the checksum'
+
+# How to create scripts/docker-entrypoint.sh.patch
+# 1. Download the original file:
+#    wget https://github.com/docker-library/mongo/raw/master/5.0/docker-entrypoint.sh
+#    ( wget https://github.com/docker-library/mongo/raw/b5c0cd58cb5626fee4d963ce05ba4d9026deb265/5.0/docker-entrypoint.sh )
+# 2. Make a copy of it:
+#    cp docker-entrypoint.sh docker-entrypoint-patched.sh
+# 3. Add required modifications to docker-entrypoint-patched.sh
+# 4. Create patch:
+#    diff -u docker-entrypoint.sh docker-entrypoint-patched.sh > scripts/docker-entrypoint.sh.patch
+# 5. Clean up:
+#    rm docker-entrypoint.sh docker-entrypoint-patched.sh
+COPY scripts/docker-entrypoint.sh.patch .
+RUN patch /usr/local/bin/docker-entrypoint.sh docker-entrypoint.sh.patch
+
+# We need to create /etc/mongodb.key here to set proper permissions
+RUN touch /etc/mongodb.key && chown mongodb:mongodb /etc/mongodb.key && chmod u+rw /etc/mongodb.key
+CMD ["--replSet", "rs", "--keyFile", "/etc/mongodb.key"]
