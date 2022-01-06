@@ -2,6 +2,8 @@ import pytest
 from django.db import transaction
 
 from node.blockchain.models.account_state import AccountState
+from node.core.database import ensure_in_transaction
+from node.core.exceptions import TransactionError
 
 
 @pytest.mark.django_db
@@ -50,3 +52,13 @@ def test_commit():
     db_account_state = AccountState.objects.first()
     assert db_account_state
     assert db_account_state._id == account_state._id
+
+
+def test_ensure_in_transaction():
+
+    @ensure_in_transaction
+    def test_me():
+        pass
+
+    with pytest.raises(TransactionError, match='Expected to have an active transaction'):
+        test_me()

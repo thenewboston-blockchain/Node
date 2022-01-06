@@ -55,7 +55,6 @@ RUN echo '12f900454e89facfb4c297f83c57b065  /usr/local/bin/docker-entrypoint.sh'
 #    rm docker-entrypoint.sh docker-entrypoint-patched.sh
 COPY scripts/docker-entrypoint.sh.patch .
 RUN patch /usr/local/bin/docker-entrypoint.sh docker-entrypoint.sh.patch
-# We need to create /etc/mongodb.key here to set proper permissions
 RUN mkdir -p /etc/mongo-key && chown mongodb:mongodb /etc/mongo-key
 
 CMD ["--replSet", "rs", "--keyFile", "/etc/mongo-key/mongodb.key"]

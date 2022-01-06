@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING, Optional  # noqa: I101
 
-from django.db import transaction
-
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, SignedChangeRequest
 from node.blockchain.utils.lock import lock
+from node.core.database import ensure_in_transaction
 from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
 
@@ -19,6 +18,7 @@ BLOCK_LOCK = 'block'
 class BlockManager(CustomManager):
 
     @lock(BLOCK_LOCK)
+    @ensure_in_transaction
     def add_block_from_signed_change_request(
         self,
         signed_change_request: SignedChangeRequest,
@@ -37,6 +37,7 @@ class BlockManager(CustomManager):
         )
 
     @lock(BLOCK_LOCK)
+    @ensure_in_transaction
     def add_block_from_block_message(
         self,
         message: BlockMessage,
@@ -60,17 +61,15 @@ class BlockManager(CustomManager):
             # TODO(dmu) MEDIUM: We have to decode because of `message = models.TextField()`. Reconsider
             message=binary_data.decode('utf-8'),
         )
-        with transaction.atomic():
-            # TODO(dmu) CRITICAL: Ensure that `with transaction.atomic()` results into transaction or
-            #                     save point on MongoDB side
-            #                     https://thenewboston.atlassian.net/browse/BC-174
-            # We update write through cache here (not in add_block()), because otherwise we would need to
-            # deserialize the block (again) to read the message
-            blockchain_facade.update_write_through_cache(message)
-            # No need to validate the block since we produced a valid one
-            return self.add_block(block, validate=False, expect_locked=True)
+
+        # We update write through cache here (not in add_block()), because otherwise we would need to
+        # deserialize the block (again) to read the message
+        blockchain_facade.update_write_through_cache(message)
+        # No need to validate the block since we produced a valid one
+        return self.add_block(block, validate=False, expect_locked=True)
 
     @lock(BLOCK_LOCK)
+    @ensure_in_transaction
     def add_block(self, block, *, validate=True) -> 'Block':
         if validate:
             # TODO(dmu) CRITICAL: Validate block
