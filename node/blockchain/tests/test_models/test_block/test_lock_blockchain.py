@@ -2,7 +2,8 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockMessage, NodeDeclarationSignedChangeRequest
-from node.blockchain.models import Block, Lock
+from node.blockchain.models import Block
+from node.blockchain.utils.lock import create_lock, delete_lock
 from node.core.exceptions import BlockchainLockingError
 
 
@@ -16,11 +17,11 @@ def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
         message=node_declaration_signed_change_request_message, signing_key=regular_node_key_pair.private
     )
 
-    lock = Lock.objects.create(_id='block')
+    create_lock('block')
     with pytest.raises(BlockchainLockingError):
         Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
-    lock.delete()
+    delete_lock('block')
 
     Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
@@ -36,11 +37,11 @@ def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
     )
     block_message = BlockMessage.create_from_signed_change_request(request, blockchain_facade)
 
-    lock = Lock.objects.create(_id='block')
+    create_lock('block')
     with pytest.raises(BlockchainLockingError):
         Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
 
-    lock.delete()
+    delete_lock('block')
 
     Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
 
@@ -66,10 +67,10 @@ def test_cannot_add_block_if_blockchain_is_locked(
     )
     blockchain_facade.update_write_through_cache(block_message)
 
-    lock = Lock.objects.create(_id='block')
+    create_lock('block')
     with pytest.raises(BlockchainLockingError):
         Block.objects.add_block(block, validate=False)
 
-    lock.delete()
+    delete_lock('block')
 
     Block.objects.add_block(block, validate=False)

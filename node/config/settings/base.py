@@ -78,6 +78,7 @@ DATABASES = {
             'password': 'root',
         },
         'ATOMIC_REQUESTS': True,
+        'CONN_MAX_AGE': 600,
     }
 }
 
