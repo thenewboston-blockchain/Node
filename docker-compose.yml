@@ -13,6 +13,7 @@ services:
     volumes:
       - mongo-db:/data/db
       - mongo-configdb:/data/configdb
+      - mongo-key:/etc/mongo-key
 
   mongo-express:
     image: mongo-express
@@ -54,4 +55,6 @@ volumes:
   mongo-db:
     driver: local
   mongo-configdb:
+    driver: local
+  mongo-key:
     driver: local
