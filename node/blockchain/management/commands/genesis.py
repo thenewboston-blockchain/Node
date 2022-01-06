@@ -1,6 +1,8 @@
 import logging
 import sys
 
+from django.db import transaction
+
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage
@@ -45,12 +47,14 @@ class Command(CustomCommand):
         block_message = GenesisBlockMessage.create_from_signed_change_request(request, primary_validator_node)
         self.write_info('Made genesis block message')
 
-        # TODO(dmu) MEDIUM: Does happen in transaction? Not it does not
-        if does_exist:
-            Block.objects.all().delete()
-
         blockchain_facade = BlockchainFacade.get_instance()
-        Block.objects.add_block_from_block_message(
-            block_message, blockchain_facade, signing_key=signing_key, validate=False
-        )
+
+        with transaction.atomic():
+            if does_exist:
+                Block.objects.all().delete()
+
+            Block.objects.add_block_from_block_message(
+                block_message, blockchain_facade, signing_key=signing_key, validate=False
+            )
+
         self.write_success('Blockchain genesis complete')
