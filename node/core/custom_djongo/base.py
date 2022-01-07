@@ -6,6 +6,8 @@ from djongo.base import DatabaseWrapper as DjongoDatabaseWrapper
 from djongo.cursor import Cursor
 from djongo.database import DatabaseError
 from pymongo.client_session import ClientSession
+from pymongo.read_concern import ReadConcern
+from pymongo.write_concern import WriteConcern
 
 from node.core.custom_djongo.query import CustomQuery
 
@@ -79,7 +81,14 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
         logger.debug('Create cursor in wrapper: %s (session: %s)', id(self), id(self.session))
         if (session := self.session) is None:
             self.session = session = self.client_connection.start_session()
-            session.start_transaction()
+
+            # Starting transactions with non-default concerns to achieve READ COMMITED isolation level as per
+            # https://stackoverflow.com/questions/60156222/changing-mongodb-isolation-level-when-mongo-sessions-involved
+            # https://jepsen.io/analyses/mongodb-4.2.6
+            session.start_transaction(
+                read_concern=ReadConcern(level='snapshot'), write_concern=WriteConcern('majority')
+            )
+
             assert session.in_transaction
             logger.debug('Started transaction for session: %s', id(session))
 
