@@ -23,12 +23,24 @@ def get_database():
     return get_pymongo_client()[settings.DATABASES['default']['NAME']]
 
 
+def get_lock_collection():
+    return get_database().lock
+
+
+def make_filter(name):
+    return {'_id': name}
+
+
+def is_locked(name):
+    return bool(get_lock_collection().find_one(make_filter(name)))
+
+
 def create_lock(name):
-    get_database().lock.insert_one({'_id': name})
+    get_lock_collection().insert_one(make_filter(name))
 
 
 def delete_lock(name):
-    return get_database().lock.delete_one({'_id': name})
+    return get_lock_collection().delete_one(make_filter(name))
 
 
 def lock(name):
@@ -39,10 +51,8 @@ def lock(name):
         def wrapper(*args, **kwargs):
             expect_locked = kwargs.pop('expect_locked', False)
 
-            lock_collection = get_database().lock
-            filter_ = {'_id': name}
             if expect_locked:
-                is_already_locked = bool(lock_collection.find_one(filter_))
+                is_already_locked = is_locked(name)
                 if not is_already_locked:
                     raise BlockchainIsNotLockedError
 

@@ -7,6 +7,7 @@ set -e
 poetry run python -m node.manage collectstatic --no-input
 
 poetry run python -m node.manage migrate --no-input
+poetry run python -m node.manage ensure_is_not_locked block
 
 # TODO(dmu) MEDIUM: We might reconsider using `daphne` after figuring out if we have IO-bound or
 #                   CPU-bound application
