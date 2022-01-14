@@ -11,7 +11,7 @@ class Node(AccountState):
 
     @property
     def identifier(self):
-        return self.get_node_attribute('identifier')
+        return self._id
 
     @property
     def addresses(self):

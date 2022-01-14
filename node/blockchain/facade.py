@@ -1,5 +1,6 @@
 from typing import Type, TypeVar
 
+from node.blockchain.inner_models import Node
 from node.blockchain.models import AccountState
 from node.blockchain.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
 from node.core.utils.cryptography import get_signing_key
@@ -38,22 +39,26 @@ class BlockchainFacade:
     def clear_instance_cache(cls):
         cls._instance = None
 
-    def get_block_count(self):
+    @staticmethod
+    def get_block_count():
         return get_block_model().objects.count()
 
-    def get_next_block_number(self) -> int:
+    @staticmethod
+    def get_next_block_number() -> int:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
         last_block = get_block_model().objects.get_last_block()
         return last_block._id + 1 if last_block else 0
 
-    def get_next_block_identifier(self) -> BlockIdentifier:
+    @staticmethod
+    def get_next_block_identifier() -> BlockIdentifier:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
         last_block = get_block_model().objects.get_last_block()
         return last_block.make_hash() if last_block else None  # Genesis block has identifier of `null`
 
-    def get_account_lock(self, account_number) -> AccountLock:
+    @staticmethod
+    def get_account_lock(account_number) -> AccountLock:
         account_state = AccountState.objects.get_or_none(_id=account_number)
         return AccountLock(account_state.account_lock) if account_state else account_number
 
@@ -75,7 +80,8 @@ class BlockchainFacade:
                     setattr(account_state, field, value)
                 account_state.save()
 
-    def update_write_through_cache_schedule(self, schedule):
+    @staticmethod
+    def update_write_through_cache_schedule(schedule):
         # TODO(dmu) HIGH: Add more unittests once PV schedule block is implemented
         #                 - Add PV
         #                 - Remove PV
@@ -103,3 +109,8 @@ class BlockchainFacade:
         # TODO CRITICAL: Implement method to determine which role has Node.
         #                https://thenewboston.atlassian.net/browse/BC-191
         return NodeRole.PRIMARY_VALIDATOR
+
+    def get_primary_validator(self) -> Node:
+        # TODO(dmu) CRITICAL: Implement this method
+        #                     https://thenewboston.atlassian.net/browse/BC-212
+        raise NotImplementedError
