@@ -145,7 +145,7 @@ Run production Node
 ===================
 
 Common configuration
---------------------
+++++++++++++++++++++
 
 #. Install Docker on target machine according to https://docs.docker.com/engine/install/
    (known working: Docker version 20.10.7, build f0df350)
@@ -157,7 +157,19 @@ Common configuration
 #. Install Docker Compose  on target machine according to https://docs.docker.com/compose/install/
    (known working: docker-compose version 1.29.2, build 5becea4c)
 
-Manual deployment
------------------
 
-#. TODO(dmu) HIGH: Describe "Manual deployment" section ( https://thenewboston.atlassian.net/browse/BC-70 )
+Configure continuous deployment
++++++++++++++++++++++++++++++++
+
+#. Create deploy ssh key on target machine::
+
+    # Use empty pass phrase
+    ssh-keygen -f ~/.ssh/github
+    cat ~/.ssh/github.pub >> ~/.ssh/authorized_keys
+
+#. Create github repository secrets::
+
+    NODE_CONTINUOUS_DEPLOYMENT_ENABLED=True
+    NODE_DEPLOY_SSH_KEY=<content of ~/.ssh/github>
+    NODE_DEPLOY_SSH_HOST=<IP-address or domain name of target machine>
+    NODE_DEPLOY_SSH_USER=<username that has the corresponding public in ~/authorized_keys>

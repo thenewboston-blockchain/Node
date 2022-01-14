@@ -30,7 +30,7 @@ RUN poetry install  # this installs just the source code itself, since dependenc
 COPY scripts/dockerized-node-run.sh ./run.sh
 RUN chmod a+x run.sh
 
-FROM nginx:1.20.2-alpine AS reverse-proxy
+FROM nginx:1.20.2-alpine AS node-reverse-proxy
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY ./node/config/settings/templates/nginx.conf /etc/nginx/conf.d/node.conf
