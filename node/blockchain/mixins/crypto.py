@@ -29,8 +29,8 @@ class SignableMixin(CryptoAuxiliaryMixin):
         return signature
 
     def make_binary_representation_and_signature(self, signing_key: SigningKey):
-        binary_data = self.make_binary_representation_for_cryptography()
-        return binary_data, generate_signature(signing_key, binary_data)
+        binary_representation = self.make_binary_representation_for_cryptography()
+        return binary_representation, generate_signature(signing_key, binary_representation)
 
 
 class SignableStringWrapper(str, SignableMixin):
