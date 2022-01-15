@@ -3,7 +3,6 @@ from typing import Optional
 from typing import Type as TypingType
 from typing import TypeVar
 
-from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest, SignedChangeRequest
 from node.blockchain.mixins.crypto import SignableMixin
@@ -42,7 +41,7 @@ class BlockMessage(BlockMessageType, SignableMixin):
     def create_from_signed_change_request(
         cls: TypingType[T],
         request: SignedChangeRequest,
-        blockchain_facade: BlockchainFacade,
+        blockchain_facade,
     ) -> T:
         now = datetime.utcnow()
         if isinstance(request, GenesisSignedChangeRequest):
