@@ -1,8 +1,8 @@
 version: '3.9'
 
 services:
-  mongo:
-    image: node-mongo:current
+  node-mongo:
+    image: ghcr.io/thenewboston-developers/node-mongo:latest
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -11,9 +11,9 @@ services:
     ports:
       - 127.0.0.1:27017:27017
     volumes:
-      - mongo-db:/data/db
-      - mongo-configdb:/data/configdb
-      - mongo-key:/etc/mongo-key
+      - node-mongo-db:/data/db
+      - node-mongo-configdb:/data/configdb
+      - node-mongo-key:/etc/mongo-key
 
   mongo-express:
     image: mongo-express
@@ -26,35 +26,31 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: root
-      ME_CONFIG_MONGODB_URL: mongodb://root:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://root:${MONGO_INITDB_ROOT_PASSWORD}@node-mongo:27017/
     depends_on:
-      - mongo
+      - node-mongo
 
   node:
-    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
-    #                     https://thenewboston.atlassian.net/browse/BC-70
-    image: node:current
+    image: ghcr.io/thenewboston-developers/node:latest
     command: ./run.sh
     environment:
-      TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
     env_file:
       - .env
     depends_on:
-      - mongo
+      - node-mongo
 
-  reverse-proxy:
-    # TODO(dmu) CRITICAL: Replace image identifiers to those hosted on a docker repository
-    #                     https://thenewboston.atlassian.net/browse/BC-70
-    image: node-reverse-proxy:current
+  node-reverse-proxy:
+    image: ghcr.io/thenewboston-developers/node-reverse-proxy:latest
     ports:
       - 8555:8555
     depends_on:
       - node
 
 volumes:
-  mongo-db:
+  node-mongo-db:
     driver: local
-  mongo-configdb:
+  node-mongo-configdb:
     driver: local
-  mongo-key:
+  node-mongo-key:
     driver: local

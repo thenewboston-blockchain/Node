@@ -3,22 +3,42 @@ name: Continuous integration
 on:
   push:
     branches:
-      - master
+      - development
 
 jobs:
 # github does not support dependencies on other workflows therefore we have to duplicate the code
 # QUALITY-ASSURANCE-START
+  publish-node-mongo-unittests-image:
+    name: Publish node-mongo:unittests docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push node-mongo:unittests image to Github Packages
+        uses: docker/build-push-action@v2
+        with:
+          target: node-mongo
+          tags: ghcr.io/thenewboston-developers/node-mongo:unittests
+          push: true
+
   quality-assurance:
     name: Quality Assurance
-
+    needs: publish-node-mongo-unittests-image
     runs-on: ubuntu-latest
-    container: python:3.9.8
+    container: python:3.9.9-buster
 
     services:
       # TODO(dmu) LOW: This section duplicates services already defined in `docker-compose.yml`.
       #                Is there a way to make it DRY?
-      mongo:
-        image: mongo:5.0.3-focal
+      node-mongo:
+        image: ghcr.io/thenewboston-developers/node-mongo:unittests
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: root
@@ -40,7 +60,97 @@ jobs:
       - name: Test
         run: make test
         env:
-          TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo"}}}'
+          TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo"}}}'
           TNB_SECRET_KEY: dummy
           TNB_NODE_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # QUALITY-ASSURANCE-END
+
+  publish-node-image:
+    name: Publish node docker image
+    needs: quality-assurance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push node image to Github Packages
+        uses: docker/build-push-action@v2
+        with:
+          target: node
+          tags: ghcr.io/thenewboston-developers/node:latest
+          push: true
+          # TODO(dmu) LOW: Make a better way of forcing the download of latest blockchain state
+          #                https://thenewboston.atlassian.net/browse/BC-184
+          no-cache: true
+
+  publish-node-mongo-image:
+    name: Publish node-mongo docker image
+    needs: quality-assurance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push node-mongo image to Github Packages
+        uses: docker/build-push-action@v2
+        with:
+          target: node-mongo
+          tags: ghcr.io/thenewboston-developers/node-mongo:latest
+          push: true
+
+  publish-node-reverse-proxy-image:
+    name: Publish node-reverse-proxy docker image
+    runs-on: ubuntu-latest
+    steps:
+      # TODO LOW: This section has several duplicates. Is it possible to make it DRY?
+      #           https://thenewboston.atlassian.net/browse/BC-211
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push node-reverse-proxy image to Github Packages
+        uses: docker/build-push-action@v2
+        with:
+          target: node-reverse-proxy
+          tags: ghcr.io/thenewboston-developers/node-reverse-proxy:latest
+          push: true
+
+  deploy:
+    name: Deploy to develoment environment
+    environment: Node deployment
+    needs: [publish-node-reverse-proxy-image, publish-node-mongo-image, publish-node-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        # TODO(dmu) MEDIUM: Once/if github implements secrets on job level
+        #                   https://github.com/actions/runner/issues/520#issuecomment-877193387
+        if: ${{ env.CONTINUOUS_DEPLOYMENT_ENABLED == 'True' }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/github
+          chmod 600 ~/.ssh/github
+          cat >>~/.ssh/config <<END
+          Host target
+            HostName $DEPLOY_SSH_HOST
+            User $DEPLOY_SSH_USER
+            IdentityFile ~/.ssh/github
+            LogLevel ERROR
+            StrictHostKeyChecking no
+          END
+        env:
+          CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
+          DEPLOY_SSH_KEY: ${{ secrets.NODE_DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.NODE_DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_USER: ${{ secrets.NODE_DEPLOY_SSH_USER }}
+
+      - name: Run deploy
+        run: |
+          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/development/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} && rm -f /tmp/deploy-node.sh"

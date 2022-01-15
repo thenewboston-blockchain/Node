@@ -4,17 +4,37 @@ on: [pull_request]
 
 jobs:
 # QUALITY-ASSURANCE-START
+  publish-node-mongo-unittests-image:
+    name: Publish node-mongo:unittests docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push node-mongo:unittests image to Github Packages
+        uses: docker/build-push-action@v2
+        with:
+          target: node-mongo
+          tags: ghcr.io/thenewboston-developers/node-mongo:unittests
+          push: true
+
   quality-assurance:
     name: Quality Assurance
-
+    needs: publish-node-mongo-unittests-image
     runs-on: ubuntu-latest
-    container: python:3.9.8
+    container: python:3.9.9-buster
 
     services:
       # TODO(dmu) LOW: This section duplicates services already defined in `docker-compose.yml`.
       #                Is there a way to make it DRY?
-      mongo:
-        image: mongo:5.0.3-focal
+      node-mongo:
+        image: ghcr.io/thenewboston-developers/node-mongo:unittests
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           MONGO_INITDB_ROOT_USERNAME: root
           MONGO_INITDB_ROOT_PASSWORD: root
@@ -36,7 +56,7 @@ jobs:
       - name: Test
         run: make test
         env:
-          TNB_DATABASES: '{"default":{"CLIENT":{"host":"mongo"}}}'
+          TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo"}}}'
           TNB_SECRET_KEY: dummy
           TNB_NODE_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # QUALITY-ASSURANCE-END
