@@ -1,6 +1,7 @@
 from typing import Type, TypeVar
 
 from node.blockchain.inner_models import Node
+from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState
 from node.blockchain.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
 from node.core.utils.cryptography import get_signing_key
@@ -55,7 +56,9 @@ class BlockchainFacade:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
         last_block = get_block_model().objects.get_last_block()
-        return last_block.make_hash() if last_block else None  # Genesis block has identifier of `null`
+        assert last_block  # this method should never be used for creating genesis block
+
+        return HashableStringWrapper(last_block.body).make_hash()
 
     @staticmethod
     def get_account_lock(account_number) -> AccountLock:
@@ -94,8 +97,8 @@ class BlockchainFacade:
         for block_number, node_identifier in schedule.items():
             Schedule.objects.create(_id=block_number, node_identifier=node_identifier)
 
-    def update_write_through_cache(self, block_message):
-        block_message_update = block_message.update
+    def update_write_through_cache(self, block):
+        block_message_update = block.message.update
 
         accounts = block_message_update.accounts
         if accounts:

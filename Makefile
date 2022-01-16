@@ -60,11 +60,6 @@ run-server:
 shell:
 	poetry run python -m node.manage shell
 
-.PHONY: dbshell
-dbshell:
-	# TODO(dmu) LOW: Does it work with Djongo/MongoDB?
-	poetry run python -m node.manage dbshell
-
 .PHONY: lint
 lint:
 	poetry run pre-commit run --all-files

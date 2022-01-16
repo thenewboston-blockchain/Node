@@ -2,9 +2,11 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
-    BlockMessage, GenesisBlockMessage, GenesisSignedChangeRequestMessage, SignedChangeRequest
+    Block, GenesisBlockMessage, GenesisSignedChangeRequestMessage, SignedChangeRequest
 )
-from node.blockchain.models import AccountState, Block, Schedule
+from node.blockchain.models import AccountState
+from node.blockchain.models import Block as ORMBlock
+from node.blockchain.models import Schedule
 from node.blockchain.types import AccountLock, Signature, Type
 from node.core.utils.cryptography import is_signature_valid
 
@@ -18,29 +20,32 @@ def test_create_from_block_message(
 
     blockchain_facade = BlockchainFacade.get_instance()
 
-    block = Block.objects.add_block_from_block_message(
+    block = ORMBlock.objects.add_block_from_block_message(
         message=genesis_block_message,
         blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS
     assert message == genesis_block_message
 
     # Test rereading the block from the database
-    block = Block.objects.get(_id=0)
+    orm_block = ORMBlock.objects.get(_id=0)
+    block = Block.parse_raw(orm_block.body)
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS
@@ -81,29 +86,32 @@ def test_create_from_alpha_account_root_file(
 
     genesis_block_message = GenesisBlockMessage.create_from_signed_change_request(request, primary_validator_node)
 
-    block = Block.objects.add_block_from_block_message(
+    block = ORMBlock.objects.add_block_from_block_message(
         message=genesis_block_message,
         blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS
     assert message == genesis_block_message
 
     # Test rereading the block from the database
-    block = Block.objects.get(_id=0)
+    orm_block = ORMBlock.objects.get(_id=0)
+    block = Block.parse_raw(orm_block.body)
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == 0
     assert message.identifier is None
     assert message.type == Type.GENESIS

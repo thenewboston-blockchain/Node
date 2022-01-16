@@ -41,15 +41,7 @@ class Migration(migrations.Migration):
                     '_id',
                     models.PositiveBigIntegerField(primary_key=True, serialize=False, verbose_name='Block number')
                 ),
-                (
-                    'signer',
-                    models.CharField(max_length=64, validators=[node.blockchain.validators.HexStringValidator(64)])
-                ),
-                (
-                    'signature',
-                    models.CharField(max_length=128, validators=[node.blockchain.validators.HexStringValidator(128)])
-                ),
-                ('message', models.TextField()),
+                ('body', models.BinaryField()),
             ],
         ),
     ]

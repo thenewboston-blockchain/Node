@@ -1,8 +1,8 @@
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import BlockMessage, NodeDeclarationSignedChangeRequest
-from node.blockchain.models import Block
+from node.blockchain.inner_models import Block, BlockMessage, NodeDeclarationSignedChangeRequest
+from node.blockchain.models import Block as ORMBlock
 from node.blockchain.utils.lock import create_lock, delete_lock
 from node.core.exceptions import BlockchainLockingError
 
@@ -19,11 +19,11 @@ def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
     delete_lock('block')
 
-    Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+    ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
 
 @pytest.mark.usefixtures('base_blockchain')
@@ -39,11 +39,11 @@ def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
+        ORMBlock.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
 
     delete_lock('block')
 
-    Block.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
+    ORMBlock.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
 
 
 @pytest.mark.usefixtures('base_blockchain')
@@ -57,20 +57,18 @@ def test_cannot_add_block_if_blockchain_is_locked(
     )
     block_message = BlockMessage.create_from_signed_change_request(request, blockchain_facade)
     signing_key = primary_validator_key_pair.private
-    binary_data, signature = block_message.make_binary_data_and_signature(signing_key)
+    signature = block_message.make_signature(signing_key)
 
     block = Block(
-        _id=block_message.number,
         signer=primary_validator_key_pair.public,
         signature=signature,
-        message=binary_data.decode('utf-8'),
+        message=block_message,
     )
-    blockchain_facade.update_write_through_cache(block_message)
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        Block.objects.add_block(block, validate=False)
+        ORMBlock.objects.add_block(block, validate=False)
 
     delete_lock('block')
 
-    Block.objects.add_block(block, validate=False)
+    ORMBlock.objects.add_block(block, blockchain_facade, validate=False)
