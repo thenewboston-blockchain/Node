@@ -79,7 +79,7 @@ to get the latest version for development.
 
 #. Create superuser::
 
-    make create-superuser
+    make superuser
 
 Update
 ++++++
@@ -126,7 +126,7 @@ Run
     # Add `DATABASES['default']['NAME'] = 'node2'` to ./local/settings.dev.node2.py
     export TNB_LOCAL_SETTINGS_PATH=./local/settings.dev.node2.py
     make migrate
-    make create-superuser
+    make superuser
     # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
     poetry run python -m node.manage runserver 127.0.0.1:8556
 
