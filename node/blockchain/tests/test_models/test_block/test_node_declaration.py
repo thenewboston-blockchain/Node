@@ -2,11 +2,11 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
-    AccountState, BlockMessage, BlockMessageUpdate, Node, NodeDeclarationSignedChangeRequest,
+    AccountState, Block, BlockMessageUpdate, Node, NodeDeclarationSignedChangeRequest,
     NodeDeclarationSignedChangeRequestMessage
 )
 from node.blockchain.models import AccountState as DBAccountState
-from node.blockchain.models.block import Block
+from node.blockchain.models.block import Block as ORMBlock
 from node.blockchain.types import AccountLock, AccountNumber, Signature, Type
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import get_node_identifier, is_signature_valid
@@ -19,29 +19,32 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     expected_block_number = blockchain_facade.get_next_block_number()
     expected_identifier = blockchain_facade.get_next_block_identifier()
 
-    block = Block.objects.add_block_from_block_message(
+    block = ORMBlock.objects.add_block_from_block_message(
         message=node_declaration_block_message,
         blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
     assert message.type == Type.NODE_DECLARATION
     assert message == node_declaration_block_message
 
     # Test rereading the block from the database
-    block = Block.objects.get(_id=expected_block_number)
+    orm_block = ORMBlock.objects.get(_id=expected_block_number)
+    block = Block.parse_raw(orm_block.body)
     assert block.signer == primary_validator_key_pair.public
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
     assert message.type == Type.NODE_DECLARATION
@@ -68,12 +71,13 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
         signing_key=regular_node_key_pair.private,
     )
 
-    block = Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+    block = ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
     assert block.signer == get_node_identifier()
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
     assert message.type == Type.NODE_DECLARATION
@@ -86,12 +90,14 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
     )
     assert message.update == expected_message_update
 
-    block = Block.objects.get(_id=expected_block_number)
+    orm_block = ORMBlock.objects.get(_id=expected_block_number)
+    block = Block.parse_raw(orm_block.body)
     assert block.signer == get_node_identifier()
-    assert isinstance(block.message, str)
     assert isinstance(block.signature, str)
-    assert is_signature_valid(block.signer, block.message.encode('utf-8'), Signature(block.signature))
-    message = BlockMessage.parse_raw(block.message)
+    assert is_signature_valid(
+        block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
+    )
+    message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
     assert message.type == Type.NODE_DECLARATION
@@ -116,7 +122,7 @@ def test_add_block_from_signed_change_request_account_lock_validation(regular_no
     )
 
     with pytest.raises(ValidationError, match='Invalid account lock'):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
 
 
 @pytest.mark.django_db
@@ -140,4 +146,4 @@ def test_add_block_from_signed_change_request_node_identifier_validation(regular
 
     blockchain_facade = BlockchainFacade.get_instance()
     with pytest.raises(ValidationError, match='Signer does not match with node identifier'):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)

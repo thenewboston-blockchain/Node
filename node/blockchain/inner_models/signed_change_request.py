@@ -63,7 +63,7 @@ class SignedChangeRequest(BaseModel, HashableMixin):
         if (
             # TODO(dmu) MEDIUM: How is it possible that signer, signature, message can be empty?
             not all((signer, signature, message)) or
-            not is_signature_valid(signer, message.make_binary_message_for_cryptography(), signature)
+            not is_signature_valid(signer, message.make_binary_representation_for_cryptography(), signature)
         ):
             # TODO(dmu) LOW: Pydantic does not recognize custom ValidationError. Fix?
             raise ValueError('Invalid signature')

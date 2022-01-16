@@ -5,7 +5,9 @@ from .models import AccountState, Block
 
 @admin.register(Block)
 class BlockAdmin(admin.ModelAdmin):
-    pass
+    # TODO(dmu) MEDIUM: Improve representation of `body` field so it fits/wraps in the form nicely
+    fields = ('_id', 'body')
+    readonly_fields = fields
 
 
 @admin.register(AccountState)

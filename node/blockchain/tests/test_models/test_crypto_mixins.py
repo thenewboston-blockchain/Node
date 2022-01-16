@@ -20,4 +20,5 @@ def test_make_binary_data_for_cryptography_key_order():
     assert outer.json() == '{"key1":1,"key2":"v2","key3":{"key1":"v1","key2":"v2"}}'
 
     # ordered key for cryptography
-    assert outer.make_binary_message_for_cryptography() == b'{"key1":1,"key2":"v2","key3":{"key1":"v1","key2":"v2"}}'
+    assert outer.make_binary_representation_for_cryptography(
+    ) == b'{"key1":1,"key2":"v2","key3":{"key1":"v1","key2":"v2"}}'

@@ -1,30 +1,16 @@
-import json
-
 from djongo import models
-
-from node.blockchain.constants import JSON_CRYPTO_KWARGS
-from node.blockchain.mixins.crypto import HashableMixin
-from node.blockchain.validators import HexStringValidator
 
 from .manager import BlockManager
 
 
-class Block(models.Model, HashableMixin):
+class Block(models.Model):
     _id = models.PositiveBigIntegerField('Block number', primary_key=True)
-    # TODO(dmu) MEDIUM: Consider using models.BinaryField() for `signer` and `signature` to save storage space
-    signer = models.CharField(max_length=64, validators=(HexStringValidator(64),))
-    signature = models.CharField(max_length=128, validators=(HexStringValidator(128),))
-    # TODO(dmu) MEDIUM: Consider: message = models.BinaryField()
-    message = models.TextField()
+    body = models.BinaryField()
 
     objects = BlockManager()
 
     def __str__(self):
         return f'Block number {self._id}'
-
-    def make_binary_message_for_cryptography(self) -> bytes:
-        dict_ = {'signer': self.signer, 'signature': self.signature, 'message': self.message}
-        return json.dumps(dict_, **JSON_CRYPTO_KWARGS).encode('utf-8')  # type: ignore
 
     def save(self, *args, force_insert=True, **kwargs):
         assert force_insert  # must be true for database consistency validation
