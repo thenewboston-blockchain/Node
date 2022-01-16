@@ -48,8 +48,8 @@ install-pre-commit:
 .PHONY: update
 update: install migrate install-pre-commit ;
 
-.PHONY: create-superuser
-create-superuser:
+.PHONY: superuser
+superuser:
 	poetry run python -m node.manage createsuperuser
 
 .PHONY: run-server
