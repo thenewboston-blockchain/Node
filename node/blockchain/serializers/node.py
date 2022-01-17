@@ -1,9 +1,6 @@
 from rest_framework import serializers
 
 from node.blockchain.models import Node
-from node.blockchain.types import Type
-
-API_SUPPORTED_TYPES = {item for item in Type if item != Type.GENESIS}
 
 
 class NodeSerializer(serializers.ModelSerializer):
