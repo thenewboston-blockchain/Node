@@ -2,7 +2,7 @@ from node.blockchain.mixins.crypto import HashableMixin
 
 from ..types import AccountNumber, Signature
 from .base import BaseModel
-from .block_message import BlockMessage, GenesisBlockMessage, NodeDeclarationBlockMessage
+from .block_message import BlockMessage, CoinTransferBlockMessage, GenesisBlockMessage, NodeDeclarationBlockMessage
 from .block_message.base import BlockMessageType
 
 
@@ -34,3 +34,7 @@ class GenesisBlock(Block):
 
 class NodeDeclarationBlock(Block):
     message: NodeDeclarationBlockMessage
+
+
+class CoinTransferBlock(Block):
+    message: CoinTransferBlockMessage

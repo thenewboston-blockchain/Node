@@ -5,7 +5,8 @@ from .block_message import (  # noqa: F401
 )
 from .node import Node  # noqa: F401
 from .signed_change_request import (  # noqa: F401
-    GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest, SignedChangeRequest
+    CoinTransferSignedChangeRequest, GenesisSignedChangeRequest, NodeDeclarationSignedChangeRequest,
+    SignedChangeRequest
 )
 from .signed_change_request_message import (  # noqa: F401
     GenesisSignedChangeRequestMessage, NodeDeclarationSignedChangeRequestMessage

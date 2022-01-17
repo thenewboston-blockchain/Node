@@ -7,11 +7,9 @@ from node.blockchain.mixins.crypto import HashableMixin
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key, is_signature_valid
 
-from ..types import AccountNumber, Signature, SigningKey
-from .base import BaseModel
-from .signed_change_request_message.base import SignedChangeRequestMessage
-from .signed_change_request_message.genesis import GenesisSignedChangeRequestMessage
-from .signed_change_request_message.node_declaration import NodeDeclarationSignedChangeRequestMessage
+from ...types import AccountNumber, Signature, SigningKey
+from ..base import BaseModel
+from ..signed_change_request_message import SignedChangeRequestMessage
 
 T = TypeVar('T', bound='SignedChangeRequest')
 
@@ -83,20 +81,3 @@ class SignedChangeRequest(BaseModel, HashableMixin):
 
     def get_type(self):
         return self.message.type
-
-
-class GenesisSignedChangeRequest(SignedChangeRequest):
-    message: GenesisSignedChangeRequestMessage
-
-
-class NodeDeclarationSignedChangeRequest(SignedChangeRequest):
-    message: NodeDeclarationSignedChangeRequestMessage
-
-    def validate_type_specific_attributes(self, blockchain_facade):
-        # TODO(dmu) MEDIUM: Should we use Pydantic native validation here instead?
-        if self.signer != self.message.node.identifier:
-            raise ValidationError('Signer does not match with node identifier')
-
-    class Config(SignedChangeRequest.Config):
-        exclude = {'message': {'node': {'identifier': ...}}}
-        enrich = {'message.node.identifier': 'signer'}
