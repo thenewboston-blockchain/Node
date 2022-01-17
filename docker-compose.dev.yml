@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  node-mongo:
+    restart: 'no'
+    image: node-mongo:current
+    build:
+      context: .
+      target: node-mongo
+    environment:
+      MONGO_INITDB_ROOT_PASSWORD: root
+
+  mongo-express:
+    restart: 'no'
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@node-mongo:27017/
+
+  node:
+    image: node:current
+    build:
+      context: .
+      target: node
+    environment:
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"root"}}}'
+    ports:
+      - 127.0.0.1:8000:8555
+
+  node-reverse-proxy:
+    image: node-reverse-proxy:current
+    build:
+      context: .
+      target: node-reverse-proxy

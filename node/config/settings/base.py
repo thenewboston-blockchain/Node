@@ -1,6 +1,11 @@
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY = NotImplemented
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -11,7 +16,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
-    'node.blockchain.apps.AccountsConfig',
+    'node.blockchain.apps.BlockchainConfig',
+    'node.web.apps.WebConfig',
 ]
 
 MIDDLEWARE = [
@@ -61,16 +67,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
+        'ENGINE': 'node.core.custom_djongo',
         'NAME': 'node',
         'CLIENT': {
             'host': '127.0.0.1',
             'port': 27017,
             'username': 'root',
-            # TODO(dmu) CRITICAL: Once we expose MongoDB for reading make the password generated on node deploy
-            #                     https://thenewboston.atlassian.net/browse/BC-144
             'password': 'root',
-        }
+        },
+        'ATOMIC_REQUESTS': True,
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -80,5 +86,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -47,17 +47,17 @@ to get the latest version for development.
     #. Install and configure `pyenv` according to
        https://github.com/pyenv/pyenv#basic-github-checkout
 
-    #. Install Python 3.9.8::
+    #. Install Python 3.9.9::
 
-        pyenv install 3.9.8
-        pyenv local 3.9.8 # run from the root of this repo (`.python-version` file should appear)
+        pyenv install 3.9.9
+        pyenv local 3.9.9 # run from the root of this repo (`.python-version` file should appear)
 
 #. Install Poetry::
 
     export PIP_REQUIRED_VERSION=21.3.1
     pip install pip==${PIP_REQUIRED_VERSION} && \
     pip install virtualenvwrapper && \
-    pip install poetry==1.1.11 && \
+    pip install poetry==1.1.12 && \
     poetry config virtualenvs.path ${HOME}/.virtualenvs && \
     poetry run pip install pip==${PIP_REQUIRED_VERSION}
 
@@ -71,11 +71,15 @@ to get the latest version for development.
     vim ./local/settings.dev.py
     vim ./local/settings.unittests.py
 
+#. Configure settings for running dockerized node::
+
+    make dot-env
+
 #. Install dependencies, run migrations, etc by doing `Update`_ section steps
 
 #. Create superuser::
 
-    make create-superuser
+    make superuser
 
 Update
 ++++++
@@ -111,14 +115,61 @@ Run
 
 #. (in a separate terminal) Run node::
 
+    # TODO(dmu) HIGH: We need to be able initialize blockchain with known signing keys for testing
+    #                 https://thenewboston.atlassian.net/browse/BC-153
+    make genesis
     make run-server
 
 #. [Optional] (in a separate terminal) Run another Node for testing and debugging communications between nodes::
 
     cp node/config/settings/templates/settings.dev.py ./local/settings.dev.node2.py
     # Add `DATABASES['default']['NAME'] = 'node2'` to ./local/settings.dev.node2.py
-    export NODE_LOCAL_SETTINGS_PATH=./local/settings.dev.node2.py
+    export TNB_LOCAL_SETTINGS_PATH=./local/settings.dev.node2.py
     make migrate
-    make create-superuser
+    make superuser
     # TODO(dmu) LOW: Parametrize `make run-server` with port number and use it instead
     poetry run python -m node.manage runserver 127.0.0.1:8556
+
+#. [Optional] (in a separate terminal) Run Node for local development purposes with Docker
+
+    make up-dev
+
+Development tools
++++++++++++++++++
+
+#. Make migrations::
+
+    make migrations
+
+Run production Node
+===================
+
+Common configuration
+++++++++++++++++++++
+
+#. Install Docker on target machine according to https://docs.docker.com/engine/install/
+   (known working: Docker version 20.10.7, build f0df350)
+#. Add your user to docker group::
+
+    sudo usermod -aG docker $USER
+    exit
+
+#. Install Docker Compose  on target machine according to https://docs.docker.com/compose/install/
+   (known working: docker-compose version 1.29.2, build 5becea4c)
+
+
+Configure continuous deployment
++++++++++++++++++++++++++++++++
+
+#. Create deploy ssh key on target machine::
+
+    # Use empty pass phrase
+    ssh-keygen -f ~/.ssh/github
+    cat ~/.ssh/github.pub >> ~/.ssh/authorized_keys
+
+#. Create github repository secrets::
+
+    NODE_CONTINUOUS_DEPLOYMENT_ENABLED=True
+    NODE_DEPLOY_SSH_KEY=<content of ~/.ssh/github>
+    NODE_DEPLOY_SSH_HOST=<IP-address or domain name of target machine>
+    NODE_DEPLOY_SSH_USER=<username that has the corresponding public in ~/authorized_keys>

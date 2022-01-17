@@ -1,87 +1,60 @@
-from dataclasses import asdict
-from datetime import datetime
+import logging
+import sys
 
-from django.core.management.base import BaseCommand
+from django.db import transaction
 
-from ...models import (
-    AlphaAccount, Blockchain, GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage, Mongo
+from node.blockchain.facade import BlockchainFacade
+from node.blockchain.inner_models import (
+    GenesisBlockMessage, GenesisSignedChangeRequest, GenesisSignedChangeRequestMessage
 )
-from node.core.constants.block_types import GENESIS
-from node.core.utils.network import fetch
-from node.core.utils.signing import encode_key, generate_signature, get_public_key
-"""
-python3 manage.py genesis
+from node.blockchain.models.block import Block
+from node.blockchain.types import AccountLock
+from node.core.management import CustomCommand
+from node.core.utils.cryptography import get_signing_key
+from node.core.utils.network import make_own_node, read_source
 
-Running this script will:
-- Download the latest alpha backup file
-- Create the genesis block
-"""
+logger = logging.getLogger(__name__)
 
 
-class Command(BaseCommand):
-    help = 'Download the latest alpha backup file and create the genesis block'  # noqa: A003
+class Command(CustomCommand):
+    help = 'Create genesis block'  # noqa: A003
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.blockchain = Blockchain()
-        self.mongo = Mongo()
+    def add_arguments(self, parser):
+        # TODO(dmu) MEDIUM: We may need simpler blockchains and with known private key for local testing. Implement
+        parser.add_argument('source', help='file path or URL to alpha account root file')
+        parser.add_argument('-f', '--force', action='store_true', help='remove existing blockchain if any')
 
-    @staticmethod
-    def get_updated_accounts(accounts) -> dict[str, dict]:
-        results = {}
+    def handle(self, source, force, **options):
+        # TODO(dmu) MEDIUM: Cover this method with unittests
+        does_exist = Block.objects.exists()
+        if does_exist and not force:
+            self.write_error('Blockchain already exists')
+            sys.exit(1)
 
-        for account_number, account_data in accounts.items():
-            results[account_number] = {'balance': account_data['balance'], 'lock': account_data['balance_lock']}
+        signing_key = get_signing_key()  # we get signing key here to fail fast in case it is not configured
+        self.write_info('Got signing key')
 
-        return results
-
-    @staticmethod
-    def get_updated_nodes() -> dict[str, dict]:
-        public_key = encode_key(key=get_public_key())
-
-        return {public_key: {'fee_amount': 1, 'network_addresses': ['http://78.107.238.40:8555/']}}
-
-    def handle(self, *args, **options):
-        raise NotImplementedError('The code is broken')
-        self.blockchain.reset()
-
-        accounts: dict[str, AlphaAccount] = fetch(
-            # TODO(dmu) MEDIUM: Unhardcode URL value
-            url=(
-                'https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/'
-                'latest.json'
-            ),
-            headers={}
+        account_root_file = read_source(source)
+        self.write_info('Read source')
+        primary_validator_node = make_own_node()
+        self.write_info('Made own node')
+        request_message = GenesisSignedChangeRequestMessage.create_from_alpha_account_root_file(
+            account_lock=AccountLock(primary_validator_node.identifier),
+            account_root_file=account_root_file,
         )
 
-        public_key = encode_key(key=get_public_key())
+        request = GenesisSignedChangeRequest.create_from_signed_change_request_message(request_message, signing_key)
+        block_message = GenesisBlockMessage.create_from_signed_change_request(request, primary_validator_node)
+        self.write_info('Made genesis block message')
 
-        signed_change_request_message = GenesisSignedChangeRequestMessage(
-            accounts=accounts, lock=public_key, request_type=GENESIS
-        )
-        signed_change_request = GenesisSignedChangeRequest(
-            message=signed_change_request_message,
-            signature=generate_signature(message=asdict(signed_change_request_message)),
-            signer=public_key,
-        )
-        genesis_block_message = GenesisBlockMessage(
-            block_identifier=None,
-            block_number=0,
-            block_type=signed_change_request_message.request_type,
-            signed_change_request=signed_change_request,
-            timestamp=str(datetime.now()),
-            updates={
-                'accounts': self.get_updated_accounts(accounts),
-                'nodes': self.get_updated_nodes(),
-                'validators': {
-                    '0': {
-                        'first_block': 0,
-                        'last_block': 99,
-                        'node': public_key
-                    }
-                }
-            }
-        )
+        blockchain_facade = BlockchainFacade.get_instance()
 
-        self.blockchain.add(block_message=genesis_block_message)
-        self.stdout.write(self.style.SUCCESS('Success'))
+        with transaction.atomic():
+            if does_exist:
+                Block.objects.all().delete()
+
+            Block.objects.add_block_from_block_message(
+                block_message, blockchain_facade, signing_key=signing_key, validate=False
+            )
+
+        self.write_success('Blockchain genesis complete')

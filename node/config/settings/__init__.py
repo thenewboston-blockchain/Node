@@ -1,6 +1,6 @@
 import logging
-from pathlib import Path
 import os.path
+from pathlib import Path
 
 from split_settings.tools import include, optional
 
@@ -8,7 +8,7 @@ from node.core.utils.pytest import is_pytest_running
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
-ENVVAR_SETTINGS_PREFIX = 'NODE_'
+ENVVAR_SETTINGS_PREFIX = 'TNB_'
 
 LOCAL_SETTINGS_PATH = os.getenv(f'{ENVVAR_SETTINGS_PREFIX}LOCAL_SETTINGS_PATH')
 if not LOCAL_SETTINGS_PATH:
@@ -27,10 +27,11 @@ include(
     'custom.py',
     optional(LOCAL_SETTINGS_PATH),
     'envvars.py',
+    'docker.py',
 )
 # yapf: enable
 
 logging.captureWarnings(True)
 
 assert SECRET_KEY is not NotImplemented  # type: ignore # noqa: F821
-assert SIGNING_KEY is not NotImplemented  # type: ignore # noqa: F821
+assert NODE_SIGNING_KEY is not NotImplemented  # type: ignore # noqa: F821
