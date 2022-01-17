@@ -3,6 +3,9 @@ name: Quality Assurance
 on: [pull_request]
 
 jobs:
+# github does not support dependencies on other workflows therefore we have to duplicate the code
+# TODO(dmu) LOW: Fix this non-DRY approach if possible
+#                https://thenewboston.atlassian.net/browse/BC-211
 # QUALITY-ASSURANCE-START
   publish-node-mongo-unittests-image:
     name: Publish node-mongo:unittests docker image
