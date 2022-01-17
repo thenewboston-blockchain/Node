@@ -3,6 +3,7 @@ Local development environment setup
 
 This section describes how to setup development environment for Debian-based distributions
 (tested on Linux Mint 20.2 specifically)
+REMOVE THIS CHANGE
 
 Initial setup
 +++++++++++++
