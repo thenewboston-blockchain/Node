@@ -145,15 +145,24 @@ def test_node_declaration_signed_change_request_with_invalid_account_lock(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('role', (NodeRole.PRIMARY_VALIDATOR, NodeRole.CONFIRMATION_VALIDATOR, NodeRole.REGULAR_NODE))
 @pytest.mark.parametrize(
     'update_with', (
-        (dict(signature='0' * 128)),
-        (dict(signer='0' * 64)),
-        (dict(message=dict(account_lock=('0' * 64)))),
+        ({
+            'signature': '0' * 128
+        }),
+        ({
+            'signer': '0' * 64
+        }),
+        ({
+            'message': {
+                'account_lock': '0' * 64
+            }
+        }),
     )
 )
 def test_signature_validation_for_node_declaration(
-    update_with, api_client, primary_validator_node, primary_validator_key_pair
+    role, update_with, api_client, primary_validator_node, primary_validator_key_pair
 ):
     message = NodeDeclarationSignedChangeRequestMessage(
         node=primary_validator_node,
@@ -164,7 +173,9 @@ def test_signature_validation_for_node_declaration(
         signing_key=primary_validator_key_pair.private,
     )
     payload = deep_update(signed_change_request.dict(), update_with)
-    response = api_client.post('/api/signed-change-requests/', payload)
+    with as_role(role):
+        response = api_client.post('/api/signed-change-requests/', payload)
+
     assert response.status_code == 400
     assert response.json() == {'non_field_errors': [{'code': 'invalid', 'message': 'Invalid signature'}]}
 
