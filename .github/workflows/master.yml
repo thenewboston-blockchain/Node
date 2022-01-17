@@ -103,7 +103,7 @@ jobs:
   deploy:
     name: Deploy to develoment environment
     environment: Node deployment
-    needs: [publish-node-reverse-proxy-image, publish-node-mongo-image, publish-node-image]
+    needs: publish-images
     runs-on: ubuntu-latest
     steps:
       - name: Configure SSH
