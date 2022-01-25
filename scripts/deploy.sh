@@ -48,8 +48,8 @@ docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
 counter=0
-# TODO CRITICAL: Need to implement keepalive endpoint (http://127.0.0.1:8555/api/v1/nodes/self/).
-#                https://thenewboston.atlassian.net/browse/BC-195
+# TODO CRITICAL: Implement ensure_node_declared
+#                https://thenewboston.atlassian.net/browse/BC-197
 until $(curl --output /dev/null --silent --head --fail http://127.0.0.1:8555/); do
   counter=$(($counter + 1))
   if [ ${counter} -ge 12 ]; then
