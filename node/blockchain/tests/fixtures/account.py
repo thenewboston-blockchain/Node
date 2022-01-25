@@ -1,6 +1,7 @@
 import pytest
 
 from node.blockchain.types import AccountNumber, KeyPair, SigningKey
+from node.core.utils.cryptography import get_node_identifier, get_signing_key
 
 
 @pytest.fixture
@@ -32,4 +33,12 @@ def user_key_pair() -> KeyPair:
     return KeyPair(
         public=AccountNumber('97b369953f665956d47b0a003c268ad2b05cf601b8798210ca7c2423afb9af78'),
         private=SigningKey('f450b3082201544bc9348e862b818d3423857c0eb7bec5d00751098424186454'),
+    )
+
+
+@pytest.fixture
+def self_node_key_pair() -> KeyPair:
+    return KeyPair(
+        public=AccountNumber(get_node_identifier()),
+        private=SigningKey(get_signing_key()),
     )
