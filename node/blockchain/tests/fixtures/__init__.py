@@ -8,4 +8,3 @@ from .mocks import *  # noqa: F401
 from .node import *  # noqa: F401
 from .roles import *  # noqa: F401
 from .signed_change_request import *  # noqa: F401
-from .signed_change_request_message import *  # noqa: F401

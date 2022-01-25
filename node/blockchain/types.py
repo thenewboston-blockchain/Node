@@ -10,6 +10,7 @@ from node.core.utils.types import hexstr64, hexstr64_i, hexstr128  # noqa: I101
 class Type(IntEnum):
     GENESIS = 0
     NODE_DECLARATION = 1
+    COIN_TRANSFER = 2
 
 
 @unique
