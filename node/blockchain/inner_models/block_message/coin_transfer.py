@@ -13,8 +13,8 @@ class CoinTransferBlockMessage(BlockMessage):
 
     @classmethod
     def make_block_message_update(cls, request: CoinTransferSignedChangeRequest) -> BlockMessageUpdate:
-        # TODO HIGH: Implement make_block_message_update method for CoinTransferBlockMessage
-        #       https://thenewboston.atlassian.net/browse/BC-225
+        # TODO CRITICAL: Implement make_block_message_update method for CoinTransferBlockMessage
+        #                https://thenewboston.atlassian.net/browse/BC-225
         account_state = AccountState()
         accounts = {request.signer: account_state}
         return BlockMessageUpdate(accounts=accounts)
