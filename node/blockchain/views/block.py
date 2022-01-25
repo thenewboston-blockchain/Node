@@ -1,8 +1,11 @@
 from django.http import HttpResponse
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from node.blockchain.models import Block
 from node.blockchain.serializers.block import BlockSerializer
 from node.core.pagination import CustomLimitOffsetNoCountPagination
+
+LAST_BLOCK_ID = 'last'
 
 
 class BlockViewSet(ReadOnlyModelViewSet):
@@ -25,5 +28,11 @@ class BlockViewSet(ReadOnlyModelViewSet):
         return HttpResponse(content=response_body, content_type='application/json')
 
     def retrieve(self, request, *args, **kwargs):
+        if self.kwargs.get('pk') == LAST_BLOCK_ID:
+            instance = Block.objects.order_by('-_id').values('_id').first()
+            if instance:
+                # We do not use instance to rely on self.get_object() logic for compatibility purposes
+                self.kwargs['pk'] = instance['_id']
+
         instance = self.get_object()
         return HttpResponse(content=instance.body, content_type='application/json')

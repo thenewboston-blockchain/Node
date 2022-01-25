@@ -1,5 +1,5 @@
 import logging
-from typing import Type, TypeVar
+from typing import Optional, Type, TypeVar, Union
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -46,8 +46,8 @@ class NodeClient:
     def requests_get(url, *args, **kwargs):  # We need this method for mocking in unittests
         return requests.get(url, *args, **kwargs)
 
-    def http_post(self, network_address, resource, json_data=None, data=None, *, should_raise=True):
-        url = urljoin(network_address, f'/api/{resource}/')
+    def http_post(self, address, resource, json_data=None, data=None, *, should_raise=True):
+        url = urljoin(address, f'/api/{resource}/')
 
         try:
             response = self.requests_post(
@@ -72,8 +72,12 @@ class NodeClient:
 
         return response
 
-    def http_get(self, network_address, resource, *, parameters=None, should_raise=True):
-        url = urljoin(network_address, f'/api/{resource}/')
+    def http_get(self, network_address, resource, *, resource_id=None, parameters=None, should_raise=True):
+        path = f'/api/{resource}/'
+        if resource_id is not None:
+            path += f'{resource_id}/'
+
+        url = urljoin(network_address, path)
         if parameters:
             url += '?' + urlencode(parameters)
 
@@ -126,5 +130,13 @@ class NodeClient:
         else:
             raise ConnectionError(f'Could not send signed change request to {node}')
 
-    def list_nodes(self, address, offset=None, limit=None):
+    def list_nodes(self, address: str, offset=None, limit=None) -> list[Node]:
         return self.list_resource(address, 'nodes', offset=offset, limit=limit)
+
+    def get_block_raw(self, address: str, block_number: Union[int, str]) -> Optional[str]:
+        response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
+        if response is None or response.status_code == 404:
+            return None
+
+        response.raise_for_status()
+        return response.content.decode('utf-8')
