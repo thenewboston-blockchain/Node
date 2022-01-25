@@ -78,3 +78,22 @@ def test_send_scr_to_node(
             timeout=2,
         ),
     ))
+
+
+@pytest.mark.parametrize(
+    'offset, limit, expected_count', (
+        (None, None, 2),
+        (None, 1, 1),
+        (1, None, 1),
+        (2, None, 0),
+        (2, 1, 0),
+    )
+)
+@pytest.mark.usefixtures('rich_blockchain')
+def test_list_nodes(offset, limit, expected_count, smart_mocked_node_client):
+    client = smart_mocked_node_client
+
+    response = client.list_nodes('http://testserver/', offset, limit)
+    assert response.status_code == 200
+    message = response.json()
+    assert len(message['results']) == expected_count

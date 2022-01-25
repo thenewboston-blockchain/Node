@@ -27,7 +27,7 @@ def web_client():
 @pytest.fixture
 def mocked_node_client():
     client = NodeClient()
-    with patch.object(client, 'requests_post'):
+    with patch.object(client, 'requests_post'), patch.object(client, 'requests_get'):
         yield client
 
 
@@ -77,7 +77,11 @@ def smart_mocked_node_client(api_client):
         'attribute': 'requests_post',
         'new': partial(client_method_wrapper, api_client.post, client.requests_post),
     }
-    with patch.object(client, **post_arguments):
+    get_arguments = {
+        'attribute': 'requests_get',
+        'new': partial(client_method_wrapper, api_client.get, client.requests_get),
+    }
+    with patch.object(client, **post_arguments), patch.object(client, **get_arguments):
         yield client
 
 
