@@ -5,7 +5,7 @@ from urllib.parse import urlencode, urljoin
 
 import requests
 
-from node.blockchain.inner_models import Node, SignedChangeRequest
+from node.blockchain.inner_models import Block, Node, SignedChangeRequest
 
 logger = logging.getLogger(__name__)
 
@@ -181,14 +181,22 @@ class NodeClient:
             offset += len(nodes)
 
     @from_node
-    def list_nodes(self, /, address: str) -> list[Node]:
+    def list_nodes(self, /, address: Union[str, Node]) -> list[Node]:
         return list(self.yield_nodes(address))
 
     @from_node
-    def get_block_raw(self, /, address: str, block_number: Union[int, str]) -> Optional[str]:
+    def get_block_raw(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[str]:
         response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
         if response is None or response.status_code == 404:
             return None
 
         response.raise_for_status()
         return response.content.decode('utf-8')
+
+    @from_node
+    def get_block(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[Block]:
+        block = self.get_block_raw(address, block_number)
+        if block is None:
+            return None
+
+        return Block.parse_raw(block)
