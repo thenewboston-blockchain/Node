@@ -1,11 +1,15 @@
+from types import GeneratorType
 from unittest.mock import MagicMock, call
 
 import pytest
 from requests.exceptions import HTTPError
 
 from node.blockchain.facade import BlockchainFacade
+from node.blockchain.inner_models.node import Node as InnerNode
 from node.blockchain.models import Block, Node
+from node.blockchain.tests.base import get_node_declaration_signed_change_request
 from node.core.tests.base import make_node
+from node.core.utils.cryptography import generate_key_pair, get_node_identifier
 
 
 def test_send_scr_to_address(
@@ -100,22 +104,64 @@ def test_get_block_raw_last_from_empty_blockchain(test_server_address, smart_moc
     assert block is None
 
 
-# TODO(dmu) CRITICAL: Fix the unittest
-@pytest.mark.skip('Failing')
-@pytest.mark.parametrize(
-    'offset, limit, expected_count', (
-        (None, None, 2),
-        (None, 1, 1),
-        (1, None, 1),
-        (2, None, 0),
-        (2, 1, 0),
-    )
-)
 @pytest.mark.usefixtures('rich_blockchain')
-def test_list_nodes(offset, limit, expected_count, test_server_address, smart_mocked_node_client):
+def test_list_nodes(test_server_address, smart_mocked_node_client):
     client = smart_mocked_node_client
 
-    response = client.list_nodes(test_server_address, offset, limit)
-    assert response.status_code == 200
-    message = response.json()
-    assert len(message['results']) == expected_count
+    node_generator = client.list_nodes(test_server_address)
+
+    assert isinstance(node_generator, GeneratorType)
+    nodes = list(node_generator)
+    assert len(nodes) == 3
+
+    node1, node2, node3 = nodes
+
+    assert isinstance(node1, InnerNode)
+    assert node1.identifier == '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
+    assert node1.addresses == [
+        'http://not-existing-node-address-674898923.com:8555/',
+    ]
+    assert node1.fee == 4
+
+    assert isinstance(node2, InnerNode)
+    assert node2.identifier == get_node_identifier()
+    assert node2.addresses == [
+        'http://not-existing-self-address-674898923.com:8555/',
+    ]
+    assert node2.fee == 4
+
+    assert isinstance(node3, InnerNode)
+    assert node3.identifier == 'b9dc49411424cce606d27eeaa8d74cb84826d8a1001d17603638b73bdc6077f1'
+    assert node3.addresses == [
+        'http://not-existing-primary-validator-address-674898923.com:8555/',
+    ]
+    assert node3.fee == 4
+
+
+@pytest.mark.django_db
+def test_list_nodes_without_nodes(test_server_address, smart_mocked_node_client):
+    client = smart_mocked_node_client
+    node_generator = client.list_nodes(test_server_address)
+    nodes = list(node_generator)
+    assert len(nodes) == 0
+
+
+@pytest.mark.django_db
+def test_list_nodes_pagination(test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    for _ in range(24):
+        node_key_pair = generate_key_pair()
+        node = make_node(node_key_pair, [primary_validator_node.addresses[0], 'http://testserver/'])
+        node_declaration_scr = get_node_declaration_signed_change_request(node, node_key_pair)
+        Block.objects.add_block_from_signed_change_request(
+            signed_change_request=node_declaration_scr,
+            blockchain_facade=blockchain_facade,
+            signing_key=node_key_pair.private,
+            validate=False,
+        )
+
+    client = smart_mocked_node_client
+    node_generator = client.list_nodes(test_server_address)
+    nodes = list(node_generator)
+    assert len(nodes) == 25

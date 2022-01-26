@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Type, TypeVar, Union
+from typing import Generator, Optional, Type, TypeVar, Union
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound='NodeClient')
 
 DEFAULT_TIMEOUT = 2
+LIST_NODES_LIMIT = 20
 
 
 def setdefault_if_not_none(dict_, key, value):
@@ -130,8 +131,22 @@ class NodeClient:
         else:
             raise ConnectionError(f'Could not send signed change request to {node}')
 
-    def list_nodes(self, address: str, offset=None, limit=None) -> list[Node]:
-        return self.list_resource(address, 'nodes', offset=offset, limit=limit)
+    def list_nodes(self, address: str) -> Generator[Node, None, None]:
+        offset = 0
+        while True:
+            response = self.list_resource(address, 'nodes', offset=offset, limit=LIST_NODES_LIMIT)
+            if response is None:
+                break
+
+            nodes = response.json().get('results')
+            if not nodes:
+                break
+
+            for node_dict in nodes:
+                node = Node.parse_obj(node_dict)
+                yield node
+
+            offset += len(nodes)
 
     def get_block_raw(self, address: str, block_number: Union[int, str]) -> Optional[str]:
         response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
