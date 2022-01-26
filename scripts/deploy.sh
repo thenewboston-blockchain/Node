@@ -21,7 +21,7 @@ else
   docker login --username "$GITHUB_USERNAME" --password "$GITHUB_PASSWORD" $DOCKER_REGISTRY_HOST
 fi
 
-wget https://raw.githubusercontent.com/thenewboston-developers/Node/development/docker-compose.yml -O docker-compose.yml
+wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/docker-compose.yml -O docker-compose.yml
 
 test -f .env || touch .env
 grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$(xxd -l 16 -p /dev/urandom)" >>.env
