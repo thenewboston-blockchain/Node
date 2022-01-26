@@ -1,10 +1,14 @@
+import functools
 from collections import defaultdict
-from typing import Optional
+from itertools import islice
+from typing import Optional, Union
 
-from node.blockchain.inner_models.node import Node
+from node.blockchain.inner_models import Block, Node
 from node.core.clients.node import NodeClient
 
-node_block_cache: dict = {}
+from ..constants import LAST_BLOCK_ID
+
+node_block_cache: dict[tuple, Optional[Block]] = {}
 
 
 def get_nodes_for_syncing() -> list[Node]:
@@ -16,57 +20,79 @@ def get_nodes_for_syncing() -> list[Node]:
     return []
 
 
-def get_node_block(node: Node, block_number: int):
-    key = (node.identifier, block_number)
+def get_node_block(node: Node, block_number: Union[int, str]) -> Optional[Block]:
+    node_identifier = node.identifier
+    key = (node_identifier, block_number)
     if key in node_block_cache:
         block = node_block_cache[key]
     else:
         # We cache None with a meaning that a node does not have such a block
-        node_block_cache[key] = block = NodeClient.get_instance().get_block_raw(node, block_number)
+        node_block_cache[key] = block = NodeClient.get_instance().get_block(node, block_number)
+        if block is not None and isinstance(block_number, str):
+            node_block_cache[(node_identifier, block.get_block_number())] = block
 
     return block
 
 
-def get_node_last_block_number(node):
-    raise NotImplementedError
-
-
-def get_node_block_hash(node, block_number):
-    raise NotImplementedError
-
-
-def enrich_with_last_block_number(nodes):
+def get_available_nodes(nodes: list[Node]):
+    available_nodes = []
     for node in nodes:
-        node.last_block_number = get_node_last_block_number(node)
-
-
-def get_nodes_majority(nodes: list[Node]) -> Optional[list[Node]]:
-    node_block_cache.clear()
-
-    # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-186
-    clusters = defaultdict(set)
-    enrich_with_last_block_number(nodes)
-    # TODO(dmu) CRITICAL: Filter out offline nodes
-    filtered_nodes = nodes
-    sorted_nodes = sorted(filtered_nodes, key=lambda x: x.last_block_number)
-    for node_index in range(len(sorted_nodes)):
-        node = sorted_nodes[node_index]
-        block_number = node.last_block_number
-
-        block_hash = get_node_block_hash(node, block_number)
-        clusters[(block_number, block_hash)].add(node)
-        for other_node_index in range(node_index + 1, len(sorted_nodes)):
-            other_node = sorted_nodes[other_node_index]
-            block_hash = get_node_block_hash(other_node, block_number)
-            clusters[(block_number, block_hash)].add(other_node)
-
-    majority_count = len(nodes) // 2 + 1
-
-    clusters_sorted = sorted(((key[0], key[1], len(value)) for key, value in clusters.items()), key=lambda x: x[2])
-    for cluster_sorted in clusters_sorted:
-        if cluster_sorted[2] < majority_count:
+        last_block = get_node_block(node, LAST_BLOCK_ID)
+        if last_block is None:
             continue
 
-        return list(clusters[(cluster_sorted[0], cluster_sorted[1])])
+        node.last_block = last_block
+        available_nodes.append(node)
 
-    return None
+    return available_nodes
+
+
+def clusterize_nodes(nodes):
+    clusters = defaultdict(set)
+    nodes = sorted(nodes, key=lambda _node: _node.last_block.get_block_number())
+    for node_index, node in enumerate(nodes):
+        last_block = node.last_block
+        last_block_hash = last_block.make_hash()
+
+        block_number = last_block.get_block_number()
+        clusters[(block_number, last_block_hash)].add(node)
+
+        for other_node in islice(nodes, node_index + 1, len(nodes)):
+            block = get_node_block(other_node, block_number)
+            if block is None:
+                continue
+
+            assert block.get_block_number() == block_number
+
+            clusters[(block_number, block.make_hash())].add(other_node)
+
+    return clusters
+
+
+def get_best_cluster(clusters, majority_count):
+    clusters = list(filter(lambda cluster: len(cluster) >= majority_count, clusters))
+    if not clusters:
+        return None
+
+    return max(clusters, key=lambda cluster: len(cluster))
+
+
+def clear_cache(func):
+
+    @functools.wraps
+    def wrapper(*args, **kwargs):
+        node_block_cache.clear()
+        rv = func(*args, **kwargs)
+        node_block_cache.clear()
+        return rv
+
+    return wrapper
+
+
+@clear_cache
+def get_nodes_majority(nodes: list[Node]) -> Optional[list[Node]]:
+    available_nodes = get_available_nodes(nodes)
+    majority_count = len(available_nodes) // 2 + 1
+
+    clusters = list(clusterize_nodes(available_nodes).values())
+    return list(get_best_cluster(clusters, majority_count))

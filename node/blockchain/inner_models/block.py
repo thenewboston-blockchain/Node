@@ -27,6 +27,9 @@ class Block(BlockType, HashableMixin):
         assert class_  # because message.type should be validated by now
         return class_.parse_obj(*args, **kwargs)
 
+    def get_block_number(self):
+        return self.message.number
+
 
 class GenesisBlock(Block):
     message: GenesisBlockMessage

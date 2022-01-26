@@ -5,7 +5,7 @@ from node.blockchain.models import Block
 from node.blockchain.serializers.block import BlockSerializer
 from node.core.pagination import CustomLimitOffsetNoCountPagination
 
-LAST_BLOCK_ID = 'last'
+from ..constants import LAST_BLOCK_ID
 
 
 class BlockViewSet(ReadOnlyModelViewSet):
