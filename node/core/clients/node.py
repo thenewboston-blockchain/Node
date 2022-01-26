@@ -1,3 +1,4 @@
+import functools
 import logging
 from typing import Generator, Optional, Type, TypeVar, Union
 from urllib.parse import urlencode, urljoin
@@ -17,6 +18,37 @@ LIST_NODES_LIMIT = 20
 def setdefault_if_not_none(dict_, key, value):
     if value is not None:
         dict_.setdefault(key, value)
+
+
+def from_node(method):
+
+    @functools.wraps(method)
+    def wrapper(self, source: Union[str, Node], *args, **kwargs):
+        if isinstance(source, str):
+            return method(self, source, *args, **kwargs)
+
+        assert isinstance(source, Node)
+
+        for address in source.addresses:
+            try:
+                rv = method(self, source, *args, **kwargs)
+            except Exception:
+                exc_info = True
+                rv = None
+            else:
+                exc_info = False
+
+            if exc_info or rv is None:
+                logger.warning('Could not get result for %s(%s, ...)', method.__name__, address, exc_info=exc_info)
+                continue
+
+            return rv
+
+        # TODO(dmu) LOW: Is it better to reraise last exception. What if there was not exception.
+        #                Need to decide what is better return or raise exception in general
+        return None
+
+    return wrapper
 
 
 class NodeClient:
@@ -131,7 +163,7 @@ class NodeClient:
         else:
             raise ConnectionError(f'Could not send signed change request to {node}')
 
-    def list_nodes(self, address: str) -> Generator[Node, None, None]:
+    def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
         offset = 0
         while True:
             response = self.list_resource(address, 'nodes', offset=offset, limit=LIST_NODES_LIMIT)
@@ -148,7 +180,12 @@ class NodeClient:
 
             offset += len(nodes)
 
-    def get_block_raw(self, address: str, block_number: Union[int, str]) -> Optional[str]:
+    @from_node
+    def list_nodes(self, /, address: str) -> list[Node]:
+        return list(self.yield_nodes(address))
+
+    @from_node
+    def get_block_raw(self, /, address: str, block_number: Union[int, str]) -> Optional[str]:
         response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
         if response is None or response.status_code == 404:
             return None

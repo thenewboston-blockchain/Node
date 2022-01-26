@@ -105,10 +105,10 @@ def test_get_block_raw_last_from_empty_blockchain(test_server_address, smart_moc
 
 
 @pytest.mark.usefixtures('rich_blockchain')
-def test_list_nodes(test_server_address, smart_mocked_node_client):
+def test_yield_nodes(test_server_address, smart_mocked_node_client):
     client = smart_mocked_node_client
 
-    node_generator = client.list_nodes(test_server_address)
+    node_generator = client.yield_nodes(test_server_address)
 
     assert isinstance(node_generator, GeneratorType)
     nodes = list(node_generator)
@@ -139,15 +139,17 @@ def test_list_nodes(test_server_address, smart_mocked_node_client):
 
 
 @pytest.mark.django_db
-def test_list_nodes_without_nodes(test_server_address, smart_mocked_node_client):
+def test_yield_nodes_without_nodes(test_server_address, smart_mocked_node_client):
     client = smart_mocked_node_client
-    node_generator = client.list_nodes(test_server_address)
+    node_generator = client.yield_nodes(test_server_address)
     nodes = list(node_generator)
     assert len(nodes) == 0
 
 
 @pytest.mark.django_db
-def test_list_nodes_pagination(test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node):
+def test_yield_nodes_pagination(
+    test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node
+):
     blockchain_facade = BlockchainFacade.get_instance()
 
     for _ in range(24):
@@ -162,6 +164,6 @@ def test_list_nodes_pagination(test_server_address, base_blockchain, smart_mocke
         )
 
     client = smart_mocked_node_client
-    node_generator = client.list_nodes(test_server_address)
+    node_generator = client.yield_nodes(test_server_address)
     nodes = list(node_generator)
     assert len(nodes) == 25
