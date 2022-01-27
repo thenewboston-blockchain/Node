@@ -86,5 +86,11 @@ def smart_mocked_node_client(api_client):
 
 
 @pytest.fixture
+def force_smart_mocked_node_client(smart_mocked_node_client):
+    with patch.object(NodeClient, '_instance', new=smart_mocked_node_client):
+        yield
+
+
+@pytest.fixture
 def test_server_address():
     return TEST_SERVER_ADDRESS
