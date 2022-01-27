@@ -31,7 +31,7 @@ def from_node(method):
 
         for address in source.addresses:
             try:
-                rv = method(self, source, *args, **kwargs)
+                rv = method(self, address, *args, **kwargs)
             except Exception:
                 exc_info = True
                 rv = None
@@ -39,7 +39,9 @@ def from_node(method):
                 exc_info = False
 
             if exc_info or rv is None:
-                logger.warning('Could not get result for %s(%s, ...)', method.__name__, address, exc_info=exc_info)
+                logger.warning(
+                    'Could not get result for %s(%r, ...)', method.__name__, str(address), exc_info=exc_info
+                )
                 continue
 
             return rv

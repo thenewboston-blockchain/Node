@@ -82,9 +82,10 @@ def clear_cache(func):
     @functools.wraps
     def wrapper(*args, **kwargs):
         node_block_cache.clear()
-        rv = func(*args, **kwargs)
-        node_block_cache.clear()
-        return rv
+        try:
+            return func(*args, **kwargs)
+        finally:
+            node_block_cache.clear()
 
     return wrapper
 

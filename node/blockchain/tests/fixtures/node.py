@@ -9,6 +9,11 @@ def regular_node(regular_node_key_pair):
 
 
 @pytest.fixture
+def test_server_address_regular_node(regular_node_key_pair, test_server_address):
+    return make_node(regular_node_key_pair, [test_server_address])
+
+
+@pytest.fixture
 def primary_validator_node(primary_validator_key_pair):
     return make_node(primary_validator_key_pair, ['http://not-existing-primary-validator-address-674898923.com:8555/'])
 
