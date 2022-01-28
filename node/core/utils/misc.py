@@ -5,6 +5,13 @@ from .types import hexstr
 SENTINEL = object()
 
 
+class Wrapper:
+
+    def __init__(self, body, **kwargs):
+        self.body = body
+        self.__dict__.update(kwargs)
+
+
 def yaml_coerce(value):
     if isinstance(value, str):
         return yaml.load('dummy: ' + value, Loader=yaml.SafeLoader)['dummy']
