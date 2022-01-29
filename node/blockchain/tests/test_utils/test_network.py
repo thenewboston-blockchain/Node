@@ -4,7 +4,9 @@ import pytest
 
 from node.blockchain.inner_models import Node
 from node.blockchain.models import Block
-from node.blockchain.utils.network import clusterize_nodes, get_best_cluster, get_node_block, node_block_cache
+from node.blockchain.utils.network import (
+    clusterize_nodes, get_best_cluster, get_node_block, get_nodes_majority, node_block_cache
+)
 from node.core.clients.node import NodeClient
 from node.core.utils.misc import Wrapper
 
@@ -123,3 +125,72 @@ def test_clusterize_nodes_and_get_best_cluster():
     best_cluster = get_best_cluster(clusters, 4)
     # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
     assert set(node.identifier for node in cluster2) == set(node.identifier for node in best_cluster)
+
+
+def test_get_nodes_majority():
+
+    def make_block(block_number):
+        return MagicMock(
+            **{
+                'get_block_number.return_value': block_number,
+                'make_hash.return_value': str(block_number)
+            }
+        )
+
+    node_clusters_1_2_3 = Node(identifier='0' * 64, addresses=['http://n0/'], fee=0)
+    node_1_clusters_1_2 = Node(identifier='1' * 64, addresses=['http://n1/'], fee=0)
+    node_2_clusters_1_2 = Node(identifier='2' * 64, addresses=['http://n2/'], fee=0)
+    node_3_clusters_1_2 = Node(identifier='3' * 64, addresses=['http://n3/'], fee=0)
+    node_clusters_1 = Node(identifier='4' * 64, addresses=['http://n4/'], fee=0)
+    node_clusters_4 = Node(identifier='5' * 64, addresses=['http://n5/'], fee=0)
+
+    block_2 = make_block(2)
+    last_block_map = {
+        node_clusters_1_2_3.identifier:
+            make_block(3),
+        node_1_clusters_1_2.identifier:
+            block_2,
+        node_2_clusters_1_2.identifier:
+            block_2,
+        node_3_clusters_1_2.identifier:
+            block_2,
+        node_clusters_1.identifier:
+            make_block(1),
+        node_clusters_4.identifier:
+            MagicMock(**{
+                'get_block_number.return_value': 3,
+                'make_hash.return_value': 'another_3',
+            })
+    }
+
+    best_cluster = [node_clusters_1_2_3, node_1_clusters_1_2, node_2_clusters_1_2, node_3_clusters_1_2]
+    nodes = [
+        # List is randomized on purpose: for better test coverage on random data
+        node_1_clusters_1_2,
+        node_clusters_1,
+        node_3_clusters_1_2,
+        node_clusters_1_2_3,
+        node_2_clusters_1_2,
+        node_clusters_4
+    ]
+
+    def get_block_node(node, block_number):
+        if block_number == 'last':
+            return last_block_map[node.identifier]
+
+        if node.identifier == node_clusters_4.identifier:
+            return MagicMock(
+                **{
+                    'get_block_number.return_value': block_number,
+                    'make_hash.return_value': f'another_{block_number}',
+                }
+            )
+
+        return make_block(block_number)
+
+    with patch('node.blockchain.utils.network.get_node_block', new=get_block_node):
+        majority = get_nodes_majority(nodes)
+
+    assert majority is not None
+    # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
+    assert set(node.identifier for node in majority) == set(node.identifier for node in best_cluster)

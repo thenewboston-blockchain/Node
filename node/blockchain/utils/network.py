@@ -99,7 +99,7 @@ def get_best_cluster(clusters, majority_count):
 
 def clear_cache(func):
 
-    @functools.wraps
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         node_block_cache.clear()
         try:
