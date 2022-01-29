@@ -1,7 +1,19 @@
+from djongo.models.fields import DjongoManager
+
+from node.core.managers import CustomQuerySet
+
 from .account_state import AccountState
 
 
+class NodeManager(DjongoManager.from_queryset(CustomQuerySet)):  # type: ignore
+
+    def get_queryset(self):
+        return super().get_queryset().filter(node__isnull=False)
+
+
 class Node(AccountState):
+
+    objects = NodeManager()
 
     class Meta:
         proxy = True

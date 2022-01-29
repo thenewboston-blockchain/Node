@@ -9,7 +9,7 @@ SELF_NODE_ID = 'self'
 
 class NodeViewSet(ReadOnlyModelViewSet):
     serializer_class = NodeSerializer
-    queryset = NodeSerializer.Meta.model.objects.filter(node__isnull=False).order_by('_id')
+    queryset = NodeSerializer.Meta.model.objects.order_by('_id')
     pagination_class = CustomLimitOffsetPagination
 
     def retrieve(self, request, *args, **kwargs):

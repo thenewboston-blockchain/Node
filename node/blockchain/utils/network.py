@@ -4,7 +4,9 @@ from itertools import islice
 from typing import Optional, Union
 
 from node.blockchain.inner_models import Block, Node
+from node.blockchain.models.node import Node as ORMNode
 from node.core.clients.node import NodeClient
+from node.core.utils.cryptography import get_node_identifier
 from node.core.utils.misc import Wrapper
 
 from ..constants import LAST_BLOCK_ID
@@ -13,11 +15,14 @@ node_block_cache: dict[tuple, Optional[Block]] = {}
 
 
 def get_nodes_for_syncing() -> list[Node]:
-    # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-164
-    #                     If local blockchain contains at least one node then use nodes from local blockchain
-    #                     Otherwise try to get nodes from thenewboston.com end-point
-    #                     Otherwise use nodes from JSON-file (stored during docker image build)
-    #                     Otherwise return an empty list of nodes
+    nodes = ORMNode.objects.exclude(_id=get_node_identifier()).all()
+    if nodes:
+        return nodes
+
+    # TODO(dmu) HIGH: Otherwise try to get nodes from thenewboston.com end-point (use ThenewbostonComClient)
+    #                 https://thenewboston.atlassian.net/browse/BC-185
+    # TODO(dmu) CRITICAL: Otherwise use nodes from JSON-file (stored during docker image build)
+    #                     https://thenewboston.atlassian.net/browse/BC-224
     return []
 
 
