@@ -85,7 +85,6 @@ jobs:
           tags: ghcr.io/thenewboston-developers/node:latest
           push: true
           # TODO(dmu) LOW: Make a better way of forcing the download of latest blockchain state
-          #                https://thenewboston.atlassian.net/browse/BC-184
           no-cache: true
       - name: Push node-mongo image to Github Packages
         uses: docker/build-push-action@v2
