@@ -15,13 +15,15 @@ ENV TNB_IN_DOCKER true
 RUN set -xe \
     && apt-get update \
     && apt-get install build-essential \
-    && pip install pip==21.3.1 virtualenvwrapper poetry==1.1.12
+    && pip install pip==22.0.2 virtualenvwrapper poetry==1.1.12
 
 # For image build optimization purposes we install depdendencies here (so changes in the source code will not
 # require dependencies reinstallation)
 COPY ["pyproject.toml", "poetry.lock", "./"]
-RUN poetry run pip install pip==21.3.1
+RUN poetry run pip install pip==22.0.2
 RUN poetry install
+
+COPY nodes-list.json ./
 
 COPY ["LICENSE", "README.rst", "./"]
 COPY node node

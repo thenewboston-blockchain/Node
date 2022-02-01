@@ -69,3 +69,6 @@ venv/
 .DS_Store
 .idea
 .vscode
+
+# Node
+nodes-list.json

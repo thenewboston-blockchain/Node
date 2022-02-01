@@ -107,12 +107,12 @@ class NodeClient:
 
         return response
 
-    def http_get(self, network_address, resource, *, resource_id=None, parameters=None, should_raise=True):
+    def http_get(self, address, resource, *, resource_id=None, parameters=None, should_raise=True):
         path = f'/api/{resource}/'
         if resource_id is not None:
             path += f'{resource_id}/'
 
-        url = urljoin(network_address, path)
+        url = urljoin(address, path)
         if parameters:
             url += '?' + urlencode(parameters)
 

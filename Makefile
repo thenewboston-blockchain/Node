@@ -2,7 +2,7 @@
 build: build-node build-reverse-proxy build-node-mongo;
 
 .PHONY: build-node
-build-node:
+build-node: generate-list-nodes-file
 	docker build . --build-arg RESET_DOCKER_CACHE="$$(date)" --target=node -t node:current
 
 .PHONY: build-reverse-proxy
@@ -74,6 +74,10 @@ migrations:
 .PHONY: genesis
 genesis:
 	poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+
+.PHONY: generate-list-nodes-file
+generate-list-nodes-file:
+	poetry run python -m node.manage list_nodes http://34.221.75.138:8555/ > nodes-list.json
 
 .PHONY: dot-env
 dot-env:
