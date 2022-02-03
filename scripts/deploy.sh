@@ -8,7 +8,7 @@ DOCKER_REGISTRY_HOST=ghcr.io
 #                   this script instead of using positional arguments
 GITHUB_USERNAME="${GITHUB_USERNAME:-$1}"
 GITHUB_PASSWORD="${GITHUB_PASSWORD:-$2}"
-CONTINUOUS_DEPLOYMENT_ENABLED="${CONTINUOUS_DEPLOYMENT_ENABLED:-$3}"
+RUN_GENESIS="${RUN_GENESIS:-$3}"
 
 docker logout $DOCKER_REGISTRY_HOST
 
@@ -48,7 +48,7 @@ fi
 docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
-if [ "$CONTINUOUS_DEPLOYMENT_ENABLED" == True ]; then
+if [ "$RUN_GENESIS" == True ]; then
   docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 fi
 

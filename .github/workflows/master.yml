@@ -128,7 +128,11 @@ jobs:
           DEPLOY_SSH_USER: ${{ secrets.NODE_DEPLOY_SSH_USER }}
 
       - name: Run deploy
+        # TODO(dmu) MEDIUM: Once/if github implements secrets on job level
+        #                   https://github.com/actions/runner/issues/520#issuecomment-877193387
+        if: ${{ env.CONTINUOUS_DEPLOYMENT_ENABLED == 'True' }}
         run: |
-          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} {{ env.CONTINUOUS_DEPLOYMENT_ENABLED }} && rm -f /tmp/deploy-node.sh"
+          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} {{ env.RUN_GENESIS }} && rm -f /tmp/deploy-node.sh"
         env:
           CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
+          RUN_GENESIS: ${{ secrets.NODE_RUN_GENESIS }}
