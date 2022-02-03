@@ -49,7 +49,10 @@ docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
 if [ "$RUN_GENESIS" == True ]; then
+  echo 'Running genesis'
   docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+else
+  echo 'Not running genesis'
 fi
 
 counter=0

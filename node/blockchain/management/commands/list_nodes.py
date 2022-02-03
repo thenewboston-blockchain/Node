@@ -15,8 +15,5 @@ class Command(BaseCommand):
         parser.add_argument('node_address')
 
     def handle(self, node_address: str, *args, **options):
-        node_client = NodeClient.get_instance()
-        nodes = []
-        for node in node_client.yield_nodes(node_address):
-            nodes.append(node.dict())
-        self.stdout.write(json.dumps(nodes))
+        nodes = [node.dict() for node in NodeClient.get_instance().yield_nodes(node_address)]
+        self.stdout.write(json.dumps(nodes, separators=(',', ':')))
