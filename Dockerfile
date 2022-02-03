@@ -1,5 +1,7 @@
 FROM python:3.9.9-buster AS node
 
+ARG NODE_LIST_SOURCE=http://34.221.75.138:8555/
+
 WORKDIR /opt/project
 
 EXPOSE 8555
@@ -15,12 +17,12 @@ ENV TNB_IN_DOCKER true
 RUN set -xe \
     && apt-get update \
     && apt-get install build-essential \
-    && pip install pip==21.3.1 virtualenvwrapper poetry==1.1.12
+    && pip install pip==22.0.2 virtualenvwrapper poetry==1.1.12
 
 # For image build optimization purposes we install depdendencies here (so changes in the source code will not
 # require dependencies reinstallation)
 COPY ["pyproject.toml", "poetry.lock", "./"]
-RUN poetry run pip install pip==21.3.1
+RUN poetry run pip install pip==22.0.2
 RUN poetry install
 
 COPY ["LICENSE", "README.rst", "./"]
@@ -29,6 +31,8 @@ RUN poetry install  # this installs just the source code itself, since dependenc
 
 COPY scripts/dockerized-node-run.sh ./run.sh
 RUN chmod a+x run.sh
+
+RUN TNB_SECRET_KEY=dummy TNB_NODE_SIGNING_KEY=dummy poetry run python -m node.manage list_nodes $NODE_LIST_SOURCE > node-list.json
 
 FROM nginx:1.20.2-alpine AS node-reverse-proxy
 
