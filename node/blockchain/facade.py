@@ -97,6 +97,14 @@ class BlockchainFacade:
         for block_number, node_identifier in schedule.items():
             Schedule.objects.create(_id=block_number, node_identifier=node_identifier)
 
+    @staticmethod
+    def clear():
+        get_block_model().objects.all().delete()
+
+        AccountState.objects.all().delete()
+        from node.blockchain.models import Schedule
+        Schedule.objects.all().delete()
+
     def update_write_through_cache(self, block):
         block_message_update = block.message.update
 
