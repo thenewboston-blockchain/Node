@@ -10,6 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH .
 ENV TNB_IN_DOCKER true
+# TODO(dmu) LOW: Is there a way to read WORKDIR value instead of hardcoding `/opt/project`?
+ENV TNB_NODE_LIST_JSON_PATH /opt/project/node-list.json
 
 # TODO(dmu) LOW: Optimize images size by deleting no longer needed files after installation
 # We added build-essential to avoid hard to track issues later if add some package that requires it.
@@ -32,7 +34,7 @@ RUN poetry install  # this installs just the source code itself, since dependenc
 COPY scripts/dockerized-node-run.sh ./run.sh
 RUN chmod a+x run.sh
 
-RUN TNB_SECRET_KEY=dummy TNB_NODE_SIGNING_KEY=dummy poetry run python -m node.manage list_nodes $NODE_LIST_SOURCE > node-list.json
+RUN TNB_SECRET_KEY=dummy TNB_NODE_SIGNING_KEY=dummy poetry run python -m node.manage list_nodes $NODE_LIST_SOURCE > $TNB_NODE_LIST_JSON_PATH
 
 FROM nginx:1.20.2-alpine AS node-reverse-proxy
 

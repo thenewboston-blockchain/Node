@@ -1,14 +1,22 @@
+from operator import attrgetter
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.test import override_settings
 
 from node.blockchain.inner_models import Node
 from node.blockchain.models import Block
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.utils.network import (
-    clusterize_nodes, get_best_cluster, get_node_block, get_nodes_majority, node_block_cache
+    clusterize_nodes, get_best_cluster, get_node_block, get_nodes_for_syncing, get_nodes_majority, node_block_cache
 )
 from node.core.clients.node import NodeClient
+from node.core.utils.cryptography import get_node_identifier
 from node.core.utils.misc import Wrapper
+
+
+def sort_nodes(nodes):
+    return sorted(nodes, key=attrgetter('identifier'))
 
 
 @pytest.mark.parametrize('block_number', (1, 'last'))
@@ -194,3 +202,20 @@ def test_get_nodes_majority():
     assert majority is not None
     # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
     assert set(node.identifier for node in majority) == set(node.identifier for node in best_cluster)
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+def test_get_nodes_for_syncing(node_list_json_file_content, node_list_json_file):
+    assert ORMNode.objects.all().exists()
+    nodes = get_nodes_for_syncing()
+    self_identifier = get_node_identifier()
+    assert sort_nodes(nodes) == sort_nodes(
+        (node.get_node() for node in ORMNode.objects.all() if node.identifier != self_identifier)
+    )
+
+    ORMNode.objects.all().delete()
+    assert get_nodes_for_syncing() == []
+
+    expected_nodes = sort_nodes((Node(**item) for item in node_list_json_file_content))
+    with override_settings(NODE_LIST_JSON_PATH=node_list_json_file.name):
+        assert expected_nodes == sort_nodes(get_nodes_for_syncing())
