@@ -51,7 +51,7 @@ class Command(CustomCommand):
 
         with transaction.atomic():
             if does_exist:
-                Block.objects.all().delete()
+                blockchain_facade.clear()
 
             Block.objects.add_block_from_block_message(
                 block_message, blockchain_facade, signing_key=signing_key, validate=False

@@ -43,14 +43,21 @@ def get_nodes_from_json_file(path) -> list[Node]:
 def get_nodes_for_syncing() -> list[Node]:
     nodes = ORMNode.objects.exclude(_id=get_node_identifier()).all()
     if nodes:
+        logger.debug('Got nodes from local blockchain')
         return [node.get_node() for node in nodes]
+    logger.debug('No nodes in local blockchain')
 
     # TODO(dmu) HIGH: Otherwise try to get nodes from thenewboston.com end-point (use ThenewbostonComClient)
     #                 https://thenewboston.atlassian.net/browse/BC-185
     path = settings.NODE_LIST_JSON_PATH
     if path:
-        return get_nodes_from_json_file(path)
+        nodes = get_nodes_from_json_file(path)
+        logger.debug('Got nodes from %s', path)
+        if nodes:
+            return nodes
+    logger.debug('No nodes in node list json file (%s)', path)
 
+    logger.debug('Nodes for syncing were not found')
     return []
 
 
