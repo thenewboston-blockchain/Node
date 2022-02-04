@@ -1,7 +1,11 @@
 import functools
+import json
+import logging
 from collections import defaultdict
 from itertools import islice
 from typing import Optional, Union
+
+from django.conf import settings
 
 from node.blockchain.inner_models import Block, Node
 from node.blockchain.models.node import Node as ORMNode
@@ -11,18 +15,42 @@ from node.core.utils.misc import Wrapper
 
 from ..constants import LAST_BLOCK_ID
 
+logger = logging.getLogger(__name__)
+
 node_block_cache: dict[tuple, Optional[Block]] = {}
+
+
+def get_nodes_from_json_file(path) -> list[Node]:
+    try:
+        with open(path) as fp:
+            nodes_json = json.load(fp)
+    except Exception:
+        logger.warning('Unable to load nodes from %s', path, exc_info=True)
+
+    nodes = []
+    for node_json in nodes_json:
+        try:
+            node = Node.parse_obj(node_json)
+        except Exception:
+            logger.warning('Skipping invalid node: %s', node_json, exc_info=True)
+            continue
+
+        nodes.append(node)
+
+    return nodes
 
 
 def get_nodes_for_syncing() -> list[Node]:
     nodes = ORMNode.objects.exclude(_id=get_node_identifier()).all()
     if nodes:
-        return nodes
+        return [node.get_node() for node in nodes]
 
     # TODO(dmu) HIGH: Otherwise try to get nodes from thenewboston.com end-point (use ThenewbostonComClient)
     #                 https://thenewboston.atlassian.net/browse/BC-185
-    # TODO(dmu) CRITICAL: Otherwise use nodes from JSON-file (stored during docker image build)
-    #                     https://thenewboston.atlassian.net/browse/BC-224
+    path = settings.NODE_LIST_JSON_PATH
+    if path:
+        return get_nodes_from_json_file(path)
+
     return []
 
 

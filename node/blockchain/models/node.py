@@ -1,5 +1,6 @@
 from djongo.models.fields import DjongoManager
 
+from node.blockchain.inner_models import Node as PydanticNode
 from node.core.managers import CustomQuerySet
 
 from .account_state import AccountState
@@ -32,3 +33,10 @@ class Node(AccountState):
     @property
     def fee(self):
         return self.get_node_attribute('fee')
+
+    def get_node(self) -> PydanticNode:
+        return PydanticNode(
+            identifier=self.identifier,
+            addresses=self.addresses,
+            fee=self.fee,
+        )
