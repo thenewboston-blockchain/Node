@@ -15,7 +15,7 @@ from ..signed_change_request_message import SignedChangeRequestMessage
 T = TypeVar('T', bound='SignedChangeRequest')
 
 
-class SignedChangeRequest(BaseModel, HashableMixin, ValidatableMixin):
+class SignedChangeRequest(ValidatableMixin, BaseModel, HashableMixin):
     signer: AccountNumber
     signature: Signature
     message: SignedChangeRequestMessage
@@ -56,11 +56,15 @@ class SignedChangeRequest(BaseModel, HashableMixin, ValidatableMixin):
         validate_signature_helper(values)
         return values
 
+    def validate_business_logic(self):
+        self.message.validate_business_logic()
+
     def validate_account_lock(self, blockchain_facade):
         if blockchain_facade.get_account_lock(self.signer) != self.message.account_lock:
             raise ValidationError('Invalid account lock')
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
+        self.message.validate_blockchain_state_dependent(blockchain_facade)
         self.validate_account_lock(blockchain_facade)
 
     def get_type(self):

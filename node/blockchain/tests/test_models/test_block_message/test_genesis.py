@@ -1,6 +1,12 @@
+import json
 from datetime import datetime
 
-from node.blockchain.inner_models import AccountState, BlockMessage, GenesisBlockMessage, GenesisSignedChangeRequest
+import pytest
+from pydantic.error_wrappers import ValidationError as PydanticValidationError
+
+from node.blockchain.inner_models import (
+    AccountState, BlockMessage, BlockMessageUpdate, GenesisBlockMessage, GenesisSignedChangeRequest
+)
 from node.blockchain.types import Type
 
 
@@ -48,3 +54,42 @@ def test_serialize_deserialize_works(genesis_block_message):
 
     serialized2 = deserialized.json()
     assert serialized == serialized2
+
+
+@pytest.mark.parametrize('kwargs', (
+    {
+        'number': 1
+    },
+    {
+        'identifier': '0' * 64
+    },
+    {
+        'type': Type.NODE_DECLARATION.value
+    },
+))
+def test_cannot_create_invalid_genesis_block_message(
+    primary_validator_key_pair, genesis_signed_change_request_message, kwargs
+):
+    request = GenesisSignedChangeRequest.create_from_signed_change_request_message(
+        message=genesis_signed_change_request_message,
+        signing_key=primary_validator_key_pair.private,
+    )
+
+    with pytest.raises(PydanticValidationError):
+        GenesisBlockMessage(
+            timestamp=datetime.utcnow(),
+            update=BlockMessageUpdate(),
+            request=request,
+            **(dict(kwargs, type=Type(kwargs['type'])) if 'type' in kwargs else kwargs),
+        )
+
+    message = GenesisBlockMessage(
+        timestamp=datetime.utcnow(),
+        update=BlockMessageUpdate(accounts={'0' * 64: AccountState()}),
+        request=request,
+    )
+    message_dict = json.loads(message.json())
+    message_dict.update(kwargs)
+
+    with pytest.raises(PydanticValidationError):
+        GenesisBlockMessage.parse_raw(json.dumps(message_dict))

@@ -13,7 +13,7 @@ class BlockType(BaseModel):
     message: BlockMessageType
 
 
-class Block(BlockType, HashableMixin, ValidatableMixin):
+class Block(ValidatableMixin, BlockType, HashableMixin):
     signer: AccountNumber
     signature: Signature
     message: BlockMessage
@@ -41,8 +41,13 @@ class Block(BlockType, HashableMixin, ValidatableMixin):
         validate_signature_helper(values)
         return values
 
+    def validate_business_logic(self):
+        self.message.validate_business_logic()
+
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.message.validate_blockchain_state_dependent(blockchain_facade)
+        # TODO(dmu) CRITICAL: Validate that signer is a PV
+        #                     https://thenewboston.atlassian.net/browse/BC-160
 
 
 class GenesisBlock(Block):

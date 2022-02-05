@@ -3,6 +3,8 @@ from typing import Optional
 from typing import Type as TypingType
 from typing import TypeVar
 
+from pydantic import root_validator
+
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.mixins.crypto import SignableMixin
 from node.blockchain.mixins.validatable import ValidatableMixin
@@ -23,12 +25,18 @@ class BlockMessageUpdate(BaseModel):
     #                   have that field just there
     schedule: Optional[dict[intstr, AccountNumber]]
 
+    @root_validator
+    def not_empty(cls, values):
+        if not values['accounts'] and not values['schedule']:
+            raise ValueError('Update must be not empty')
+        return values
+
 
 class BlockMessageType(BaseModel):
     type: Type  # noqa: A003
 
 
-class BlockMessage(BlockMessageType, SignableMixin, ValidatableMixin):
+class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
     number: int
     identifier: BlockIdentifier
     timestamp: datetime
@@ -82,10 +90,18 @@ class BlockMessage(BlockMessageType, SignableMixin, ValidatableMixin):
         assert class_
         return class_.parse_obj(*args, **kwargs)
 
+    def validate_business_logic(self):
+        self.request.validate_business_logic()
+
+    def validate_number(self, blockchain_facade):
+        if blockchain_facade.get_next_block_number() != self.number:
+            raise ValidationError('Invalid block number')
+
     def validate_identifier(self, blockchain_facade):
         if blockchain_facade.get_next_block_identifier() != self.identifier:
             raise ValidationError('Invalid identifier')
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.request.validate_blockchain_state_dependent(blockchain_facade)
+        self.validate_number(blockchain_facade)
         self.validate_identifier(blockchain_facade)

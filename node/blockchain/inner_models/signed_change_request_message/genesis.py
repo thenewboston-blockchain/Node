@@ -5,6 +5,7 @@ from typing import TypeVar
 from pydantic import Field
 
 from node.blockchain.inner_models.base import BaseModel
+from node.core.exceptions import ValidationError
 
 from ...types import AlphaAccountLock, AlphaAccountNumber, Type
 from .base import SignedChangeRequestMessage
@@ -47,3 +48,8 @@ class GenesisSignedChangeRequestMessage(SignedChangeRequestMessage):
             )
 
         return cls(account_lock=account_lock, accounts=accounts)
+
+    def validate_business_logic(self):
+        super().validate_business_logic()
+        if not self.accounts:
+            raise ValidationError('There must be at least one account')

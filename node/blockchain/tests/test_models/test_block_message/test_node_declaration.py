@@ -77,7 +77,7 @@ def test_block_identifier_is_mandatory(node_declaration_signed_change_request_me
         identifier='01' * 32,
         timestamp=datetime.utcnow(),
         request=request,
-        update=BlockMessageUpdate(),
+        update=BlockMessageUpdate(accounts={'0' * 64: AccountState()}),
     )
 
     with pytest.raises(ValidationError) as exc_info:
@@ -86,7 +86,7 @@ def test_block_identifier_is_mandatory(node_declaration_signed_change_request_me
             identifier=None,
             timestamp=datetime.utcnow(),
             request=request,
-            update=BlockMessageUpdate(),
+            update=BlockMessageUpdate(accounts={'0' * 64: AccountState()}),
         )
 
     assert re.search(r'identifier.*none is not an allowed value', str(exc_info.value), flags=re.DOTALL)
