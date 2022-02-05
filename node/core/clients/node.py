@@ -134,21 +134,29 @@ class NodeClient:
         return response
 
     def list_resource(
-        self,
-        network_address,
-        resource,
-        *,
-        offset=None,
-        limit=None,
-        ordering=None,
-        parameters=None,
-        should_raise=True
+        self, address, resource, *, offset=None, limit=None, ordering=None, parameters=None, should_raise=True
     ):
         parameters = parameters or {}
         setdefault_if_not_none(parameters, 'offset', offset)
         setdefault_if_not_none(parameters, 'limit', limit)
         setdefault_if_not_none(parameters, 'ordering', ordering)
-        return self.http_get(network_address, resource, parameters=parameters, should_raise=should_raise)
+        return self.http_get(address, resource, parameters=parameters, should_raise=should_raise)
+
+    def yield_resource(self, address, resource, by_limit):
+        offset = 0
+        while True:
+            response = self.list_resource(address, resource, offset=offset, limit=by_limit)
+            if response is None:
+                break
+
+            items = response.json().get('results')
+            if not items:
+                break
+
+            for item in items:
+                yield item
+
+            offset += len(items)
 
     def send_scr_to_address(self, address: str, signed_change_request: SignedChangeRequest):
         logger.debug('Sending %s to %s', signed_change_request, address)
@@ -166,21 +174,8 @@ class NodeClient:
             raise ConnectionError(f'Could not send signed change request to {node}')
 
     def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
-        offset = 0
-        while True:
-            response = self.list_resource(address, 'nodes', offset=offset, limit=LIST_NODES_LIMIT)
-            if response is None:
-                break
-
-            nodes = response.json().get('results')
-            if not nodes:
-                break
-
-            for node_dict in nodes:
-                node = Node.parse_obj(node_dict)
-                yield node
-
-            offset += len(nodes)
+        for item in self.yield_resource(address, 'nodes', by_limit=LIST_NODES_LIMIT):
+            yield Node.parse_obj(item)
 
     @from_node
     def list_nodes(self, /, address: Union[str, Node]) -> list[Node]:
@@ -202,3 +197,9 @@ class NodeClient:
             return None
 
         return Block.parse_raw(block)
+
+    def list_blocks_raw(self):
+        raise NotImplementedError
+
+    def yield_blocks_raw(self):
+        raise NotImplementedError

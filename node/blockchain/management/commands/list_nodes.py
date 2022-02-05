@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Prints list of nodes.'  # noqa: A003
+    help = 'Prints list of nodes'  # noqa: A003
 
     def add_arguments(self, parser):
         parser.add_argument('node_address')
