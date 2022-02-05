@@ -108,17 +108,20 @@ class BlockchainFacade:
         return get_block_model().objects.count()
 
     @staticmethod
-    def get_next_block_number() -> int:
+    def get_last_block():
+        return get_block_model().objects.get_last_block()
+
+    def get_next_block_number(self) -> int:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        last_block = get_block_model().objects.get_last_block()
+        last_block = self.get_last_block()
         return last_block._id + 1 if last_block else 0
 
-    @staticmethod
-    def get_next_block_identifier() -> BlockIdentifier:
+    def get_next_block_identifier(self) -> BlockIdentifier:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        last_block = get_block_model().objects.get_last_block()
+        # TODO(dmu) MEDIUM: Should we still return correct block identifier for genesis block?
+        last_block = self.get_last_block()
         assert last_block  # this method should never be used for creating genesis block
 
         return HashableStringWrapper(last_block.body).make_hash()
