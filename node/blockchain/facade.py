@@ -57,6 +57,7 @@ class BlockchainFacade:
 
         # Make blockchain state specific validations
         block.message.request.validate_account_lock(self)
+        block.message.validate_identifier(self)
 
         from node.blockchain.models import Block as ORMBlock
         orm_block = ORMBlock(_id=block.message.number, body=block.json())
@@ -120,12 +121,12 @@ class BlockchainFacade:
         last_block = self.get_last_block()
         return last_block._id + 1 if last_block else 0
 
-    def get_next_block_identifier(self) -> BlockIdentifier:
+    def get_next_block_identifier(self) -> Optional[BlockIdentifier]:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        # TODO(dmu) MEDIUM: Should we still return correct block identifier for genesis block?
         last_block = self.get_last_block()
-        assert last_block  # this method should never be used for creating genesis block
+        if not last_block:
+            return None
 
         return HashableStringWrapper(last_block.body).make_hash()
 

@@ -5,6 +5,7 @@ from typing import TypeVar
 
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.mixins.crypto import SignableMixin
+from node.core.exceptions import ValidationError
 from node.core.utils.types import intstr
 
 from ...types import AccountNumber, BlockIdentifier, Type
@@ -79,3 +80,7 @@ class BlockMessage(BlockMessageType, SignableMixin):
         class_ = get_block_message_subclass(type_)
         assert class_
         return class_.parse_obj(*args, **kwargs)
+
+    def validate_identifier(self, blockchain_facade):
+        if blockchain_facade.get_next_block_identifier() != self.identifier:
+            raise ValidationError('Invalid identifier')
