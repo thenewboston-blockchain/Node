@@ -3,7 +3,7 @@ from typing import Type, TypeVar
 from node.blockchain.inner_models import Node
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState
-from node.blockchain.types import AccountLock, BlockIdentifier, NodeRole, SigningKey
+from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.misc import set_if_not_none
 
@@ -64,6 +64,11 @@ class BlockchainFacade:
     def get_account_lock(account_number) -> AccountLock:
         account_state = AccountState.objects.get_or_none(_id=account_number)
         return AccountLock(account_state.account_lock) if account_state else account_number
+
+    @staticmethod
+    def get_account_balance(account_number: AccountNumber) -> int:
+        account_state = AccountState.objects.get_or_none(_id=account_number)
+        return account_state.balance if account_state else 0
 
     @staticmethod
     def update_write_through_cache_accounts(accounts):
