@@ -3,9 +3,9 @@ from typing import TypeVar, cast
 
 from pydantic import root_validator
 
-from node.blockchain.mixins.crypto import HashableMixin
+from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
 from node.core.exceptions import ValidationError
-from node.core.utils.cryptography import derive_public_key, is_signature_valid
+from node.core.utils.cryptography import derive_public_key
 
 from ...types import AccountNumber, Signature, SigningKey
 from ..base import BaseModel
@@ -49,23 +49,10 @@ class SignedChangeRequest(BaseModel, HashableMixin):
 
     @root_validator
     def validate_signature(cls, values):
-        if cls == SignedChangeRequest:
-            # This workaround is fine because we never validate signature for `SignedChangeRequest` instances.
-            # Signature validation makes sense for child classes only since they define the actual structure being
-            # signed
+        if cls == SignedChangeRequest:  # only child classes signature validation makes sense
             return values
 
-        signer = values.get('signer')
-        message = values.get('message')
-        signature = values.get('signature')
-        if (
-            # TODO(dmu) MEDIUM: How is it possible that signer, signature, message can be empty?
-            not all((signer, signature, message)) or
-            not is_signature_valid(signer, message.make_binary_representation_for_cryptography(), signature)
-        ):
-            # TODO(dmu) LOW: Pydantic does not recognize custom ValidationError. Fix?
-            raise ValueError('Invalid signature')
-
+        validate_signature_helper(values)
         return values
 
     def validate_account_lock(self, blockchain_facade):

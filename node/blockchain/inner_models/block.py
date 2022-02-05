@@ -1,4 +1,6 @@
-from node.blockchain.mixins.crypto import HashableMixin
+from pydantic import root_validator
+
+from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
 
 from ..types import AccountNumber, Signature
 from .base import BaseModel
@@ -29,6 +31,14 @@ class Block(BlockType, HashableMixin):
 
     def get_block_number(self):
         return self.message.number
+
+    @root_validator
+    def validate_signature(cls, values):
+        if cls == Block:  # only child classes signature validation makes sense
+            return values
+
+        validate_signature_helper(values)
+        return values
 
 
 class GenesisBlock(Block):
