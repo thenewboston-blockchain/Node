@@ -2,7 +2,6 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import Block, BlockMessage, NodeDeclarationSignedChangeRequest
-from node.blockchain.models import Block as ORMBlock
 from node.blockchain.utils.lock import create_lock, delete_lock
 from node.core.exceptions import BlockchainLockingError
 
@@ -19,11 +18,11 @@ def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        blockchain_facade.add_block_from_signed_change_request(request)
 
     delete_lock('block')
 
-    ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
+    blockchain_facade.add_block_from_signed_change_request(request)
 
 
 @pytest.mark.usefixtures('base_blockchain')

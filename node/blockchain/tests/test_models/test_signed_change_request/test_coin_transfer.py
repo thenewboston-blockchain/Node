@@ -4,7 +4,6 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import SignedChangeRequest
 from node.blockchain.inner_models.signed_change_request.coin_transfer import CoinTransferSignedChangeRequest
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferSignedChangeRequestMessage
-from node.blockchain.models.block.model import Block
 from node.core.exceptions import ValidationError
 
 
@@ -54,4 +53,4 @@ def test_invalid_account_lock(regular_node_key_pair):
         signing_key=regular_node_key_pair.private,
     )
     with pytest.raises(ValidationError, match='Invalid account lock'):
-        Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        blockchain_facade.add_block_from_signed_change_request(request)

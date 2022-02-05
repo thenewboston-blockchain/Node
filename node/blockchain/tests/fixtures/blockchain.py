@@ -1,7 +1,6 @@
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.models import Block
 
 
 @pytest.fixture
@@ -23,16 +22,14 @@ def rich_blockchain(
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
-    Block.objects.add_block_from_signed_change_request(
+    blockchain_facade.add_block_from_signed_change_request(
         signed_change_request=regular_node_declaration_signed_change_request,
-        blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
 
-    Block.objects.add_block_from_signed_change_request(
+    blockchain_facade.add_block_from_signed_change_request(
         signed_change_request=self_node_declaration_signed_change_request,
-        blockchain_facade=blockchain_facade,
         signing_key=self_node_key_pair.private,
         validate=False,
     )

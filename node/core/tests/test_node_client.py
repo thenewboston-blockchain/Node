@@ -156,9 +156,8 @@ def test_yield_nodes_pagination(
         node_key_pair = generate_key_pair()
         node = make_node(node_key_pair, [primary_validator_node.addresses[0], 'http://testserver/'])
         node_declaration_scr = get_node_declaration_signed_change_request(node, node_key_pair)
-        Block.objects.add_block_from_signed_change_request(
+        blockchain_facade.add_block_from_signed_change_request(
             signed_change_request=node_declaration_scr,
-            blockchain_facade=blockchain_facade,
             signing_key=node_key_pair.private,
             validate=False,
         )

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
-from node.blockchain.inner_models import Block, BlockMessage, Node
+from node.blockchain.inner_models import Block, BlockMessage, Node, SignedChangeRequest
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState
 from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
@@ -84,6 +84,24 @@ class BlockchainFacade:
         # No need to validate the block since we produced a valid one
         self.add_block(block, validate=False, expect_locked=True)
         return block
+
+    @ensure_in_transaction
+    @lock(BLOCK_LOCK)
+    def add_block_from_signed_change_request(
+        self,
+        signed_change_request: SignedChangeRequest,
+        *,
+        signing_key: Optional[SigningKey] = None,
+        validate=True
+    ) -> Block:
+        if validate:
+            signed_change_request.validate_business_logic(self)
+
+        block_message = BlockMessage.create_from_signed_change_request(signed_change_request, self)
+        # no need to validate the block message since we produced a valid one
+        return self.add_block_from_block_message(
+            block_message, signing_key=signing_key, validate=False, expect_locked=True
+        )
 
     @staticmethod
     def get_block_count():
