@@ -67,8 +67,8 @@ def test_cannot_add_block_if_blockchain_is_locked(
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        ORMBlock.objects.add_block(block, validate=False)
+        blockchain_facade.add_block(block, validate=False)
 
     delete_lock('block')
 
-    ORMBlock.objects.add_block(block, blockchain_facade, validate=False)
+    blockchain_facade.add_block(block, validate=False)

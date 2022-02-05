@@ -1,13 +1,20 @@
-from typing import Type, TypeVar
+from typing import TYPE_CHECKING, Type, TypeVar
 
-from node.blockchain.inner_models import Node
+from node.blockchain.inner_models import Block, Node
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState
 from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
+from node.blockchain.utils.lock import lock
+from node.core.database import ensure_in_transaction
 from node.core.utils.cryptography import get_signing_key
 from node.core.utils.misc import set_if_not_none
 
+if TYPE_CHECKING:
+    from node.blockchain.models import Block as ORMBlock
+
 T = TypeVar('T', bound='BlockchainFacade')
+
+BLOCK_LOCK = 'block'
 
 
 def get_block_model():
@@ -39,6 +46,21 @@ class BlockchainFacade:
     @classmethod
     def clear_instance_cache(cls):
         cls._instance = None
+
+    @ensure_in_transaction
+    @lock(BLOCK_LOCK)
+    def add_block(self, block: Block, *, validate=True) -> 'ORMBlock':
+        if validate:
+            # TODO(dmu) CRITICAL: Validate block
+            #                     https://thenewboston.atlassian.net/browse/BC-160
+            raise NotImplementedError
+
+        from node.blockchain.models import Block as ORMBlock
+        orm_block = ORMBlock(_id=block.message.number, body=block.json())
+        orm_block.save()
+
+        self.update_write_through_cache(block)
+        return orm_block
 
     @staticmethod
     def get_block_count():
