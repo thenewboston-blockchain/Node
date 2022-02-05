@@ -64,5 +64,5 @@ class BlockchainUnlockingError(BlockchainError):
     pass
 
 
-class TransactionError(NodeError):
+class DatabaseTransactionError(NodeError):
     pass

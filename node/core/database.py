@@ -2,7 +2,7 @@ import functools
 
 from django.db import transaction
 
-from node.core.exceptions import TransactionError
+from node.core.exceptions import DatabaseTransactionError
 
 
 def ensure_in_transaction(func):
@@ -10,7 +10,7 @@ def ensure_in_transaction(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not ((connection := transaction.get_connection()) and connection.in_atomic_block):
-            raise TransactionError('Expected to have an active transaction')
+            raise DatabaseTransactionError('Expected to have an active transaction')
 
         return func(*args, **kwargs)
 
