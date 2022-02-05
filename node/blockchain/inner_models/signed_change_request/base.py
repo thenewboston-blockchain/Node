@@ -4,6 +4,7 @@ from typing import TypeVar, cast
 from pydantic import root_validator
 
 from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
+from node.blockchain.mixins.validatable import ValidatableMixin
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key
 
@@ -14,7 +15,7 @@ from ..signed_change_request_message import SignedChangeRequestMessage
 T = TypeVar('T', bound='SignedChangeRequest')
 
 
-class SignedChangeRequest(BaseModel, HashableMixin):
+class SignedChangeRequest(BaseModel, HashableMixin, ValidatableMixin):
     signer: AccountNumber
     signature: Signature
     message: SignedChangeRequestMessage
@@ -59,11 +60,8 @@ class SignedChangeRequest(BaseModel, HashableMixin):
         if blockchain_facade.get_account_lock(self.signer) != self.message.account_lock:
             raise ValidationError('Invalid account lock')
 
-    def validate_type_specific_attributes(self):
-        pass  # this method is to be overridden if needed
-
-    def validate_business_logic(self):  # validate() is used by pydantic
-        self.validate_type_specific_attributes()
+    def validate_blockchain_state_dependent(self, blockchain_facade):
+        self.validate_account_lock(blockchain_facade)
 
     def get_type(self):
         return self.message.type
