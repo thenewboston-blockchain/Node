@@ -55,6 +55,9 @@ class BlockchainFacade:
             #                     https://thenewboston.atlassian.net/browse/BC-160
             raise NotImplementedError
 
+        # Make blockchain state specific validations
+        block.message.request.validate_account_lock(self)
+
         from node.blockchain.models import Block as ORMBlock
         orm_block = ORMBlock(_id=block.message.number, body=block.json())
         orm_block.save()
@@ -95,7 +98,7 @@ class BlockchainFacade:
         validate=True
     ) -> Block:
         if validate:
-            signed_change_request.validate_business_logic(self)
+            signed_change_request.validate_business_logic()
 
         block_message = BlockMessage.create_from_signed_change_request(signed_change_request, self)
         # no need to validate the block message since we produced a valid one

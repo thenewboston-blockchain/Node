@@ -44,6 +44,7 @@ def test_serialize_and_deserialize_coin_transfer(
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
 def test_invalid_account_lock(regular_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
