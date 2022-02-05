@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.models import Block
 from node.blockchain.serializers.signed_change_request import SignedChangeRequestSerializer
 from node.blockchain.types import NodeRole
 from node.core.clients.node import NodeClient
@@ -22,11 +21,8 @@ class SignedChangeRequestViewSet(GenericViewSet):
         blockchain_facade = BlockchainFacade.get_instance()
         role = blockchain_facade.get_node_role()
         if role == NodeRole.PRIMARY_VALIDATOR:
-            Block.objects.add_block_from_signed_change_request(
-                signed_change_request=signed_change_request,
-                blockchain_facade=blockchain_facade,
-                signing_key=get_signing_key(),
-                validate=True
+            blockchain_facade.add_block_from_signed_change_request(
+                signed_change_request=signed_change_request, signing_key=get_signing_key(), validate=True
             )
             # TODO(dmu) CRITICAL: Send notifications to CVs about new block
             #                     https://thenewboston.atlassian.net/browse/BC-189

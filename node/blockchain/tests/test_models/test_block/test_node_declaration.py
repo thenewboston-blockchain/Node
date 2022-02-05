@@ -70,7 +70,7 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
         signing_key=regular_node_key_pair.private,
     )
 
-    block = ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
+    block = blockchain_facade.add_block_from_signed_change_request(request)
     assert block.signer == get_node_identifier()
     assert isinstance(block.signature, str)
     assert is_signature_valid(
@@ -121,7 +121,7 @@ def test_add_block_from_signed_change_request_account_lock_validation(regular_no
     )
 
     with pytest.raises(ValidationError, match='Invalid account lock'):
-        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        blockchain_facade.add_block_from_signed_change_request(request)
 
 
 @pytest.mark.django_db
@@ -145,4 +145,4 @@ def test_add_block_from_signed_change_request_node_identifier_validation(regular
 
     blockchain_facade = BlockchainFacade.get_instance()
     with pytest.raises(ValidationError, match='Signer does not match with node identifier'):
-        ORMBlock.objects.add_block_from_signed_change_request(request, blockchain_facade)
+        blockchain_facade.add_block_from_signed_change_request(request)

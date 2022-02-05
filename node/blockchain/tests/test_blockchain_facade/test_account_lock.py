@@ -2,7 +2,6 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import NodeDeclarationSignedChangeRequest
-from node.blockchain.models.block import Block
 
 
 @pytest.mark.django_db
@@ -19,7 +18,7 @@ def test_account_lock_change_when_block_is_added(
         signing_key=regular_node_key_pair.private,
     )
 
-    Block.objects.add_block_from_signed_change_request(request, blockchain_facade)
+    blockchain_facade.add_block_from_signed_change_request(request)
 
     account_lock = blockchain_facade.get_account_lock(regular_node_key_pair.public)
     assert account_lock != regular_node_key_pair.public
