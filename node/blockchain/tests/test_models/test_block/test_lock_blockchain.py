@@ -39,11 +39,11 @@ def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
 
     create_lock('block')
     with pytest.raises(BlockchainLockingError):
-        ORMBlock.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
+        blockchain_facade.add_block_from_block_message(block_message, validate=False)
 
     delete_lock('block')
 
-    ORMBlock.objects.add_block_from_block_message(block_message, blockchain_facade, validate=False)
+    blockchain_facade.add_block_from_block_message(block_message, validate=False)
 
 
 @pytest.mark.usefixtures('base_blockchain')

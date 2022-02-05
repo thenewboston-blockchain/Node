@@ -53,8 +53,6 @@ class Command(CustomCommand):
             if does_exist:
                 blockchain_facade.clear()
 
-            Block.objects.add_block_from_block_message(
-                block_message, blockchain_facade, signing_key=signing_key, validate=False
-            )
+            blockchain_facade.add_block_from_block_message(block_message, signing_key=signing_key, validate=False)
 
         self.write_success('Blockchain genesis complete')
