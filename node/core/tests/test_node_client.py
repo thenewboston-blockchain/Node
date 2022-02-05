@@ -38,7 +38,7 @@ def test_send_scr_to_address(
 def test_send_scr_to_address_integration(
     test_server_address, regular_node_declaration_signed_change_request, smart_mocked_node_client
 ):
-    assert BlockchainFacade.get_next_block_number() == 1
+    assert BlockchainFacade.get_instance().get_next_block_number() == 1
     assert not Node.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
     client = smart_mocked_node_client
@@ -46,7 +46,7 @@ def test_send_scr_to_address_integration(
     response = client.send_scr_to_address(test_server_address, scr)
     assert response.status_code == 201
 
-    assert BlockchainFacade.get_next_block_number() == 2
+    assert BlockchainFacade.get_instance().get_next_block_number() == 2
     assert Node.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
 

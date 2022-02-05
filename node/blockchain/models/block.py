@@ -1,8 +1,17 @@
 from djongo import models
 
 from node.blockchain.inner_models import Block as PydanticBlock
+from node.core.managers import CustomManager
 
-from .manager import BlockManager
+
+class BlockManager(CustomManager):
+
+    def create(self, *args, **kwargs):
+        # This method is blocked intentionally to prohibit adding of invalid blocks
+        raise NotImplementedError('One of the `BlockchainFacade.add_block*() methods must be used')
+
+    def get_last_block(self):
+        return self.order_by('-_id').first()
 
 
 class Block(models.Model):
