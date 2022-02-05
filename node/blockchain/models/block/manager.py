@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional  # noqa: I101
+from typing import Optional  # noqa: I101
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import Block, BlockMessage, SignedChangeRequest
@@ -8,9 +8,6 @@ from node.core.managers import CustomManager
 from node.core.utils.cryptography import derive_public_key, get_signing_key
 
 from ...types import SigningKey
-
-if TYPE_CHECKING:
-    from .model import Block as ORMBlock
 
 BLOCK_LOCK = 'block'
 
@@ -57,23 +54,8 @@ class BlockManager(CustomManager):
 
         block = Block(signer=signer, signature=signature, message=message)
         # No need to validate the block since we produced a valid one
-        self.add_block(block, blockchain_facade, validate=False, expect_locked=True)
+        blockchain_facade.add_block(block, validate=False, expect_locked=True)
         return block
-
-    @ensure_in_transaction
-    @lock(BLOCK_LOCK)
-    def add_block(self, block: Block, blockchain_facade: BlockchainFacade, *, validate=True) -> 'ORMBlock':
-        if validate:
-            # TODO(dmu) CRITICAL: Validate block
-            #                     https://thenewboston.atlassian.net/browse/BC-160
-            raise NotImplementedError
-
-        from node.blockchain.models import Block as ORMBlock
-        orm_block = ORMBlock(_id=block.message.number, body=block.json())
-        orm_block.save()
-
-        blockchain_facade.update_write_through_cache(block)
-        return orm_block
 
     def create(self, *args, **kwargs):
         # This method is blocked intentionally to prohibit adding of invalid blocks
