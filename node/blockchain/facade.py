@@ -51,13 +51,10 @@ class BlockchainFacade:
     @lock(BLOCK_LOCK)
     def add_block(self, block: Block, *, validate=True) -> 'ORMBlock':
         if validate:
-            # TODO(dmu) CRITICAL: Validate block
-            #                     https://thenewboston.atlassian.net/browse/BC-160
-            raise NotImplementedError
+            block.validate_business_logic()
 
         # Make blockchain state specific validations
-        block.message.request.validate_account_lock(self)
-        block.message.validate_identifier(self)
+        block.validate_blockchain_state_dependent(self)
 
         from node.blockchain.models import Block as ORMBlock
         orm_block = ORMBlock(_id=block.message.number, body=block.json())
@@ -76,9 +73,7 @@ class BlockchainFacade:
         validate=True,
     ) -> Block:
         if validate:
-            # TODO(dmu) MEDIUM: Validate block message
-            #                   (is it ever used? maybe we just raise NotImplementedError here forever)
-            raise NotImplementedError
+            message.validate_business_logic()
 
         signing_key = signing_key or get_signing_key()
         signer = derive_public_key(signing_key)

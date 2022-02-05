@@ -1,6 +1,7 @@
 from pydantic import root_validator
 
 from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
+from node.blockchain.mixins.validatable import ValidatableMixin
 
 from ..types import AccountNumber, Signature
 from .base import BaseModel
@@ -12,7 +13,7 @@ class BlockType(BaseModel):
     message: BlockMessageType
 
 
-class Block(BlockType, HashableMixin):
+class Block(BlockType, HashableMixin, ValidatableMixin):
     signer: AccountNumber
     signature: Signature
     message: BlockMessage
@@ -39,6 +40,9 @@ class Block(BlockType, HashableMixin):
 
         validate_signature_helper(values)
         return values
+
+    def validate_blockchain_state_dependent(self, blockchain_facade):
+        self.message.validate_blockchain_state_dependent(blockchain_facade)
 
 
 class GenesisBlock(Block):
