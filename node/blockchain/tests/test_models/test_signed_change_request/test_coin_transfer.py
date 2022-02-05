@@ -9,25 +9,27 @@ from node.core.exceptions import ValidationError
 
 
 def test_create_from_coin_transfer_signed_change_request_message(
-    coin_transfer_signed_change_request_message, regular_node_key_pair
+    coin_transfer_signed_change_request_message, treasury_account_key_pair
 ):
     signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
         message=coin_transfer_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
+        signing_key=treasury_account_key_pair.private,
     )
     assert isinstance(signed_change_request, CoinTransferSignedChangeRequest)
     assert signed_change_request.message == coin_transfer_signed_change_request_message
-    assert signed_change_request.signer == regular_node_key_pair.public
+    assert signed_change_request.signer == treasury_account_key_pair.public
     assert signed_change_request.signature == (
-        '40d66503370e3d603c3c53654acabeb28a12be467b99967b2b37d146f859e4a8'
-        '1f23dc6d148b6206f33e9269b27d821b4e2d922f94c3ea1e28107677be508a05'
+        '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
+        '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09'
     )
 
 
-def test_serialize_and_deserialize_coin_transfer(coin_transfer_signed_change_request_message, regular_node_key_pair):
+def test_serialize_and_deserialize_coin_transfer(
+    coin_transfer_signed_change_request_message, treasury_account_key_pair
+):
     signed_change_request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
         message=coin_transfer_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
+        signing_key=treasury_account_key_pair.private,
     )
     assert isinstance(signed_change_request, CoinTransferSignedChangeRequest)
     serialized = signed_change_request.json()

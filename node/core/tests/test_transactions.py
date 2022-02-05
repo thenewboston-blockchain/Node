@@ -3,7 +3,7 @@ from django.db import transaction
 
 from node.blockchain.models.account_state import AccountState
 from node.core.database import ensure_in_transaction
-from node.core.exceptions import TransactionError
+from node.core.exceptions import DatabaseTransactionError
 
 
 @pytest.mark.django_db
@@ -60,5 +60,5 @@ def test_ensure_in_transaction():
     def test_me():
         pass
 
-    with pytest.raises(TransactionError, match='Expected to have an active transaction'):
+    with pytest.raises(DatabaseTransactionError, match='Expected to have an active transaction'):
         test_me()

@@ -24,3 +24,15 @@ def test_account_lock_change_when_block_is_added(
     account_lock = blockchain_facade.get_account_lock(regular_node_key_pair.public)
     assert account_lock != regular_node_key_pair.public
     assert account_lock == request.make_hash()
+
+
+@pytest.mark.usefixtures('base_blockchain')
+def test_get_account_balance(treasury_account_key_pair, treasury_amount):
+    blockchain_facade = BlockchainFacade.get_instance()
+    assert blockchain_facade.get_account_balance(treasury_account_key_pair.public) == treasury_amount
+
+
+@pytest.mark.django_db
+def test_get_account_balance_for_unknown_account_number():
+    blockchain_facade = BlockchainFacade.get_instance()
+    assert blockchain_facade.get_account_balance('0' * 64) == 0
