@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from node.core.exceptions import ValidationError
 
 from ..signed_change_request_message import NodeDeclarationSignedChangeRequestMessage
 from .base import SignedChangeRequest
-
-if TYPE_CHECKING:
-    from node.blockchain.facade import BlockchainFacade
 
 T = TypeVar('T', bound='SignedChangeRequest')
 
@@ -14,7 +11,7 @@ T = TypeVar('T', bound='SignedChangeRequest')
 class NodeDeclarationSignedChangeRequest(SignedChangeRequest):
     message: NodeDeclarationSignedChangeRequestMessage
 
-    def validate_type_specific_attributes(self, blockchain_facade: 'BlockchainFacade'):
+    def validate_type_specific_attributes(self):
         # TODO(dmu) MEDIUM: Should we use Pydantic native validation here instead?
         if self.signer != self.message.node.identifier:
             raise ValidationError('Signer does not match with node identifier')

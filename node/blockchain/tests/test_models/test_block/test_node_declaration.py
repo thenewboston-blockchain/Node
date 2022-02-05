@@ -105,6 +105,7 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request_account_lock_validation(regular_node_key_pair, regular_node):
     blockchain_facade = BlockchainFacade.get_instance()
 

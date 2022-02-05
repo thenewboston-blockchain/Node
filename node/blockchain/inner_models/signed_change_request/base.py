@@ -72,12 +72,11 @@ class SignedChangeRequest(BaseModel, HashableMixin):
         if blockchain_facade.get_account_lock(self.signer) != self.message.account_lock:
             raise ValidationError('Invalid account lock')
 
-    def validate_type_specific_attributes(self, blockchain_facade):
+    def validate_type_specific_attributes(self):
         pass  # this method is to be overridden if needed
 
-    def validate_business_logic(self, blockchain_facade):  # validate() is used by pydantic
-        self.validate_account_lock(blockchain_facade)
-        self.validate_type_specific_attributes(blockchain_facade)
+    def validate_business_logic(self):  # validate() is used by pydantic
+        self.validate_type_specific_attributes()
 
     def get_type(self):
         return self.message.type
