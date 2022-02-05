@@ -19,9 +19,8 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     expected_block_number = blockchain_facade.get_next_block_number()
     expected_identifier = blockchain_facade.get_next_block_identifier()
 
-    block = ORMBlock.objects.add_block_from_block_message(
+    block = blockchain_facade.add_block_from_block_message(
         message=node_declaration_block_message,
-        blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )

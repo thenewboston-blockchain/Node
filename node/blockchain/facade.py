@@ -1,12 +1,12 @@
-from typing import TYPE_CHECKING, Type, TypeVar
+from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
-from node.blockchain.inner_models import Block, Node
+from node.blockchain.inner_models import Block, BlockMessage, Node
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState
 from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
 from node.blockchain.utils.lock import lock
 from node.core.database import ensure_in_transaction
-from node.core.utils.cryptography import get_signing_key
+from node.core.utils.cryptography import derive_public_key, get_signing_key
 from node.core.utils.misc import set_if_not_none
 
 if TYPE_CHECKING:
@@ -61,6 +61,29 @@ class BlockchainFacade:
 
         self.update_write_through_cache(block)
         return orm_block
+
+    @ensure_in_transaction
+    @lock(BLOCK_LOCK)
+    def add_block_from_block_message(
+        self,
+        message: BlockMessage,
+        *,
+        signing_key: Optional[SigningKey] = None,
+        validate=True,
+    ) -> Block:
+        if validate:
+            # TODO(dmu) MEDIUM: Validate block message
+            #                   (is it ever used? maybe we just raise NotImplementedError here forever)
+            raise NotImplementedError
+
+        signing_key = signing_key or get_signing_key()
+        signer = derive_public_key(signing_key)
+        signature = message.make_signature(signing_key)
+
+        block = Block(signer=signer, signature=signature, message=message)
+        # No need to validate the block since we produced a valid one
+        self.add_block(block, validate=False, expect_locked=True)
+        return block
 
     @staticmethod
     def get_block_count():

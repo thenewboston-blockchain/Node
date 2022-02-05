@@ -20,9 +20,8 @@ def test_create_from_block_message(
 
     blockchain_facade = BlockchainFacade.get_instance()
 
-    block = ORMBlock.objects.add_block_from_block_message(
+    block = blockchain_facade.add_block_from_block_message(
         message=genesis_block_message,
-        blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
@@ -86,9 +85,8 @@ def test_create_from_alpha_account_root_file(
 
     genesis_block_message = GenesisBlockMessage.create_from_signed_change_request(request, primary_validator_node)
 
-    block = ORMBlock.objects.add_block_from_block_message(
+    block = blockchain_facade.add_block_from_block_message(
         message=genesis_block_message,
-        blockchain_facade=blockchain_facade,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
