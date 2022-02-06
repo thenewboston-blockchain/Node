@@ -8,6 +8,7 @@ from pydantic import Field
 from node.blockchain.inner_models.account_state import AccountState
 from node.blockchain.inner_models.node import Node
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest
+from node.core.exceptions import ValidationError
 
 from ...types import BlockIdentifier, Type
 from .base import BlockMessage, BlockMessageUpdate
@@ -67,3 +68,8 @@ class GenesisBlockMessage(BlockMessage):
             request=request,
             update=update,
         )
+
+    def validate_blockchain_state_dependent(self, blockchain_facade):
+        super().validate_blockchain_state_dependent(blockchain_facade)
+        if blockchain_facade.has_blocks():
+            raise ValidationError('Blockchain must not have blocks')

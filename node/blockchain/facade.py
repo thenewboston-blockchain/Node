@@ -107,6 +107,10 @@ class BlockchainFacade:
         return get_block_model().objects.count()
 
     @staticmethod
+    def has_blocks():
+        return get_block_model().objects.exists()
+
+    @staticmethod
     def get_last_block():
         return get_block_model().objects.get_last_block()
 
