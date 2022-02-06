@@ -124,7 +124,7 @@ def test_type_validation_for_node_declaration_no_message(api_client):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures('base_blockchain')
+@pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_node_declaration_signed_change_request_with_invalid_account_lock(
     api_client, primary_validator_node, primary_validator_key_pair
 ):
