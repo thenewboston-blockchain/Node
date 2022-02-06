@@ -2,7 +2,8 @@ from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
 from node.blockchain.inner_models import Block, BlockMessage, Node, SignedChangeRequest
 from node.blockchain.mixins.crypto import HashableStringWrapper
-from node.blockchain.models import AccountState
+from node.blockchain.models import AccountState as ORMAccountState
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
 from node.blockchain.utils.lock import lock
 from node.core.database import ensure_in_transaction
@@ -131,12 +132,12 @@ class BlockchainFacade:
 
     @staticmethod
     def get_account_lock(account_number) -> AccountLock:
-        account_state = AccountState.objects.get_or_none(_id=account_number)
+        account_state = ORMAccountState.objects.get_or_none(_id=account_number)
         return AccountLock(account_state.account_lock) if account_state else account_number
 
     @staticmethod
     def get_account_balance(account_number: AccountNumber) -> int:
-        account_state = AccountState.objects.get_or_none(_id=account_number)
+        account_state = ORMAccountState.objects.get_or_none(_id=account_number)
         return account_state.balance if account_state else 0
 
     @staticmethod
@@ -149,7 +150,7 @@ class BlockchainFacade:
             set_if_not_none(fields_for_update, 'node', node)
             assert fields_for_update
 
-            account_state, is_created = AccountState.objects.get_or_create(
+            account_state, is_created = ORMAccountState.objects.get_or_create(
                 _id=account_number, defaults=fields_for_update
             )
             if not is_created:
@@ -175,7 +176,7 @@ class BlockchainFacade:
     def clear():
         get_block_model().objects.all().delete()
 
-        AccountState.objects.all().delete()
+        ORMAccountState.objects.all().delete()
         from node.blockchain.models import Schedule
         Schedule.objects.all().delete()
 
@@ -195,7 +196,15 @@ class BlockchainFacade:
         #                https://thenewboston.atlassian.net/browse/BC-191
         return NodeRole.PRIMARY_VALIDATOR
 
-    def get_primary_validator(self) -> Node:
-        # TODO(dmu) CRITICAL: Implement this method
-        #                     https://thenewboston.atlassian.net/browse/BC-212
-        raise NotImplementedError
+    def get_primary_validator(self) -> Optional[Node]:
+        """
+        Return primary validator that must confirm the next block
+        """
+        from node.blockchain.models import Schedule
+
+        schedule = Schedule.objects.filter(_id__lte=self.get_next_block_number()).order_by('-_id').first()
+        if not schedule:
+            return None
+
+        node = ORMNode.objects.get_or_none(_id=schedule.node_identifier)
+        return node.get_node() if node else None
