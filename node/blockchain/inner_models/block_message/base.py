@@ -9,7 +9,7 @@ from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.mixins.crypto import SignableMixin
 from node.blockchain.mixins.validatable import ValidatableMixin
 from node.core.exceptions import ValidationError
-from node.core.utils.types import intstr
+from node.core.utils.types import intstr, positive_int
 
 from ...types import AccountNumber, BlockIdentifier, Type
 from ..account_state import AccountState
@@ -37,7 +37,7 @@ class BlockMessageType(BaseModel):
 
 
 class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
-    number: int
+    number: positive_int  # it is redefined in GenesisBlockMessage, so value 0 is allowed
     identifier: BlockIdentifier
     timestamp: datetime
     update: BlockMessageUpdate

@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
 from node.blockchain.inner_models import Block, BlockMessage, Node, SignedChangeRequest
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
 T = TypeVar('T', bound='BlockchainFacade')
 
 BLOCK_LOCK = 'block'
+
+logger = logging.getLogger(__name__)
 
 
 def get_block_model():
@@ -212,13 +215,20 @@ class BlockchainFacade:
 
     def get_primary_validator(self) -> Optional[Node]:
         """
-        Return primary validator that must confirm the next block
+        Return primary validator that should sign the next block
         """
         from node.blockchain.models import Schedule
 
         schedule = Schedule.objects.filter(_id__lte=self.get_next_block_number()).order_by('-_id').first()
         if not schedule:
+            logger.warning('Schedule for the next block was not found')
             return None
 
         node = ORMNode.objects.get_or_none(_id=schedule.node_identifier)
-        return node.get_node() if node else None
+        if not node:
+            # TODO(dmu) HIGH: Implement workaround for the case when
+            #                 node unregisters itself by the moment it is scheduled
+            #                 https://thenewboston.atlassian.net/browse/BC-236
+            raise NotImplementedError
+
+        return node.get_node()

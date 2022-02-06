@@ -8,7 +8,7 @@ from node.core.exceptions import BlockchainLockingError
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
-    node_declaration_signed_change_request_message, regular_node_key_pair
+    node_declaration_signed_change_request_message, regular_node_key_pair, primary_validator_key_pair
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -22,12 +22,12 @@ def test_cannot_add_block_from_signed_change_request_if_blockchain_is_locked(
 
     delete_lock('block')
 
-    blockchain_facade.add_block_from_signed_change_request(request)
+    blockchain_facade.add_block_from_signed_change_request(request, signing_key=primary_validator_key_pair.private)
 
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
-    node_declaration_signed_change_request_message, regular_node_key_pair
+    node_declaration_signed_change_request_message, regular_node_key_pair, primary_validator_key_pair
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -42,7 +42,9 @@ def test_cannot_add_block_from_block_message_if_blockchain_is_locked(
 
     delete_lock('block')
 
-    blockchain_facade.add_block_from_block_message(block_message, validate=False)
+    blockchain_facade.add_block_from_block_message(
+        block_message, signing_key=primary_validator_key_pair.private, validate=False
+    )
 
 
 @pytest.mark.usefixtures('base_blockchain')

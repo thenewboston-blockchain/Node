@@ -9,7 +9,7 @@ from node.blockchain.models import AccountState as DBAccountState
 from node.blockchain.models.block import Block as ORMBlock
 from node.blockchain.types import AccountLock, AccountNumber, Signature, Type
 from node.core.exceptions import ValidationError
-from node.core.utils.cryptography import get_node_identifier, is_signature_valid
+from node.core.utils.cryptography import is_signature_valid
 
 
 @pytest.mark.django_db
@@ -59,7 +59,9 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
-def test_add_block_from_signed_change_request(node_declaration_signed_change_request_message, regular_node_key_pair):
+def test_add_block_from_signed_change_request(
+    node_declaration_signed_change_request_message, regular_node_key_pair, primary_validator_key_pair
+):
     blockchain_facade = BlockchainFacade.get_instance()
 
     expected_block_number = blockchain_facade.get_next_block_number()
@@ -70,8 +72,10 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
         signing_key=regular_node_key_pair.private,
     )
 
-    block = blockchain_facade.add_block_from_signed_change_request(request)
-    assert block.signer == get_node_identifier()
+    block = blockchain_facade.add_block_from_signed_change_request(
+        request, signing_key=primary_validator_key_pair.private
+    )
+    assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.signature, str)
     assert is_signature_valid(
         block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
@@ -91,7 +95,7 @@ def test_add_block_from_signed_change_request(node_declaration_signed_change_req
 
     orm_block = ORMBlock.objects.get(_id=expected_block_number)
     block = Block.parse_raw(orm_block.body)
-    assert block.signer == get_node_identifier()
+    assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.signature, str)
     assert is_signature_valid(
         block.signer, block.message.make_binary_representation_for_cryptography(), Signature(block.signature)
