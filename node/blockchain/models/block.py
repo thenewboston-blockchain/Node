@@ -2,6 +2,7 @@ from djongo import models
 
 from node.blockchain.inner_models import Block as PydanticBlock
 from node.core.managers import CustomManager
+from node.core.models import CustomModel
 
 
 class BlockManager(CustomManager):
@@ -14,7 +15,7 @@ class BlockManager(CustomManager):
         return self.order_by('-_id').first()
 
 
-class Block(models.Model):
+class Block(CustomModel):
     _id = models.PositiveBigIntegerField('Block number', primary_key=True)
     body = models.BinaryField()
 
