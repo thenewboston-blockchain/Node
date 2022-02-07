@@ -36,8 +36,6 @@ if ! grep -q -o TNB_NODE_SIGNING_KEY .env; then
   echo "TNB_NODE_SIGNING_KEY=$TNB_NODE_SIGNING_KEY" >>.env
 fi
 
-# TODO CRITICAL: Implement clear_blockchain Django management command
-#                https://thenewboston.atlassian.net/browse/BC-196
 # TODO CRITICAL: Implement initialize_blockchain
 #                https://thenewboston.atlassian.net/browse/BC-201
 # TODO CRITICAL: Implement sync_blockchain
