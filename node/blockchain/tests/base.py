@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import Node, NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
 from node.blockchain.models import Schedule
-from node.blockchain.types import KeyPair, NodeRole
+from node.blockchain.types import NodeRole
 from node.core.utils.cryptography import get_node_identifier
 
 
@@ -22,20 +21,3 @@ def as_role(node_role: NodeRole):
         Schedule.objects.filter(node_identifier=node_identifier).delete()
 
     yield
-
-
-def get_node_declaration_signed_change_request(node: Node, node_key_pair: KeyPair) -> SignedChangeRequest:
-    message = NodeDeclarationSignedChangeRequestMessage(
-        node=node,
-        account_lock=node.identifier,
-    )
-
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=message,
-        signing_key=node_key_pair.private,
-    )
-    assert signed_change_request.message
-    assert signed_change_request.signer
-    assert signed_change_request.signature
-
-    return signed_change_request
