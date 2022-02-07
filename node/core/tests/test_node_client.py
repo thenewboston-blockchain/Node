@@ -34,7 +34,7 @@ def test_send_scr_to_address(
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures('base_blockchain')
+@pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_send_scr_to_address_integration(
     test_server_address, regular_node_declaration_signed_change_request, smart_mocked_node_client
 ):

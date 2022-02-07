@@ -7,7 +7,7 @@ from node.blockchain.models import Node as ORMNode
 from node.blockchain.types import AccountLock, AccountNumber, BlockIdentifier, NodeRole, SigningKey
 from node.blockchain.utils.lock import lock
 from node.core.database import ensure_in_transaction
-from node.core.utils.cryptography import derive_public_key, get_signing_key
+from node.core.utils.cryptography import derive_public_key, get_node_identifier, get_signing_key
 from node.core.utils.misc import set_if_not_none
 
 if TYPE_CHECKING:
@@ -192,9 +192,23 @@ class BlockchainFacade:
             self.update_write_through_cache_schedule(schedule)
 
     def get_node_role(self):
-        # TODO CRITICAL: Implement method to determine which role has Node.
-        #                https://thenewboston.atlassian.net/browse/BC-191
-        return NodeRole.PRIMARY_VALIDATOR
+        # TODO(dmu) MEDIUM: Should we optimize the implementation to make only one database request and
+        #                   process the response in Python?
+        from node.blockchain.models import Schedule
+
+        node_identifier = get_node_identifier()
+        if not Schedule.objects.filter(node_identifier=node_identifier).exists():
+            return NodeRole.REGULAR_NODE
+
+        next_block_number = self.get_next_block_number()
+        schedule = Schedule.objects.filter(_id__lte=next_block_number).order_by('-_id').first()
+        if schedule and schedule.node_identifier == node_identifier:
+            return NodeRole.PRIMARY_VALIDATOR
+
+        if Schedule.objects.filter(_id__gt=next_block_number, node_identifier=node_identifier).exists():
+            return NodeRole.CONFIRMATION_VALIDATOR
+
+        return NodeRole.REGULAR_NODE
 
     def get_primary_validator(self) -> Optional[Node]:
         """
