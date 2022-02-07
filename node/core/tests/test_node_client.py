@@ -148,7 +148,7 @@ def test_yield_nodes_without_nodes(test_server_address, smart_mocked_node_client
 
 @pytest.mark.django_db
 def test_yield_nodes_pagination(
-    test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node
+    test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node, primary_validator_key_pair
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -158,7 +158,7 @@ def test_yield_nodes_pagination(
         node_declaration_scr = get_node_declaration_signed_change_request(node, node_key_pair)
         blockchain_facade.add_block_from_signed_change_request(
             signed_change_request=node_declaration_scr,
-            signing_key=node_key_pair.private,
+            signing_key=primary_validator_key_pair.private,
             validate=False,
         )
 

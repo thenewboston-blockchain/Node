@@ -2,6 +2,7 @@ from pydantic import root_validator
 
 from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
 from node.blockchain.mixins.validatable import ValidatableMixin
+from node.core.exceptions import ValidationError
 
 from ..types import AccountNumber, Signature
 from .base import BaseModel
@@ -44,10 +45,18 @@ class Block(ValidatableMixin, BlockType, HashableMixin):
     def validate_business_logic(self):
         self.message.validate_business_logic()
 
+    def validate_signer(self, blockchain_facade):
+        if not blockchain_facade.has_blocks():
+            return
+
+        primary_validator = blockchain_facade.get_primary_validator()
+        assert primary_validator
+        if primary_validator.identifier != self.signer:
+            raise ValidationError('Block must be signed by primary validator')
+
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.message.validate_blockchain_state_dependent(blockchain_facade)
-        # TODO(dmu) CRITICAL: Validate that signer is a PV
-        #                     https://thenewboston.atlassian.net/browse/BC-160
+        self.validate_signer(blockchain_facade)
 
 
 class GenesisBlock(Block):
