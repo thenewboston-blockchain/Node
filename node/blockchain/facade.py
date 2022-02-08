@@ -53,6 +53,11 @@ class BlockchainFacade:
 
     @ensure_in_transaction
     @lock(BLOCK_LOCK)
+    def add_block_from_json(self, block_json: str) -> 'ORMBlock':
+        return self.add_block(Block.parse_raw(block_json), expect_locked=True)
+
+    @ensure_in_transaction
+    @lock(BLOCK_LOCK)
     def add_block(self, block: Block, *, validate=True) -> 'ORMBlock':
         if validate:
             block.validate_business_logic()
