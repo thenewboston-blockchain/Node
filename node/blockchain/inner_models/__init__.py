@@ -9,5 +9,6 @@ from .signed_change_request import (  # noqa: F401
     SignedChangeRequest
 )
 from .signed_change_request_message import (  # noqa: F401
-    GenesisSignedChangeRequestMessage, NodeDeclarationSignedChangeRequestMessage
+    CoinTransferSignedChangeRequestMessage, GenesisSignedChangeRequestMessage,
+    NodeDeclarationSignedChangeRequestMessage
 )
