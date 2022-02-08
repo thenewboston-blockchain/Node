@@ -1,4 +1,6 @@
+import django_filters
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend, RangeFilter
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from node.blockchain.models import Block
@@ -8,11 +10,21 @@ from node.core.pagination import CustomLimitOffsetNoCountPagination
 from ..constants import LAST_BLOCK_ID
 
 
+class BlockFilterSet(django_filters.FilterSet):
+    block_number = RangeFilter('_id')
+
+    class Meta:
+        model = Block
+        fields = ('block_number',)
+
+
 class BlockViewSet(ReadOnlyModelViewSet):
     serializer_class = BlockSerializer
-    # TODO(dmu) MEDIUM: We might need to add dynamic filtering and ordering later
+    # TODO(dmu) MEDIUM: We might need to add dynamic ordering later
     queryset = BlockSerializer.Meta.model.objects.order_by('_id')
     pagination_class = CustomLimitOffsetNoCountPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = BlockFilterSet
 
     def list(self, request, *args, **kwargs):  # noqa: A003
         queryset = self.filter_queryset(self.get_queryset())

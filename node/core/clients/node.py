@@ -137,16 +137,16 @@ class NodeClient:
     def list_resource(
         self, address, resource, *, offset=None, limit=None, ordering=None, parameters=None, should_raise=True
     ):
-        parameters = parameters or {}
+        parameters = (parameters or {}).copy()
         setdefault_if_not_none(parameters, 'offset', offset)
         setdefault_if_not_none(parameters, 'limit', limit)
         setdefault_if_not_none(parameters, 'ordering', ordering)
         return self.http_get(address, resource, parameters=parameters, should_raise=should_raise)
 
-    def yield_resource(self, address, resource, by_limit):
+    def yield_resource(self, address, resource, by_limit, parameters: Optional[dict] = None):
         offset = 0
         while True:
-            response = self.list_resource(address, resource, offset=offset, limit=by_limit)
+            response = self.list_resource(address, resource, offset=offset, limit=by_limit, parameters=parameters)
             if response is None:
                 break
 
@@ -154,6 +154,7 @@ class NodeClient:
             if not items:
                 break
 
+            logger.debug('Got %s items', len(items))
             for item in items:
                 yield item
 
@@ -199,8 +200,17 @@ class NodeClient:
 
         return Block.parse_raw(block)
 
-    def yield_blocks_raw(self, /, address: str) -> Generator[dict, None, None]:
-        yield from self.yield_resource(address, 'blocks', by_limit=LIST_BLOCKS_LIMIT)
+    def yield_blocks_raw(
+        self,
+        /,
+        address: str,
+        block_number_min: Optional[int] = None,
+        block_number_max: Optional[int] = None
+    ) -> Generator[dict, None, None]:
+        parameters: dict = {}
+        setdefault_if_not_none(parameters, 'block_number_min', block_number_min)
+        setdefault_if_not_none(parameters, 'block_number_max', block_number_max)
+        yield from self.yield_resource(address, 'blocks', by_limit=LIST_BLOCKS_LIMIT, parameters=parameters)
 
     @from_node
     def list_blocks_raw(self, /, address: str) -> list[dict]:
