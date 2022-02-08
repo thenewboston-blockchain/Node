@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from node.blockchain.models import Node
-from node.core.tests.base import make_node
+from node.blockchain.tests.factories.node import make_node
 
 
 @pytest.fixture

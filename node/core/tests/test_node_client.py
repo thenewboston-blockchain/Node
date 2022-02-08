@@ -7,10 +7,10 @@ from requests.exceptions import HTTPError
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models.node import Node as InnerNode
 from node.blockchain.models import Block, Node
+from node.blockchain.tests.factories.node import make_node
 from node.blockchain.tests.factories.signed_change_request.node_declaration import (
     make_node_declaration_signed_change_request
 )
-from node.core.tests.base import make_node
 from node.core.utils.cryptography import generate_key_pair, get_node_identifier
 
 
