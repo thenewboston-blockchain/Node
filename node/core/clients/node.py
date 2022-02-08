@@ -5,7 +5,8 @@ from urllib.parse import urlencode, urljoin
 
 import requests
 
-from node.blockchain.inner_models import Block, Node, SignedChangeRequest
+from node.blockchain.inner_models import AccountState, Block, Node, SignedChangeRequest
+from node.blockchain.types import AccountNumber
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +200,7 @@ class NodeClient:
         return None
 
     @from_node
-    def get_block_raw(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[str]:
+    def get_block_raw(self, /, address: str, block_number: Union[int, str]) -> Optional[str]:
         response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
         if response is None or response.status_code == 404:
             return None
@@ -242,3 +243,11 @@ class NodeClient:
     @from_node
     def list_blocks_raw(self, /, address: str) -> list[dict]:
         return list(self.yield_blocks_raw(address))
+
+    @from_node
+    def get_account_state(self, address: str, account_number: AccountNumber) -> Optional[AccountState]:
+        response = self.http_get(address, 'account-states', resource_id=account_number, should_raise=False)
+        if response is None or response.status_code == 404:
+            return None
+
+        return AccountState.parse_obj(response.json())

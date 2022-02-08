@@ -34,7 +34,7 @@ def test_retrieve_node(primary_validator_node, api_client):
 
 
 @pytest.mark.django_db
-def test_retrieve_node_ruturns_404(api_client):
+def test_not_found(api_client):
     response = api_client.get('/api/nodes/UNKNOWN_IDENTIFIER/')
     assert response.status_code == 404
     assert response.json() == {'detail': 'Not found.'}
