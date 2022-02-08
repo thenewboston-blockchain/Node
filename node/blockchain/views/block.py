@@ -24,7 +24,7 @@ class BlockViewSet(ReadOnlyModelViewSet):
             serializer = self.get_serializer(page, many=True)
 
         # We use customized response formation to reduce amount of serialization / deserialization
-        response_body = '[' + ','.join(serializer.data) + ']'
+        response_body = '{"results":[' + ','.join(serializer.data) + ']}'
         return HttpResponse(content=response_body, content_type='application/json')
 
     def retrieve(self, request, *args, **kwargs):
