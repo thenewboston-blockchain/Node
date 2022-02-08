@@ -27,6 +27,22 @@ def test_list_blocks(api_client):
         assert response_block == expected_block
 
 
+@pytest.mark.usefixtures('bloated_blockchain')
+def test_list_blocks_range(api_client):
+    response = api_client.get('/api/blocks/?block_number_min=3&block_number_max=6')
+    assert response.status_code == 200
+    response_json = response.json()
+    results = response_json.get('results')
+    assert isinstance(results, list)
+    assert len(results) == 4
+
+    for index, block_number in enumerate(range(3, 7)):
+        block = Block.objects.get(_id=block_number)
+        response_block = results[index]
+        expected_block = json.loads(block.body)
+        assert response_block == expected_block
+
+
 @pytest.mark.usefixtures('rich_blockchain')
 def test_blocks_pagination(api_client):
     response = api_client.get('/api/blocks/?limit=1')

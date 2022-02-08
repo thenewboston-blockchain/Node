@@ -162,3 +162,16 @@ def test_yield_blocks(test_server_address, bloated_blockchain, smart_mocked_node
     assert [block['message']['number'] for block in blocks] == list(range(27))
     block_objs = [Block.parse_obj(block) for block in blocks]
     assert block_objs == [block.get_block() for block in ORMBlock.objects.all().order_by('_id')]
+
+
+@pytest.mark.django_db
+def test_yield_blocks_filtered(test_server_address, bloated_blockchain, smart_mocked_node_client):
+    blocks = list(
+        smart_mocked_node_client.yield_blocks_raw(test_server_address, block_number_min=3, block_number_max=6)
+    )
+    assert len(blocks) == 4
+    assert [block['message']['number'] for block in blocks] == list(range(3, 7))
+    block_objs = [Block.parse_obj(block) for block in blocks]
+    assert block_objs == [
+        block.get_block() for block in ORMBlock.objects.all().filter(_id__gte=3, _id__lte=6).order_by('_id')
+    ]
