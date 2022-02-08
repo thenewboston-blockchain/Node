@@ -13,6 +13,7 @@ T = TypeVar('T', bound='NodeClient')
 
 DEFAULT_TIMEOUT = 2
 LIST_NODES_LIMIT = 20
+LIST_BLOCKS_LIMIT = 20
 
 
 def setdefault_if_not_none(dict_, key, value):
@@ -178,7 +179,7 @@ class NodeClient:
             yield Node.parse_obj(item)
 
     @from_node
-    def list_nodes(self, /, address: Union[str, Node]) -> list[Node]:
+    def list_nodes(self, /, address: str) -> list[Node]:
         return list(self.yield_nodes(address))
 
     @from_node
@@ -198,8 +199,9 @@ class NodeClient:
 
         return Block.parse_raw(block)
 
-    def list_blocks_raw(self):
-        raise NotImplementedError
+    def yield_blocks_raw(self, /, address: str) -> Generator[dict, None, None]:
+        yield from self.yield_resource(address, 'blocks', by_limit=LIST_BLOCKS_LIMIT)
 
-    def yield_blocks_raw(self):
-        raise NotImplementedError
+    @from_node
+    def list_blocks_raw(self, /, address: str) -> list[dict]:
+        return list(self.yield_blocks_raw(address))

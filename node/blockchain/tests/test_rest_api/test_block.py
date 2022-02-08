@@ -16,12 +16,13 @@ def test_list_blocks(api_client):
     response = api_client.get('/api/blocks/')
     assert response.status_code == 200
     response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 3
+    results = response_json.get('results')
+    assert isinstance(results, list)
+    assert len(results) == 3
 
     for block_number in range(2):
         block = Block.objects.get(_id=block_number)
-        response_block = response_json[block_number]
+        response_block = results[block_number]
         expected_block = json.loads(block.body)
         assert response_block == expected_block
 
@@ -31,22 +32,25 @@ def test_blocks_pagination(api_client):
     response = api_client.get('/api/blocks/?limit=1')
     assert response.status_code == 200
     response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 1
-    assert response_json[0] == json.loads(Block.objects.get(_id=0).body)
+    results = response_json.get('results')
+    assert isinstance(results, list)
+    assert len(results) == 1
+    assert results[0] == json.loads(Block.objects.get(_id=0).body)
 
     response = api_client.get('/api/blocks/?limit=1&offset=1')
     assert response.status_code == 200
     response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 1
-    assert response_json[0] == json.loads(Block.objects.get(_id=1).body)
+    results = response_json.get('results')
+    assert isinstance(results, list)
+    assert len(results) == 1
+    assert results[0] == json.loads(Block.objects.get(_id=1).body)
 
     response = api_client.get('/api/blocks/?limit=1&offset=3')
     assert response.status_code == 200
     response_json = response.json()
-    assert isinstance(response_json, list)
-    assert len(response_json) == 0
+    results = response_json.get('results')
+    assert isinstance(results, list)
+    assert len(results) == 0
 
 
 @pytest.mark.usefixtures('rich_blockchain')

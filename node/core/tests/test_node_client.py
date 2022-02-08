@@ -5,13 +5,12 @@ import pytest
 from requests.exceptions import HTTPError
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models.node import Node as InnerNode
-from node.blockchain.models import Block, Node
+from node.blockchain.inner_models import Block
+from node.blockchain.inner_models import Node as InnerNode
+from node.blockchain.models import Block as ORMBlock
+from node.blockchain.models import Node
 from node.blockchain.tests.factories.node import make_node
-from node.blockchain.tests.factories.signed_change_request.node_declaration import (
-    make_node_declaration_signed_change_request
-)
-from node.core.utils.cryptography import generate_key_pair, get_node_identifier
+from node.core.utils.cryptography import get_node_identifier
 
 
 def test_send_scr_to_address(
@@ -96,7 +95,7 @@ def test_send_scr_to_node(
 ))
 def test_get_block_raw(test_server_address, smart_mocked_node_client, block_identifier, block_number):
     block = smart_mocked_node_client.get_block_raw(test_server_address, block_identifier)
-    expected_block = Block.objects.get(_id=block_number)
+    expected_block = ORMBlock.objects.get(_id=block_number)
     assert block == expected_block.body
 
 
@@ -150,21 +149,16 @@ def test_yield_nodes_without_nodes(test_server_address, smart_mocked_node_client
 
 @pytest.mark.django_db
 def test_yield_nodes_pagination(
-    test_server_address, base_blockchain, smart_mocked_node_client, primary_validator_node, primary_validator_key_pair
+    test_server_address, bloated_blockchain, smart_mocked_node_client, primary_validator_node,
+    primary_validator_key_pair
 ):
-    blockchain_facade = BlockchainFacade.get_instance()
+    assert len(list(smart_mocked_node_client.yield_nodes(test_server_address))) == 27
 
-    for _ in range(24):
-        node_key_pair = generate_key_pair()
-        node = make_node(node_key_pair, [primary_validator_node.addresses[0], 'http://testserver/'])
-        node_declaration_scr = make_node_declaration_signed_change_request(node, node_key_pair)
-        blockchain_facade.add_block_from_signed_change_request(
-            signed_change_request=node_declaration_scr,
-            signing_key=primary_validator_key_pair.private,
-            validate=False,
-        )
 
-    client = smart_mocked_node_client
-    node_generator = client.yield_nodes(test_server_address)
-    nodes = list(node_generator)
-    assert len(nodes) == 25
+@pytest.mark.django_db
+def test_yield_blocks(test_server_address, bloated_blockchain, smart_mocked_node_client):
+    blocks = list(smart_mocked_node_client.yield_blocks_raw(test_server_address))
+    assert len(blocks) == 27
+    assert [block['message']['number'] for block in blocks] == list(range(27))
+    block_objs = [Block.parse_obj(block) for block in blocks]
+    assert block_objs == [block.get_block() for block in ORMBlock.objects.all().order_by('_id')]
