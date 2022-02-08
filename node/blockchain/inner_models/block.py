@@ -52,7 +52,7 @@ class Block(ValidatableMixin, BlockType, HashableMixin):
         primary_validator = blockchain_facade.get_primary_validator()
         assert primary_validator
         if primary_validator.identifier != self.signer:
-            raise ValidationError('Block must be signed by primary validator')
+            raise ValidationError('Invalid block signer')
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.message.validate_blockchain_state_dependent(blockchain_facade)
