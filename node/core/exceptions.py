@@ -52,6 +52,10 @@ class BlockchainError(NodeError):
     pass
 
 
+class BlockchainSyncError(NodeError):
+    pass
+
+
 class BlockchainLockingError(BlockchainError):
     pass
 

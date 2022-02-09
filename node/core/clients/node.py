@@ -24,7 +24,7 @@ def setdefault_if_not_none(dict_, key, value):
 def from_node(method):
 
     @functools.wraps(method)
-    def wrapper(self, source: Union[str, Node], *args, **kwargs):
+    def wrapper(self, /, source: Union[str, Node], *args, **kwargs):
         if isinstance(source, str):
             return method(self, source, *args, **kwargs)
 
@@ -208,24 +208,36 @@ class NodeClient:
         return response.content.decode('utf-8')
 
     @from_node
-    def get_block(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[Block]:
+    def get_block(self, /, address: str, block_number: Union[int, str]) -> Optional[Block]:
         block = self.get_block_raw(address, block_number)
         if block is None:
             return None
 
         return Block.parse_raw(block)
 
+    @from_node
+    def get_last_block(self, /, address) -> Optional[Block]:
+        return self.get_block(address, 'last')
+
+    @from_node
+    def get_last_block_number(self, /, address) -> Optional[int]:
+        last_block = self.get_last_block(address)
+        return last_block.get_block_number() if last_block else None
+
     def yield_blocks_raw(
         self,
         /,
         address: str,
         block_number_min: Optional[int] = None,
-        block_number_max: Optional[int] = None
+        block_number_max: Optional[int] = None,
+        by_limit: Optional[int] = None,
     ) -> Generator[dict, None, None]:
         parameters: dict = {}
         setdefault_if_not_none(parameters, 'block_number_min', block_number_min)
         setdefault_if_not_none(parameters, 'block_number_max', block_number_max)
-        yield from self.yield_resource(address, 'blocks', by_limit=LIST_BLOCKS_LIMIT, parameters=parameters)
+
+        by_limit = LIST_BLOCKS_LIMIT if by_limit is None else by_limit
+        yield from self.yield_resource(address, 'blocks', by_limit=by_limit, parameters=parameters)
 
     @from_node
     def list_blocks_raw(self, /, address: str) -> list[dict]:
