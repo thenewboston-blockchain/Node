@@ -187,6 +187,7 @@ class NodeClient:
         return list(self.yield_nodes(address))
 
     def get_node_online_address(self, node) -> Optional[str]:
+        # TODO(dmu) MEDIUM: What should we do if node is not declared, but responds API calls?
         for address in node.addresses:
             try:
                 self.http_get(address, 'nodes', resource_id='self')
