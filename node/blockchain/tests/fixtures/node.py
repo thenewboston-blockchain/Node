@@ -23,8 +23,8 @@ def primary_validator_node(primary_validator_key_pair):
 
 
 @pytest.fixture
-def self_node(self_node_key_pair):
-    return make_node(self_node_key_pair, ['http://not-existing-self-address-674898923.com:8555/'])
+def self_node(self_node_key_pair, test_server_address):
+    return make_node(self_node_key_pair, ['http://not-existing-self-address-674898923.com:8555/', test_server_address])
 
 
 @pytest.fixture

@@ -57,6 +57,9 @@ def from_node(method):
 class NodeClient:
     _instance = None
 
+    def __init__(self):
+        self.timeout = DEFAULT_TIMEOUT
+
     @classmethod
     def get_instance(cls: Type[T]) -> T:
         instance = cls._instance
@@ -87,7 +90,7 @@ class NodeClient:
 
         try:
             response = self.requests_post(
-                url, json=json_data, data=data, headers={'Content-Type': 'application/json'}, timeout=DEFAULT_TIMEOUT
+                url, json=json_data, data=data, headers={'Content-Type': 'application/json'}, timeout=self.timeout
             )
         except Exception:
             logger.warning('Could not POST %s, data: %s', url, data if json_data is None else json_data, exc_info=True)
@@ -118,7 +121,7 @@ class NodeClient:
             url += '?' + urlencode(parameters)
 
         try:
-            response = self.requests_get(url, timeout=DEFAULT_TIMEOUT)
+            response = self.requests_get(url, timeout=self.timeout)
         except Exception:
             logger.warning('Could not GET %s', url, exc_info=True)
             if should_raise:
@@ -182,6 +185,17 @@ class NodeClient:
     @from_node
     def list_nodes(self, /, address: str) -> list[Node]:
         return list(self.yield_nodes(address))
+
+    def get_node_online_address(self, node) -> Optional[str]:
+        for address in node.addresses:
+            try:
+                self.http_get(address, 'nodes', resource_id='self')
+            except Exception:
+                logger.warning('Node %s is not online on %s', node, address, exc_info=True)
+            else:
+                return address
+
+        return None
 
     @from_node
     def get_block_raw(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[str]:

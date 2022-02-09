@@ -82,7 +82,8 @@ def smart_mocked_node_client(api_client):
         'new': partial(client_method_wrapper, api_client.get, client.requests_get),
     }
     with patch.object(client, **post_arguments), patch.object(client, **get_arguments):
-        yield client
+        with patch.object(client, 'timeout', new=0.01):
+            yield client
 
 
 @pytest.fixture
