@@ -1,5 +1,5 @@
 from types import GeneratorType
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from requests.exceptions import HTTPError
@@ -8,7 +8,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import Block
 from node.blockchain.inner_models import Node as InnerNode
 from node.blockchain.models import Block as ORMBlock
-from node.blockchain.models import Node
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.tests.factories.node import make_node
 from node.core.utils.cryptography import get_node_identifier
 
@@ -40,7 +40,7 @@ def test_send_scr_to_address_integration(
     test_server_address, regular_node_declaration_signed_change_request, smart_mocked_node_client
 ):
     assert BlockchainFacade.get_instance().get_next_block_number() == 1
-    assert not Node.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
+    assert not ORMNode.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
     client = smart_mocked_node_client
     scr = regular_node_declaration_signed_change_request
@@ -48,7 +48,7 @@ def test_send_scr_to_address_integration(
     assert response.status_code == 201
 
     assert BlockchainFacade.get_instance().get_next_block_number() == 2
-    assert Node.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
+    assert ORMNode.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
 
 def test_send_scr_to_node(
@@ -128,6 +128,7 @@ def test_yield_nodes(test_server_address, smart_mocked_node_client):
     assert node2.identifier == get_node_identifier()
     assert node2.addresses == [
         'http://not-existing-self-address-674898923.com:8555/',
+        test_server_address,
     ]
     assert node2.fee == 4
 
@@ -175,3 +176,15 @@ def test_yield_blocks_filtered(test_server_address, bloated_blockchain, smart_mo
     assert block_objs == [
         block.get_block() for block in ORMBlock.objects.all().filter(_id__gte=3, _id__lte=6).order_by('_id')
     ]
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+def test_get_node_online_address(test_server_address, smart_mocked_node_client, self_node):
+    assert self_node.identifier == get_node_identifier()
+    assert test_server_address in self_node.addresses
+    assert ORMNode.objects.filter(_id=self_node.identifier).exists()
+
+    assert smart_mocked_node_client.get_node_online_address(self_node) == test_server_address
+
+    with patch.object(smart_mocked_node_client, 'requests_get', side_effect=HTTPError()):
+        assert smart_mocked_node_client.get_node_online_address(self_node) is None
