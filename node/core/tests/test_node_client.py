@@ -13,7 +13,7 @@ from node.blockchain.tests.factories.node import make_node
 from node.core.utils.cryptography import get_node_identifier
 
 
-def test_send_scr_to_address(
+def test_send_signed_change_request(
     primary_validator_node, regular_node_declaration_signed_change_request, mocked_node_client
 ):
     client = mocked_node_client
@@ -24,7 +24,7 @@ def test_send_scr_to_address(
     rv = MagicMock()
     rv.status_code = 201
     client.requests_post.return_value = rv
-    client.send_scr_to_address(address, scr)
+    client.send_signed_change_request(address, scr)
     client.requests_post.assert_called_once_with(
         str(address) + 'api/signed-change-requests/',
         json=None,
@@ -44,7 +44,7 @@ def test_send_scr_to_address_integration(
 
     client = smart_mocked_node_client
     scr = regular_node_declaration_signed_change_request
-    response = client.send_scr_to_address(test_server_address, scr)
+    response = client.send_signed_change_request(test_server_address, scr)
     assert response.status_code == 201
 
     assert BlockchainFacade.get_instance().get_next_block_number() == 2
@@ -66,7 +66,7 @@ def test_send_scr_to_node(
 
     node = make_node(primary_validator_key_pair, [primary_validator_node.addresses[0], 'http://testserver/'])
     scr = regular_node_declaration_signed_change_request
-    client.send_scr_to_node(node, scr)
+    client.send_signed_change_request(node, scr)
     client.requests_post.assert_has_calls((
         call(
             str(primary_validator_node.addresses[0]) + 'api/signed-change-requests/',

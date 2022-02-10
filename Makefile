@@ -73,7 +73,14 @@ migrations:
 
 .PHONY: genesis
 genesis:
-	poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+	# Test money
+	# Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
+	# Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
+	poetry run python -m node.manage genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+
+.PHONY: clear-blockchain
+clear-blockchain:
+	poetry run python -m node.manage clear_blockchain
 
 .PHONY: dot-env
 dot-env:

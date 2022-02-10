@@ -8,11 +8,10 @@ from pymongo.errors import DuplicateKeyError
 from node.core.exceptions import BlockchainIsNotLockedError, BlockchainLockingError, BlockchainUnlockingError
 
 thread_storage = threading.local()
-thread_storage.pymongo_client = None
 
 
 def get_pymongo_client():
-    if (client := thread_storage.pymongo_client) is None:
+    if (client := getattr(thread_storage, 'pymongo_client', None)) is None:
         client_settings = settings.DATABASES['default']['CLIENT']
         thread_storage.pymongo_client = client = MongoClient(**client_settings)
 
@@ -41,6 +40,10 @@ def create_lock(name):
 
 def delete_lock(name):
     return get_lock_collection().delete_one(make_filter(name))
+
+
+def delete_all_locks():
+    return get_lock_collection().remove()
 
 
 def lock(name):

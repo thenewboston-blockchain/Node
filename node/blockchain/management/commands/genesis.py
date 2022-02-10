@@ -23,8 +23,12 @@ class Command(CustomCommand):
         # TODO(dmu) MEDIUM: We may need simpler blockchains and with known private key for local testing. Implement
         parser.add_argument('source', help='file path or URL to alpha account root file')
         parser.add_argument('-f', '--force', action='store_true', help='remove existing blockchain if any')
+        parser.add_argument('-e', '--extra-account')
+        parser.add_argument(
+            '--extra-account-balance', type=int, default=100000, help='Balance amount for extra account'
+        )
 
-    def handle(self, source, force, **options):
+    def handle(self, source, force, extra_account, **options):
         # TODO(dmu) MEDIUM: Cover this method with unittests
         does_exist = Block.objects.exists()
         if does_exist and not force:
@@ -35,6 +39,16 @@ class Command(CustomCommand):
         self.write_info('Got signing key')
 
         account_root_file = read_source(source)
+        if extra_account:
+            if extra_account.lower() in {key.lower() for key in account_root_file}:
+                self.write_error(f'Account {extra_account} is already in use in account root file')
+                sys.exit(1)
+
+            account_root_file[extra_account] = {
+                'balance': options['extra_account_balance'],
+                'balance_lock': extra_account
+            }
+
         self.write_info('Read source')
         primary_validator_node = make_own_node()
         self.write_info('Made own node')

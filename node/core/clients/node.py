@@ -5,7 +5,8 @@ from urllib.parse import urlencode, urljoin
 
 import requests
 
-from node.blockchain.inner_models import Block, Node, SignedChangeRequest
+from node.blockchain.inner_models import AccountState, Block, Node, SignedChangeRequest
+from node.blockchain.types import AccountNumber
 
 logger = logging.getLogger(__name__)
 
@@ -21,37 +22,50 @@ def setdefault_if_not_none(dict_, key, value):
         dict_.setdefault(key, value)
 
 
-def from_node(method):
+def with_node(method_or_none=None, should_raise=False):
 
-    @functools.wraps(method)
-    def wrapper(self, /, source: Union[str, Node], *args, **kwargs):
-        if isinstance(source, str):
-            return method(self, source, *args, **kwargs)
+    def decorator(method):
 
-        assert isinstance(source, Node)
+        @functools.wraps(method)
+        def wrapper(self, /, source: Union[str, Node], *args, **kwargs):
+            if isinstance(source, str):
+                return method(self, source, *args, **kwargs)
 
-        for address in source.addresses:
-            try:
-                rv = method(self, address, *args, **kwargs)
-            except Exception:
-                exc_info = True
-                rv = None
+            assert isinstance(source, Node)
+
+            for address in source.addresses:
+                try:
+                    rv = method(self, address, *args, **kwargs)
+                except Exception:
+                    exc_info = True
+                    rv = None
+                else:
+                    exc_info = False
+
+                if exc_info or rv is None:
+                    logger.warning(
+                        'Unsuccessful API call with %s(%r, ...)', method.__name__, str(address), exc_info=exc_info
+                    )
+                    continue
+
+                return rv
+
+            if should_raise:
+                raise ConnectionError(f'Unsuccessful API call with {method.__name__}({source!r}, ...)')
             else:
-                exc_info = False
+                return None
 
-            if exc_info or rv is None:
-                logger.warning(
-                    'Could not get result for %s(%r, ...)', method.__name__, str(address), exc_info=exc_info
-                )
-                continue
+        return wrapper
 
-            return rv
+    return decorator(method_or_none) if method_or_none else decorator
 
-        # TODO(dmu) LOW: Is it better to reraise last exception. What if there was not exception.
-        #                Need to decide what is better return or raise exception in general
-        return None
 
-    return wrapper
+def raise_for_status_advanced(response):
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as ex:
+        ex.args = (ex.args[0] + f' (BODY: {response.text})',) + ex.args[1:]
+        raise
 
 
 class NodeClient:
@@ -100,7 +114,7 @@ class NodeClient:
             return None
 
         if should_raise:
-            response.raise_for_status()
+            raise_for_status_advanced(response)
         else:
             status_code = response.status_code
             if status_code >= 400:
@@ -130,7 +144,7 @@ class NodeClient:
             return None
 
         if should_raise:
-            response.raise_for_status()
+            raise_for_status_advanced(response)
         else:
             status_code = response.status_code
             if status_code >= 400:
@@ -163,26 +177,18 @@ class NodeClient:
 
             offset += len(items)
 
-    def send_scr_to_address(self, address: str, signed_change_request: SignedChangeRequest):
+    @with_node
+    def send_signed_change_request(self, /, address: str, signed_change_request: SignedChangeRequest):
         logger.debug('Sending %s to %s', signed_change_request, address)
         # TODO(dmu) LOW: Consider using `json=signed_change_request.dict()`, but this requires serialization
         #                enums to basic types in dict while still having enums in model instance representation
         return self.http_post(address, 'signed-change-requests', data=signed_change_request.json())
 
-    def send_scr_to_node(self, node: Node, signed_change_request: SignedChangeRequest):
-        for address in node.addresses:
-            try:
-                return self.send_scr_to_address(address, signed_change_request)
-            except requests.RequestException:
-                logger.warning('Error sending %s to %s at %s', signed_change_request, node, address)
-        else:
-            raise ConnectionError(f'Could not send signed change request to {node}')
-
     def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
         for item in self.yield_resource(address, 'nodes', by_limit=LIST_NODES_LIMIT):
             yield Node.parse_obj(item)
 
-    @from_node
+    @with_node
     def list_nodes(self, /, address: str) -> list[Node]:
         return list(self.yield_nodes(address))
 
@@ -198,16 +204,16 @@ class NodeClient:
 
         return None
 
-    @from_node
-    def get_block_raw(self, /, address: Union[str, Node], block_number: Union[int, str]) -> Optional[str]:
+    @with_node
+    def get_block_raw(self, /, address: str, block_number: Union[int, str]) -> Optional[str]:
         response = self.http_get(address, 'blocks', resource_id=block_number, should_raise=False)
         if response is None or response.status_code == 404:
             return None
 
         response.raise_for_status()
-        return response.content.decode('utf-8')
+        return response.text
 
-    @from_node
+    @with_node
     def get_block(self, /, address: str, block_number: Union[int, str]) -> Optional[Block]:
         block = self.get_block_raw(address, block_number)
         if block is None:
@@ -215,11 +221,11 @@ class NodeClient:
 
         return Block.parse_raw(block)
 
-    @from_node
+    @with_node
     def get_last_block(self, /, address) -> Optional[Block]:
         return self.get_block(address, 'last')
 
-    @from_node
+    @with_node
     def get_last_block_number(self, /, address) -> Optional[int]:
         last_block = self.get_last_block(address)
         return last_block.get_block_number() if last_block else None
@@ -239,6 +245,11 @@ class NodeClient:
         by_limit = LIST_BLOCKS_LIMIT if by_limit is None else by_limit
         yield from self.yield_resource(address, 'blocks', by_limit=by_limit, parameters=parameters)
 
-    @from_node
+    @with_node
     def list_blocks_raw(self, /, address: str) -> list[dict]:
         return list(self.yield_blocks_raw(address))
+
+    @with_node
+    def get_account_state(self, /, address: str, account_number: AccountNumber) -> AccountState:
+        response = self.http_get(address, 'account-states', resource_id=account_number)
+        return AccountState.parse_raw(response.text)

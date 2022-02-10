@@ -6,7 +6,8 @@ from nacl.exceptions import CryptoError
 from nacl.signing import SigningKey as NaClSigningKey
 from nacl.signing import VerifyKey
 
-from ...blockchain.types import AccountNumber, Hash, KeyPair, Signature, SigningKey
+from node.blockchain.types import AccountNumber, Hash, KeyPair, Signature, SigningKey
+
 from .misc import bytes_to_hex, hex_to_bytes
 
 
