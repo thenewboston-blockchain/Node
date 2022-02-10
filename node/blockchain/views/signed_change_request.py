@@ -29,8 +29,9 @@ class SignedChangeRequestViewSet(GenericViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         pv_node = blockchain_facade.get_primary_validator()
+
         # TODO(dmu) MEDIUM: Consider making business logic validation of signed_change_request here
-        response = NodeClient.get_instance().send_scr_to_node(pv_node, signed_change_request)
+        response = NodeClient.get_instance().send_signed_change_request(pv_node, signed_change_request)
         return HttpResponse(
             response.content, status=response.status_code, content_type=response.headers.get('content-type')
         )

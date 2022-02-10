@@ -1,6 +1,7 @@
 from enum import IntEnum, unique
 from typing import NamedTuple
 
+from pydantic.errors import AnyStrMaxLengthError, AnyStrMinLengthError
 from pydantic.types import _registered
 
 from node.core.utils.types import hexstr64, hexstr64_i, hexstr128  # noqa: I101
@@ -22,7 +23,26 @@ class NodeRole(IntEnum):
 
 @_registered
 class AccountNumber(hexstr64):
-    pass
+
+    @classmethod
+    def resemble_constr_length_validator(cls, value):
+        value_len = len(value)
+
+        min_length = cls.min_length
+        if min_length is not None and value_len < min_length:
+            raise AnyStrMinLengthError(limit_value=min_length)
+
+        max_length = cls.max_length
+        if max_length is not None and value_len > max_length:
+            raise AnyStrMaxLengthError(limit_value=max_length)
+
+        return value
+
+    @classmethod
+    def validate(cls, value):
+        value = super().validate(value)
+        # We need resemble_constr_length_validator() to use standalone AccountNumber() validation
+        return cls.resemble_constr_length_validator(value)
 
 
 @_registered

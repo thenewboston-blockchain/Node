@@ -42,6 +42,10 @@ def delete_lock(name):
     return get_lock_collection().delete_one(make_filter(name))
 
 
+def delete_all_locks():
+    return get_lock_collection().remove()
+
+
 def lock(name):
 
     def decorator(func):

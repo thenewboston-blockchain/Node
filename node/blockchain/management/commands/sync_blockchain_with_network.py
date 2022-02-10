@@ -1,16 +1,9 @@
-from django.core.management import BaseCommand
-
 from node.blockchain.utils.network import get_nodes_for_syncing
+from node.core.management import CustomCommand
 
 
-class Command(BaseCommand):
+class Command(CustomCommand):
     help = 'Sync local blockchain with thenewboston blockchain network'  # noqa: A003
-
-    def write_info(self, msg):
-        self.stdout.write(msg, self.style.SUCCESS)
-
-    def write_error(self, msg):
-        self.stdout.write(msg, self.style.ERROR)
 
     def get_nodes_for_syncing(self):
         nodes = get_nodes_for_syncing()

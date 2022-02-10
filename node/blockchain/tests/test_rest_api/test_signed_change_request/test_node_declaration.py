@@ -197,10 +197,11 @@ def test_node_declaration_scr_as_other_roles(
     response.content = payload.encode('utf-8')
     response.headers = {'content-type': 'application/json'}
 
-    with as_role(role), patch('node.core.clients.node.NodeClient.send_scr_to_address', return_value=response) as mock:
-        response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
+    with as_role(role):
+        with patch('node.core.clients.node.NodeClient.send_signed_change_request', return_value=response) as mock:
+            response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
 
-    mock.assert_called_once_with(primary_validator_node.addresses[0], signed_change_request)
+    mock.assert_called_once_with(primary_validator_node, signed_change_request)
 
     assert response.status_code == 201
     assert response.json() == {

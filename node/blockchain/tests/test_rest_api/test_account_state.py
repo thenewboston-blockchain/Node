@@ -1,5 +1,7 @@
 import pytest
 
+from node.blockchain.models import AccountState
+
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_retrieve_account_state(api_client, treasury_account_key_pair, treasury_amount):
@@ -13,9 +15,18 @@ def test_retrieve_account_state(api_client, treasury_account_key_pair, treasury_
     }
 
 
+@pytest.mark.usefixtures('base_blockchain')
+def test_retrieve_not_known_account_state(api_client):
+    account_number = '0' * 64
+    assert not AccountState.objects.filter(_id=account_number).exists()
+    response = api_client.get(f'/api/account-states/{account_number}/')
+    assert response.status_code == 200
+    assert response.json() == {'_id': account_number, 'balance': 0, 'account_lock': account_number, 'node': None}
+
+
 @pytest.mark.django_db
 def test_not_found(api_client):
-    response = api_client.get('/api/account-states/UNKNOWN_IDENTIFIER/')
+    response = api_client.get('/api/account-states/INVALID_IDENTIFIER/')
     assert response.status_code == 404
 
 
