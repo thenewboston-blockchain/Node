@@ -134,7 +134,7 @@ def get_best_cluster(clusters, majority_count):
     if not clusters:
         return None
 
-    return max(clusters, key=lambda cluster: cluster[0])[1]
+    return max(clusters, key=lambda cluster: cluster[0])
 
 
 def clear_cache(func):
@@ -158,4 +158,5 @@ def get_nodes_majority(nodes: list[Node]) -> Optional[list[Node]]:
 
     majority_count = len(available_nodes) // 2 + 1
     clusters = clusterize_nodes(available_nodes)
+
     return get_best_cluster(clusters, majority_count) or None

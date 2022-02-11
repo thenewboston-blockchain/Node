@@ -36,13 +36,6 @@ if ! grep -q -o TNB_NODE_SIGNING_KEY .env; then
   echo "TNB_NODE_SIGNING_KEY=$TNB_NODE_SIGNING_KEY" >>.env
 fi
 
-# TODO CRITICAL: Implement initialize_blockchain
-#                https://thenewboston.atlassian.net/browse/BC-201
-# TODO CRITICAL: Implement sync_blockchain
-#                https://thenewboston.atlassian.net/browse/BC-202
-# TODO CRITICAL: Implement ensure_node_declared
-#                https://thenewboston.atlassian.net/browse/BC-197
-
 docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
@@ -50,7 +43,8 @@ if [ "$RUN_GENESIS" == True ]; then
   echo 'Running genesis'
   docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage genesis -f https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 else
-  echo 'Not running genesis'
+  echo 'Syncing with the network'
+  docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage sync_blockchain_with_network
 fi
 
 counter=0

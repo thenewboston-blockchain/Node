@@ -130,7 +130,7 @@ def test_clusterize_nodes_and_get_best_cluster():
     )
     assert expected_clusters == actual_clusters
 
-    best_cluster = get_best_cluster(clusters, 4)
+    _, best_cluster = get_best_cluster(clusters, 4)
     # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
     assert set(node.identifier for node in cluster2) == set(node.identifier for node in best_cluster)
 
@@ -197,7 +197,7 @@ def test_get_nodes_majority():
         return make_block(block_number)
 
     with patch('node.blockchain.utils.network.get_node_block', new=get_block_node):
-        majority = get_nodes_majority(nodes)
+        _, majority = get_nodes_majority(nodes)
 
     assert majority is not None
     # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
