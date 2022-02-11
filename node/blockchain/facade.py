@@ -186,6 +186,7 @@ class BlockchainFacade:
             Schedule.objects.create(_id=block_number, node_identifier=node_identifier)
 
     @staticmethod
+    @ensure_in_transaction
     @lock(BLOCK_LOCK)
     def clear():
         get_block_model().objects.all().delete()
