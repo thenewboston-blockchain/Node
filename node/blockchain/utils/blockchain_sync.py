@@ -6,6 +6,7 @@ from django.db import transaction
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import Block
 from node.core.clients.node import NodeClient
+from node.core.database import is_in_transaction
 from node.core.exceptions import BlockchainSyncError
 
 logger = logging.getLogger(__name__)
@@ -24,12 +25,12 @@ def get_default_to_block_number(address, to_block_number) -> int:
 
 def sync_with_address(address: str, to_block_number: Optional[int] = None):
     facade = BlockchainFacade.get_instance()
-    start_block_number = BlockchainFacade.get_instance().get_next_block_number()
+    start_block_number = facade.get_next_block_number()
     to_block_number = get_default_to_block_number(address, to_block_number)
     blocks_to_sync = to_block_number - start_block_number + 1
 
     # It is OK to have `by_limit` higher than max pagination limit, the API will just get the minimum of two
-    block_generator = NodeClient.get_instance().yield_blocks_raw(
+    block_generator = NodeClient.get_instance().yield_blocks_dict(
         address, block_number_min=start_block_number, block_number_max=to_block_number
     )
     for block in block_generator:
@@ -48,8 +49,12 @@ def sync_with_address(address: str, to_block_number: Optional[int] = None):
                 )
                 break
 
-            with transaction.atomic():
+            if is_in_transaction():
                 facade.add_block(block_obj)
+            else:
+                with transaction.atomic():
+                    facade.add_block(block_obj)
+            logger.debug('Synced block number %s', block_number)
         except Exception as ex:
             raise BlockchainSyncError('Could not add block: %s', block) from ex
 
