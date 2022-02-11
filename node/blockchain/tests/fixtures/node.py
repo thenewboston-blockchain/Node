@@ -54,3 +54,4 @@ def node_list_json_file(node_list_json_file_content):
 @pytest.fixture
 def self_node_declared(self_node):
     Node.objects.update_or_create(_id=self_node.identifier, defaults={'node': self_node.dict()})
+    yield self_node
