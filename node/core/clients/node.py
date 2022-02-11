@@ -230,7 +230,7 @@ class NodeClient:
         last_block = self.get_last_block(address)
         return last_block.get_block_number() if last_block else None
 
-    def yield_blocks_raw(
+    def yield_blocks_dict(
         self,
         /,
         address: str,
@@ -246,8 +246,8 @@ class NodeClient:
         yield from self.yield_resource(address, 'blocks', by_limit=by_limit, parameters=parameters)
 
     @with_node
-    def list_blocks_raw(self, /, address: str) -> list[dict]:
-        return list(self.yield_blocks_raw(address))
+    def list_blocks_dict(self, /, address: str) -> list[dict]:
+        return list(self.yield_blocks_dict(address))
 
     @with_node
     def get_account_state(self, /, address: str, account_number: AccountNumber) -> AccountState:
