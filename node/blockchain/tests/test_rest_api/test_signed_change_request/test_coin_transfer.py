@@ -4,33 +4,28 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import (
-    GenesisSignedChangeRequestMessage, NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
-)
-from node.blockchain.models.node import Node
+from node.blockchain.inner_models import CoinTransferSignedChangeRequestMessage, SignedChangeRequest
+from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
+from node.blockchain.models import AccountState
 from node.blockchain.tests.base import as_role
 from node.blockchain.tests.test_models.base import (
     CREATE, VALID, node_declaration_message_type_api_validation_parametrizer
 )
-from node.blockchain.types import AccountLock, NodeRole
+from node.blockchain.types import NodeRole
 from node.core.utils.collections import deep_update
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-def test_node_declaration_signed_change_request_as_primary_validator(api_client, regular_node, regular_node_key_pair):
+def test_coin_transfer_signed_change_request_as_primary_validator(
+    api_client, treasury_account_key_pair, coin_transfer_signed_change_request_message, treasury_amount
+):
     facade = BlockchainFacade.get_instance()
     assert facade.get_next_block_number() == 1
-    assert not Node.objects.filter(_id=regular_node.identifier).exists()
-
-    message = NodeDeclarationSignedChangeRequestMessage(
-        node=regular_node,
-        account_lock=regular_node.identifier,
-    )
 
     signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=message,
-        signing_key=regular_node_key_pair.private,
+        message=coin_transfer_signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
     )
     assert signed_change_request.message
     assert signed_change_request.signer
@@ -41,47 +36,31 @@ def test_node_declaration_signed_change_request_as_primary_validator(api_client,
     assert response.status_code == 201
     assert response.json() == {
         'message': {
-            'account_lock': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb',
-            'node': {
-                'addresses': ['http://not-existing-node-address-674898923.com:8555/'],
-                'fee': 4,
-                'identifier': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
-            },
-            'type': 1
+            'account_lock': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732',
+            'txs': [{
+                'amount': 100,
+                'is_fee': False,
+                'memo': 'message',
+                'recipient': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
+            }, {
+                'amount': 5,
+                'is_fee': True,
+                'memo': 'message',
+                'recipient': 'b9dc49411424cce606d27eeaa8d74cb84826d8a1001d17603638b73bdc6077f1'
+            }],
+            'type': 2
         },
         'signature':
-            'e6f950cce5fbe79ebc58dbd317ba7dec5baf6387bfeeb4656d73c8790d2564a4'
-            '44f8c702b3e3ca931b5bb6e534781a135d5c17c4ff03886a80f32643dbd8fe0d',
-        'signer': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
+            '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
+            '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09',
+        'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
 
     assert facade.get_next_block_number() == 2
-    node = Node.objects.get_or_none(_id=regular_node.identifier)
-    assert node
-    assert node.identifier == regular_node.identifier
-    assert node.fee == regular_node.fee
-    assert node.addresses == regular_node.addresses
-
-
-@pytest.mark.django_db
-def test_restrict_genesis_signed_change_request(
-    api_client, treasury_account_key_pair, treasury_amount, primary_validator_key_pair
-):
-    message = GenesisSignedChangeRequestMessage.create_from_treasury_account(
-        account_lock=AccountLock(primary_validator_key_pair.public),
-        treasury_account_number=treasury_account_key_pair.public,
-        treasury_amount=treasury_amount
-    )
-
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=message,
-        signing_key=primary_validator_key_pair.private,
-    )
-
-    payload = signed_change_request.dict()
-    response = api_client.post('/api/signed-change-requests/', payload)
-    assert response.status_code == 400
-    assert response.json() == {'message.type': [{'code': 'invalid', 'message': 'Invalid value.'}]}
+    account_state = AccountState.objects.get_or_none(_id=treasury_account_key_pair.public)
+    assert account_state.balance == treasury_amount - 105
+    assert account_state.node is None
+    assert account_state.pk == treasury_account_key_pair.public
 
 
 @pytest.mark.django_db
@@ -115,28 +94,31 @@ def test_type_validation_for_node_declaration(
 
 @pytest.mark.parametrize('key', ('signer', 'signature', 'message'))
 @pytest.mark.django_db
-def test_checking_missed_keys(key, api_client, self_node_declaration_signed_change_request):
-    # TODO(dmu) MEDIUM: Rename and extend test (parametrize) to test absence of `signer` and `signature`
-    payload = self_node_declaration_signed_change_request.dict()
+def test_checking_missed_keys(
+    key, api_client, treasury_account_key_pair, coin_transfer_signed_change_request_message, treasury_amount
+):
+    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
+        message=coin_transfer_signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
+    )
+    payload = signed_change_request.dict()
     del payload[key]
     response = api_client.post('/api/signed-change-requests/', json.dumps(payload), content_type='application/json')
     assert response.status_code == 400
-    assert response.json() == {key: [{'code': 'required', 'message': 'This field is required.'}]}
+    assert response.json() == {key: [{'message': 'This field is required.', 'code': 'required'}]}
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-def test_node_declaration_signed_change_request_with_invalid_account_lock(
-    api_client, primary_validator_node, primary_validator_key_pair
-):
-    message = NodeDeclarationSignedChangeRequestMessage(
-        node=primary_validator_node,
+def test_coin_transfer_signed_change_request_with_invalid_account_lock(api_client, treasury_account_key_pair):
+    message = CoinTransferSignedChangeRequestMessage(
+        txs=[CoinTransferTransaction(recipient=treasury_account_key_pair.public, amount=5)],
         account_lock='0' * 64,
     )
 
     signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
         message=message,
-        signing_key=primary_validator_key_pair.private,
+        signing_key=treasury_account_key_pair.private,
     )
 
     payload = signed_change_request.dict()
@@ -161,18 +143,21 @@ def test_node_declaration_signed_change_request_with_invalid_account_lock(
                 'account_lock': '0' * 64
             }
         }),
+        ({
+            'message': {
+                'txs': [CoinTransferTransaction(recipient='0' * 64, amount=5)]
+            }
+        }),
     )
 )
-def test_signature_validation_for_node_declaration(
-    role, update_with, api_client, primary_validator_node, primary_validator_key_pair
-):
-    message = NodeDeclarationSignedChangeRequestMessage(
-        node=primary_validator_node,
-        account_lock=primary_validator_node.identifier,
+def test_signature_validation_for_coin_transfer(role, update_with, api_client, treasury_account_key_pair):
+    message = CoinTransferSignedChangeRequestMessage(
+        txs=[CoinTransferTransaction(recipient=treasury_account_key_pair.public, amount=5)],
+        account_lock=treasury_account_key_pair.public,
     )
     signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
         message=message,
-        signing_key=primary_validator_key_pair.private,
+        signing_key=treasury_account_key_pair.private,
     )
     payload = deep_update(signed_change_request.dict(), update_with)
     with as_role(role):
@@ -185,10 +170,13 @@ def test_signature_validation_for_node_declaration(
 @pytest.mark.parametrize('role', (NodeRole.CONFIRMATION_VALIDATOR, NodeRole.REGULAR_NODE))
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'mock_get_primary_validator')
-def test_node_declaration_scr_as_other_roles(
-    api_client, regular_node_declaration_signed_change_request, role, primary_validator_node
+def test_coin_transfer_scr_as_other_roles(
+    api_client, coin_transfer_signed_change_request_message, role, treasury_account_key_pair, primary_validator_node
 ):
-    signed_change_request = regular_node_declaration_signed_change_request
+    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
+        message=coin_transfer_signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
+    )
 
     payload = signed_change_request.json()
 
@@ -206,15 +194,22 @@ def test_node_declaration_scr_as_other_roles(
     assert response.status_code == 201
     assert response.json() == {
         'message': {
-            'account_lock': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb',
-            'node': {
-                'addresses': ['http://not-existing-node-address-674898923.com:8555/'],
-                'fee': 4,
-            },
-            'type': 1
+            'account_lock': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732',
+            'txs': [{
+                'amount': 100,
+                'is_fee': False,
+                'memo': 'message',
+                'recipient': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
+            }, {
+                'amount': 5,
+                'is_fee': True,
+                'memo': 'message',
+                'recipient': 'b9dc49411424cce606d27eeaa8d74cb84826d8a1001d17603638b73bdc6077f1'
+            }],
+            'type': 2
         },
         'signature':
-            'e6f950cce5fbe79ebc58dbd317ba7dec5baf6387bfeeb4656d73c8790d2564a4'
-            '44f8c702b3e3ca931b5bb6e534781a135d5c17c4ff03886a80f32643dbd8fe0d',
-        'signer': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
+            '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
+            '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09',
+        'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
