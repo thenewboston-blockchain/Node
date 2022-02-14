@@ -29,14 +29,34 @@ class Command(CustomCommand):
 
         return majority
 
+    def sync_from_nodes(self, from_block_number, to_block_number, nodes):
+        self.write_info(f'Syncing to block number: {to_block_number}')
+        last_block_number = from_block_number - 1
+        blocks_to_sync = to_block_number - last_block_number
+        node_identifiers = set(nodes.keys())
+        while node_identifiers:
+            node_identifier = node_identifiers.pop()
+            node = nodes[node_identifier]
+            self.write_info(f'Syncing from node: {node}')
+            block_number = last_block_number
+            for block_number, _ in sync_with_node(node, to_block_number):
+                if block_number // 10 == 0:
+                    completion_percent = round((block_number - last_block_number) / blocks_to_sync * 100, 2)
+                    self.write_success(f'Completed {completion_percent}%')
+
+            completion_percent = round((block_number - last_block_number) / blocks_to_sync * 100, 2)
+            self.write_success(f'Completed {completion_percent}%')
+
+            if block_number >= to_block_number:
+                break
+
     def handle(self, tolerable_gap, max_sync_rounds, *args, **options):
         my_identifier = get_node_identifier()
-        last_block_number = BlockchainFacade.get_instance().get_next_block_number() - 1
-        self.write_info(f'Syncing from block number: {last_block_number + 1}')
 
         for sync_round in range(max_sync_rounds):
             self.write_info(f'Running {sync_round} sync round...')
 
+            self.write_info('Getting nodes for syncing...')
             majority = self.get_nodes_for_syncing()
             if not majority:
                 self.write_error('Could not detect nodes majority')
@@ -48,6 +68,9 @@ class Command(CustomCommand):
                 self.write_info('There are no other nodes to sync with in majority other then myself')
                 break
 
+            last_block_number = BlockchainFacade.get_instance().get_next_block_number() - 1
+            self.write_info(f'Syncing from block number: {last_block_number + 1}')
+
             if last_block_number >= to_block_number:
                 self.write_info(
                     f'Local blockchain has as many or more blocks as the majority (probably in sync): '
@@ -55,24 +78,9 @@ class Command(CustomCommand):
                 )
                 break
 
-            self.write_info(f'Syncing to block number: {to_block_number}')
-            blocks_to_sync = to_block_number - last_block_number
-            node_identifiers = set(nodes.keys())
-            while node_identifiers:
-                node_identifier = node_identifiers.pop()
-                node = nodes[node_identifier]
-                self.write_info(f'Syncing from node: {node}')
-                block_number = last_block_number
-                for block_number, _ in sync_with_node(node, to_block_number):
-                    if block_number // 10 == 0:
-                        completion_percent = round((block_number - last_block_number) / blocks_to_sync * 100, 2)
-                        self.write_success(f'Completed {completion_percent}%')
-
-                completion_percent = round((block_number - last_block_number) / blocks_to_sync * 100, 2)
-                self.write_success(f'Completed {completion_percent}%')
-
-                if block_number >= to_block_number:
-                    break
-
-            if to_block_number - last_block_number <= tolerable_gap:
+            gap = to_block_number - last_block_number
+            if sync_round > 0 and gap <= tolerable_gap:
+                self.write_info(f'Reached tolerable gap of {gap}')
                 break
+
+            self.sync_from_nodes(last_block_number + 1, to_block_number, nodes)
