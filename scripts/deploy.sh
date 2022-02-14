@@ -42,8 +42,8 @@ docker logout $DOCKER_REGISTRY_HOST
 if [ "$RUN_GENESIS" == True ]; then
   echo 'Running genesis'
   # Test money
-	# Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
-	# Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
+  # Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
+  # Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
   docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 else
   echo 'Syncing with the network'
