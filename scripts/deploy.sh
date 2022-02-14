@@ -36,9 +36,6 @@ if ! grep -q -o TNB_NODE_SIGNING_KEY .env; then
   echo "TNB_NODE_SIGNING_KEY=$TNB_NODE_SIGNING_KEY" >>.env
 fi
 
-docker-compose up -d --force-recreate
-docker logout $DOCKER_REGISTRY_HOST
-
 if [ "$RUN_GENESIS" == True ]; then
   echo 'Running genesis'
   # Test money
@@ -49,10 +46,13 @@ else
   echo 'Syncing with the network'
   docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage sync_blockchain_with_network
 fi
-
-counter=0
 # TODO CRITICAL: Implement ensure_node_declared
 #                https://thenewboston.atlassian.net/browse/BC-197
+
+docker-compose up -d --force-recreate
+docker logout $DOCKER_REGISTRY_HOST
+
+counter=0
 until $(curl --output /dev/null --silent --head --fail http://127.0.0.1:8555/); do
   counter=$(($counter + 1))
   if [ ${counter} -ge 12 ]; then
