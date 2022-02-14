@@ -26,7 +26,7 @@ class Command(CustomCommand):
             self.write_info(f'Syncing from node: {node}')
             block_number = last_block_number
             for block_number, _ in sync_with_node(node, to_block_number):
-                if block_number // 10 == 0:
+                if block_number % 10 == 0:
                     completion_percent = round((block_number - last_block_number) / blocks_to_sync * 100, 2)
                     self.write_success(f'Completed {completion_percent}%')
 
