@@ -157,6 +157,14 @@ Common configuration
 #. Install Docker Compose  on target machine according to https://docs.docker.com/compose/install/
    (known working: docker-compose version 1.29.2, build 5becea4c)
 
+Manual deployment
++++++++++++++++++
+
+#. Prepare github personal access token aka PAT (not github password) - it will be needed to
+   access the node docker image
+#. Run ``deploy.sh``::
+
+    bash <(wget -qO- https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh)
 
 Configure continuous deployment
 +++++++++++++++++++++++++++++++
@@ -173,3 +181,4 @@ Configure continuous deployment
     NODE_DEPLOY_SSH_KEY=<content of ~/.ssh/github>
     NODE_DEPLOY_SSH_HOST=<IP-address or domain name of target machine>
     NODE_DEPLOY_SSH_USER=<username that has the corresponding public in ~/authorized_keys>
+    NODE_RUN_GENESIS=True  # change to False after first deploy or when needed
