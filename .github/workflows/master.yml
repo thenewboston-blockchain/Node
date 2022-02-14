@@ -5,6 +5,8 @@ on:
     branches:
       - master
 
+concurrency: master
+
 jobs:
 # github does not support dependencies on other workflows therefore we have to duplicate the code
 # TODO(dmu) LOW: Fix this non-DRY approach if possible
@@ -132,7 +134,6 @@ jobs:
         #                   https://github.com/actions/runner/issues/520#issuecomment-877193387
         if: ${{ env.CONTINUOUS_DEPLOYMENT_ENABLED == 'True' }}
         run: |
-          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} {{ env.RUN_GENESIS }} && rm -f /tmp/deploy-node.sh"
+          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} ${{ secrets.NODE_RUN_GENESIS }} && rm -f /tmp/deploy-node.sh"
         env:
           CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
-          RUN_GENESIS: ${{ secrets.NODE_RUN_GENESIS }}
