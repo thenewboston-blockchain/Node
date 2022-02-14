@@ -13,7 +13,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('node_address')
+        parser.add_argument('-f', '--human-friendly', action='store_true')
 
     def handle(self, node_address: str, *args, **options):
-        nodes = [node.dict() for node in NodeClient.get_instance().yield_nodes(node_address)]
-        self.stdout.write(json.dumps(nodes, separators=(',', ':')))
+        nodes_generator = NodeClient.get_instance().yield_nodes(node_address)
+        if options.get('human_friendly'):
+            for node in nodes_generator:
+                addresses = ', '.join(node.addresses)
+                self.stdout.write(f'- {node.identifier} {addresses} fee={node.fee}')
+        else:
+            self.stdout.write(json.dumps([node.dict() for node in nodes_generator], separators=(',', ':')))
