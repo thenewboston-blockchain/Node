@@ -28,35 +28,27 @@ def test_create_from_node_declaration_signed_change_request_message(
 
 
 def test_serialize_and_deserialize_node_declaration(
-    node_declaration_signed_change_request_message, regular_node_key_pair
+    regular_node_declaration_signed_change_request, regular_node_key_pair
 ):
-    signed_change_request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
-        message=node_declaration_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
-    )
-    assert isinstance(signed_change_request, NodeDeclarationSignedChangeRequest)
-    serialized = signed_change_request.json()
+    assert isinstance(regular_node_declaration_signed_change_request, NodeDeclarationSignedChangeRequest)
+    serialized = regular_node_declaration_signed_change_request.json()
     deserialized = SignedChangeRequest.parse_raw(serialized)
     assert isinstance(deserialized, NodeDeclarationSignedChangeRequest)
-    assert deserialized.signer == signed_change_request.signer
-    assert deserialized.signature == signed_change_request.signature
-    assert deserialized.message == signed_change_request.message
-    assert deserialized == signed_change_request
+    assert deserialized.signer == regular_node_declaration_signed_change_request.signer
+    assert deserialized.signature == regular_node_declaration_signed_change_request.signature
+    assert deserialized.message == regular_node_declaration_signed_change_request.message
+    assert deserialized == regular_node_declaration_signed_change_request
 
     serialized2 = deserialized.json()
     assert serialized == serialized2
 
 
-def test_node_does_not_serialize_identifier(node_declaration_signed_change_request_message, regular_node_key_pair):
-    signed_change_request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
-        message=node_declaration_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
-    )
-    assert isinstance(signed_change_request, NodeDeclarationSignedChangeRequest)
-    serialized = signed_change_request.dict()
+def test_node_does_not_serialize_identifier(regular_node_declaration_signed_change_request, regular_node_key_pair):
+    assert isinstance(regular_node_declaration_signed_change_request, NodeDeclarationSignedChangeRequest)
+    serialized = regular_node_declaration_signed_change_request.dict()
     assert 'identifier' not in serialized['message']['node']
 
-    serialized_json = signed_change_request.json()
+    serialized_json = regular_node_declaration_signed_change_request.json()
     serialized = json.loads(serialized_json)
     assert 'identifier' not in serialized['message']['node']
 
@@ -172,17 +164,11 @@ def test_type_validation_for_node_declaration_on_parsing(id_, regular_node, sign
     assert re.search(search_re, str(exc_info.value), flags=re.DOTALL)
 
 
-def test_hashing_does_not_include_node_identifier(
-    node_declaration_signed_change_request_message, regular_node_key_pair
-):
-    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
-        message=node_declaration_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
-    )
-    request_dict = request.dict()
+def test_hashing_does_not_include_node_identifier(regular_node_declaration_signed_change_request):
+    request_dict = regular_node_declaration_signed_change_request.dict()
 
     assert 'identifier' not in request_dict['message']['node']
     hashing_string = json.dumps(request_dict, separators=(',', ':'), sort_keys=True)
     expected_hash = HashableStringWrapper(hashing_string).make_hash()
 
-    assert request.make_hash() == expected_hash
+    assert regular_node_declaration_signed_change_request.make_hash() == expected_hash

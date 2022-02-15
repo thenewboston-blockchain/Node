@@ -21,10 +21,5 @@ class CoinTransferSignedChangeRequestMessage(SignedChangeRequestMessage):
     txs: list[CoinTransferTransaction]
     type: Type = Field(default=Type.COIN_TRANSFER, const=True)  # noqa: A003
 
-    def validate_business_logic(self):
-        super().validate_business_logic()
-        # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-217
-
-    def validate_blockchain_state_dependent(self, blockchain_facade):
-        super().validate_blockchain_state_dependent(blockchain_facade)
-        # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-217
+    def get_total_amount(self):
+        return sum(tx.amount for tx in self.txs)

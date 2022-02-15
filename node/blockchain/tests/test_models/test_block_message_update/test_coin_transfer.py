@@ -10,7 +10,7 @@ from node.core.exceptions import ValidationError
 
 @pytest.mark.django_db
 def test_sender_has_not_enough_balance(regular_node_key_pair):
-    coin_transfer_signed_change_request_message = CoinTransferSignedChangeRequestMessage(
+    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
         account_lock=AccountLock(regular_node_key_pair.public),
         txs=[
             CoinTransferTransaction(recipient='0' * 64, amount=5, is_fee=False, memo='message'),
@@ -18,7 +18,7 @@ def test_sender_has_not_enough_balance(regular_node_key_pair):
         ]
     )
     request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
-        message=coin_transfer_signed_change_request_message,
+        message=signed_change_request_message,
         signing_key=regular_node_key_pair.private,
     )
     with pytest.raises(
@@ -29,18 +29,15 @@ def test_sender_has_not_enough_balance(regular_node_key_pair):
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_make_block_message_update(
-    coin_transfer_signed_change_request_message, treasury_account_key_pair, treasury_amount, regular_node_key_pair,
-    primary_validator_key_pair
+    treasure_coin_transfer_signed_change_request, treasury_amount, regular_node_key_pair, primary_validator_key_pair
 ):
-    request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
-        message=coin_transfer_signed_change_request_message,
-        signing_key=treasury_account_key_pair.private,
+    block_message_update = CoinTransferBlockMessage.make_block_message_update(
+        treasure_coin_transfer_signed_change_request
     )
-    block_message_update = CoinTransferBlockMessage.make_block_message_update(request)
 
-    assert block_message_update.accounts.get(request.signer) == AccountState(
+    assert block_message_update.accounts.get(treasure_coin_transfer_signed_change_request.signer) == AccountState(
         balance=treasury_amount - 105,
-        account_lock=request.make_hash(),
+        account_lock=treasure_coin_transfer_signed_change_request.make_hash(),
     )
     assert block_message_update.accounts.get(regular_node_key_pair.public) == AccountState(balance=100)
     assert block_message_update.accounts.get(primary_validator_key_pair.public) == AccountState(balance=5)
