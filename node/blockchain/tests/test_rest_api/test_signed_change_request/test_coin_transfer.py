@@ -110,9 +110,11 @@ def test_checking_missed_keys(
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-def test_coin_transfer_signed_change_request_with_invalid_account_lock(api_client, treasury_account_key_pair):
+def test_coin_transfer_signed_change_request_with_invalid_account_lock(
+    api_client, treasury_account_key_pair, regular_node_key_pair
+):
     message = CoinTransferSignedChangeRequestMessage(
-        txs=[CoinTransferTransaction(recipient=treasury_account_key_pair.public, amount=5)],
+        txs=[CoinTransferTransaction(recipient=regular_node_key_pair.public, amount=5)],
         account_lock='0' * 64,
     )
 

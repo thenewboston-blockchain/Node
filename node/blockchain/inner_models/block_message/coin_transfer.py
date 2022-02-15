@@ -27,7 +27,7 @@ class CoinTransferBlockMessage(BlockMessage):
 
         sender_account = request.signer
         sender_balance = BlockchainFacade.get_instance().get_account_balance(sender_account)
-        if (amount := sum(tx.amount for tx in request.message.txs)) > sender_balance:
+        if (amount := request.message.get_total_amount()) > sender_balance:
             raise ValidationError(f'Sender account {sender_account} balance is not enough to send {amount} coins')
 
         return {sender_account: AccountState(balance=sender_balance - amount, account_lock=request.make_hash())}
@@ -47,11 +47,3 @@ class CoinTransferBlockMessage(BlockMessage):
             account_number: AccountState(balance=amount) for account_number, amount in updated_amounts.items()
         }
         return updated_account_states
-
-    def validate_business_logic(self):
-        super().validate_business_logic()
-        # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-217
-
-    def validate_blockchain_state_dependent(self, blockchain_facade):
-        super().validate_blockchain_state_dependent(blockchain_facade)
-        # TODO(dmu) CRITICAL: Implement in https://thenewboston.atlassian.net/browse/BC-217
