@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps
+    'node.core',
     'node.blockchain.apps.BlockchainConfig',
     'node.web.apps.WebConfig',
 ]

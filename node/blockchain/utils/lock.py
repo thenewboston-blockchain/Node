@@ -1,25 +1,9 @@
 import functools
-import threading
 
-from django.conf import settings
-from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
+from node.core.database import get_database
 from node.core.exceptions import BlockchainIsNotLockedError, BlockchainLockingError, BlockchainUnlockingError
-
-thread_storage = threading.local()
-
-
-def get_pymongo_client():
-    if (client := getattr(thread_storage, 'pymongo_client', None)) is None:
-        client_settings = settings.DATABASES['default']['CLIENT']
-        thread_storage.pymongo_client = client = MongoClient(**client_settings)
-
-    return client
-
-
-def get_database():
-    return get_pymongo_client()[settings.DATABASES['default']['NAME']]
 
 
 def get_lock_collection():

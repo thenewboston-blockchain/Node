@@ -5,8 +5,8 @@
 
  	if [ -n "$shouldPerformInitdb" ]; then
 +
-+	  openssl rand -base64 756 > /etc/mongo-key/mongodb.key
-+    chmod 400 /etc/mongo-key/mongodb.key
++		openssl rand -base64 756 > /etc/mongo-key/mongodb.key
++		chmod 400 /etc/mongo-key/mongodb.key
 +
  		mongodHackedArgs=( "$@" )
  		if _parse_config "$@"; then
@@ -16,13 +16,13 @@
  	fi
 
 -	unset "${!MONGO_INITDB_@}"
-+  echo 'Initiating replica set'
-+  "$@" --logpath "/proc/$$/fd/1" --fork
-+  echo 'rs.initiate({"_id":"rs","members":[{"_id":0,"host":"127.0.0.1:27017"}]});' | mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD"
-+  "$@" --logpath "/proc/$$/fd/1" --shutdown
-+  echo 'Done initiating replica set'
++	echo 'Initiating replica set'
++	"$@" --logpath "/proc/$$/fd/1" --fork
++	echo 'rs.initiate({"_id":"rs","members":[{"_id":0,"host":"127.0.0.1:27017"}]});' | mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD"
++	"$@" --logpath "/proc/$$/fd/1" --shutdown
++	echo 'Done initiating replica set'
 +
-+  unset "${!MONGO_INITDB_@}"
++	unset "${!MONGO_INITDB_@}"
 +
  fi
 
