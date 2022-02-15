@@ -1,9 +1,17 @@
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.models import Schedule
 from node.blockchain.types import NodeRole
 from node.core.utils.cryptography import get_node_identifier
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('base_blockchain')
+def test_get_node_role_as_not_declared():
+    assert not ORMNode.objects.filter(_id=get_node_identifier()).exists()
+    assert BlockchainFacade.get_instance().get_node_role() is None
 
 
 @pytest.mark.django_db
