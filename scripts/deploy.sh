@@ -10,6 +10,8 @@ GITHUB_USERNAME="${GITHUB_USERNAME:-$1}"
 GITHUB_PASSWORD="${GITHUB_PASSWORD:-$2}"
 RUN_GENESIS="${RUN_GENESIS:-$3}"
 
+RUN_MANAGE_PY='node poetry run python -m node.manage'
+
 docker logout $DOCKER_REGISTRY_HOST
 
 # Support github actions deploy as well as manual deploy
@@ -25,26 +27,25 @@ fi
 wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/docker-compose.yml -O docker-compose.yml
 
 test -f .env || touch .env
-grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$(xxd -l 16 -p /dev/urandom)" >>.env
-grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev/urandom)" >>.env
+grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$(xxd -l 16 -p /dev/urandom)" >> .env
+grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev/urandom)" >> .env
 
 docker-compose pull
 
-if ! grep -q -o TNB_NODE_SIGNING_KEY .env; then
-  TEMPORARY_NODE_SIGNING_KEY=0000000000000000000000000000000000000000000000000000000000000000
-  TNB_NODE_SIGNING_KEY=$(docker-compose --log-level CRITICAL run --rm -e TNB_NODE_SIGNING_KEY=$TEMPORARY_NODE_SIGNING_KEY node poetry run python -m node.manage generate_signing_key)
-  echo "TNB_NODE_SIGNING_KEY=$TNB_NODE_SIGNING_KEY" >>.env
-fi
+grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(docker-compose run --rm -e TNB_NODE_SIGNING_KEY=dummy $RUN_MANAGE_PY generate_signing_key)" >> .env
+
+echo 'Waiting replica set initialization...'
+docker-compose run --rm node poetry run python -m node.manage check_replica_set -w
 
 if [ "$RUN_GENESIS" == True ]; then
   echo 'Running genesis'
   # Test money
   # Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
   # Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
-  docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+  docker-compose run --rm $RUN_MANAGE_PY genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 else
   echo 'Syncing with the network'
-  docker-compose --log-level CRITICAL run --rm node poetry run python -m node.manage sync_blockchain_with_network
+  docker-compose run --rm $RUN_MANAGE_PY sync_blockchain_with_network
 fi
 # TODO CRITICAL: Implement ensure_node_declared
 #                https://thenewboston.atlassian.net/browse/BC-197

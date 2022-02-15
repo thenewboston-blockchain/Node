@@ -1,6 +1,6 @@
 import pytest
 
-from node.blockchain.utils.lock import get_database
+from node.core.database import get_database
 
 
 @pytest.fixture

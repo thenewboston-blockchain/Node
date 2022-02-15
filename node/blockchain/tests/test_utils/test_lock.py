@@ -2,7 +2,8 @@ import pytest
 from django.conf import settings
 from pymongo import MongoClient
 
-from node.blockchain.utils.lock import get_database, lock
+from node.blockchain.utils.lock import lock
+from node.core.database import get_database
 from node.core.exceptions import BlockchainIsNotLockedError, BlockchainLockingError, BlockchainUnlockingError
 
 

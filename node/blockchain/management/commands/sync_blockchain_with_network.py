@@ -1,7 +1,7 @@
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.utils.blockchain_sync import sync_with_node
 from node.blockchain.utils.network import get_nodes_for_syncing, get_nodes_majority
-from node.core.management import CustomCommand
+from node.core.commands import CustomCommand
 from node.core.utils.cryptography import get_node_identifier
 
 

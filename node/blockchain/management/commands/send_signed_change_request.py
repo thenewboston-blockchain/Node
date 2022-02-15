@@ -7,7 +7,7 @@ from node.blockchain.inner_models import (
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
 from node.blockchain.types import AccountNumber, SigningKey, Type
 from node.core.clients.node import NodeClient
-from node.core.management import CustomCommand
+from node.core.commands import CustomCommand
 from node.core.utils.cryptography import derive_public_key
 
 logger = logging.getLogger(__name__)
