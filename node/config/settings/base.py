@@ -15,6 +15,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # 3rd party
+    'rest_framework',
+
     # Apps
     'node.core',
     'node.blockchain.apps.BlockchainConfig',
