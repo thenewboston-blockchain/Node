@@ -7,7 +7,7 @@ class NodeSerializer(serializers.ModelSerializer):
     # TODO(dmu) HIGH: Instead of redefining serializer fields generate serializer from
     #                 Node model metadata
     identifier = serializers.CharField()
-    addresses = serializers.ListField(serializers.CharField())
+    addresses = serializers.ListField(child=serializers.CharField())
     fee = serializers.IntegerField()
 
     class Meta:
