@@ -206,7 +206,12 @@ class BlockchainFacade:
         if schedule:
             self.update_write_through_cache_schedule(schedule)
 
-    def get_node_role(self):
+    @staticmethod
+    def get_node_by_identifier(identifier) -> Optional[Node]:
+        node = ORMNode.objects.get_or_none(_id=identifier)
+        return node.get_node() if node else None
+
+    def get_node_role(self) -> Optional[NodeRole]:
         # TODO(dmu) MEDIUM: Should we optimize the implementation to make only one database request and
         #                   process the response in Python?
         # TODO(dmu) CRITICAL: Fix: get_node_role() must return None if node is node declared
@@ -214,6 +219,10 @@ class BlockchainFacade:
         from node.blockchain.models import Schedule
 
         node_identifier = get_node_identifier()
+        node = self.get_node_by_identifier(node_identifier)
+        if not node:
+            return None
+
         if not Schedule.objects.filter(node_identifier=node_identifier).exists():
             return NodeRole.REGULAR_NODE
 
@@ -238,11 +247,12 @@ class BlockchainFacade:
             logger.warning('Schedule for the next block was not found')
             return None
 
-        node = ORMNode.objects.get_or_none(_id=schedule.node_identifier)
+        node_identifier = schedule.node_identifier
+        node = self.get_node_by_identifier(node_identifier)
         if not node:
             # TODO(dmu) HIGH: Implement workaround for the case when
             #                 node unregisters itself by the moment it is scheduled
             #                 https://thenewboston.atlassian.net/browse/BC-236
-            raise NotImplementedError
+            logger.warning('Primary validator %s is in PV schedule but not declared as a node', node_identifier)
 
-        return node.get_node()
+        return node
