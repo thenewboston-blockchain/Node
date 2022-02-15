@@ -32,7 +32,7 @@ grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev
 
 docker-compose pull
 
-grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(docker-compose run --rm -e TNB_NODE_SIGNING_KEY=dummy $RUN_MANAGE_PY generate_signing_key)" >> .env
+grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(docker-compose --log-level CRITICAL run --rm -e TNB_NODE_SIGNING_KEY=dummy $RUN_MANAGE_PY generate_signing_key)" >> .env
 
 echo 'Waiting replica set initialization...'
 docker-compose run --rm node poetry run python -m node.manage check_replica_set -w
