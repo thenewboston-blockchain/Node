@@ -78,6 +78,8 @@ DATABASES = {
             'port': 27017,
             'username': 'root',
             'password': 'root',
+            'serverSelectionTimeoutMS': 5000,
+            'connectTimeoutMS': 3000,
         },
         'ATOMIC_REQUESTS': True,
         'CONN_MAX_AGE': 600,
