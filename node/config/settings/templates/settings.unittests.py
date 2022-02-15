@@ -13,4 +13,7 @@ LOGGING['loggers']['node']['level'] = 'DEBUG'
 LOGGING['handlers']['console']['level'] = 'DEBUG'
 LOGGING['handlers']['console']['formatter'] = 'colored'
 
+DATABASES['default']['CLIENT']['serverSelectionTimeoutMS'] = 1000
+DATABASES['default']['CLIENT']['connectTimeoutMS'] = 1000
+
 NODE_SIGNING_KEY = 'a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126f'
