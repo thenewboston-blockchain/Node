@@ -54,6 +54,9 @@ nosetests.xml
 # pytest
 .pytest_cache
 
+# mypy
+.mypy_cache
+
 # Environments
 /local
 /.env

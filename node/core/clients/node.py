@@ -1,5 +1,6 @@
 import functools
 import logging
+import sys
 from typing import Generator, Optional, Type, TypeVar, Union
 from urllib.parse import urlencode, urljoin
 
@@ -37,10 +38,10 @@ def with_node(method_or_none=None, should_raise=False):
                 try:
                     rv = method(self, address, *args, **kwargs)
                 except Exception:
-                    exc_info = True
+                    exc_info = sys.exc_info()
                     rv = None
                 else:
-                    exc_info = False
+                    exc_info = None  # type: ignore
 
                 if exc_info or rv is None:
                     logger.warning(
