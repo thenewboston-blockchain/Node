@@ -2,7 +2,7 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import SignedChangeRequest
-from node.blockchain.inner_models.signed_change_request.coin_transfer import CoinTransferSignedChangeRequest
+from node.blockchain.inner_models.signed_change_request import CoinTransferSignedChangeRequest
 from node.blockchain.inner_models.signed_change_request_message import (
     CoinTransferSignedChangeRequestMessage, CoinTransferTransaction
 )
