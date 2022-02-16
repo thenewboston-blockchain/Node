@@ -34,7 +34,7 @@ RUN poetry install  # this installs just the source code itself, since dependenc
 COPY scripts/dockerized-node-run.sh ./run.sh
 RUN chmod a+x run.sh
 
-RUN TNB_SECRET_KEY=dummy TNB_NODE_SIGNING_KEY=dummy poetry run python -m node.manage list_nodes $NODE_LIST_SOURCE > $TNB_NODE_LIST_JSON_PATH
+RUN TNB_SECRET_KEY=dummy TNB_NODE_SIGNING_KEY=dummy poetry run python -m node.manage list_nodes $NODE_LIST_SOURCE > $TNB_NODE_LIST_JSON_PATH || echo '[]' > $TNB_NODE_LIST_JSON_PATH
 
 FROM nginx:1.20.2-alpine AS node-reverse-proxy
 

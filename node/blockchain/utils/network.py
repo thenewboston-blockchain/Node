@@ -20,12 +20,13 @@ logger = logging.getLogger(__name__)
 node_block_cache: dict[tuple, Optional[Block]] = {}
 
 
-def get_nodes_from_json_file(path) -> list[Node]:
+def get_nodes_from_json_file(path) -> Optional[list[Node]]:
     try:
         with open(path) as fp:
             nodes_json = json.load(fp)
     except Exception:
         logger.warning('Unable to load nodes from %s', path, exc_info=True)
+        return None
 
     nodes = []
     for node_json in nodes_json:
@@ -50,11 +51,10 @@ def get_nodes_for_syncing() -> list[Node]:
     # TODO(dmu) HIGH: Otherwise try to get nodes from thenewboston.com end-point (use ThenewbostonComClient)
     #                 https://thenewboston.atlassian.net/browse/BC-185
     path = settings.NODE_LIST_JSON_PATH
-    if path:
-        nodes = get_nodes_from_json_file(path)
+    if path and (nodes := get_nodes_from_json_file(path)):
         logger.debug('Got nodes from %s', path)
-        if nodes:
-            return nodes
+        return nodes
+
     logger.debug('No nodes in node list json file (%s)', path)
 
     logger.debug('Nodes for syncing were not found')
