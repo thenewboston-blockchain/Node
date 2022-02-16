@@ -19,6 +19,7 @@ class Command(CustomCommand):
                 self.write(f'Clearing lock: {name}')
                 delete_lock(name)
                 self.write(f'Lock cleared: {name}')
+                return
 
             sys.exit(1)
 
