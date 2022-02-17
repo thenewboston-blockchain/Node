@@ -4,3 +4,4 @@ JSON_CRYPTO_KWARGS = {
 }
 
 LAST_BLOCK_ID = 'last'
+BLOCK_LOCK = 'block'

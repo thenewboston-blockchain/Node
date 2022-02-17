@@ -30,15 +30,20 @@ def delete_all_locks():
     return get_lock_collection().remove()
 
 
-def lock(name):
+def lock(name, expect_locked=False):
+    outer_expect_locked = expect_locked
 
     def decorator(func):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            expect_locked = kwargs.pop('expect_locked', False)
+            bypass_lock_validation = kwargs.pop('bypass_lock_validation', False)
+            if bypass_lock_validation:
+                return func(*args, **kwargs)
 
-            if expect_locked:
+            inner_expect_locked = kwargs.pop('expect_locked', outer_expect_locked)
+
+            if inner_expect_locked:
                 is_already_locked = is_locked(name)
                 if not is_already_locked:
                     raise BlockchainIsNotLockedError

@@ -5,9 +5,11 @@ from typing import TypeVar
 
 from pydantic import root_validator
 
+from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.inner_models.base import BaseModel
 from node.blockchain.mixins.crypto import SignableMixin
 from node.blockchain.mixins.validatable import ValidatableMixin
+from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
 from node.core.utils.types import intstr, positive_int
 
@@ -101,6 +103,7 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
         if blockchain_facade.get_next_block_identifier() != self.identifier:
             raise ValidationError('Invalid identifier')
 
+    @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.request.validate_blockchain_state_dependent(blockchain_facade)
         self.validate_number(blockchain_facade)
