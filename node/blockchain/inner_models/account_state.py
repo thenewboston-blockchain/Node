@@ -2,7 +2,6 @@ from typing import Optional
 
 from pydantic import root_validator
 
-from node.core.exceptions import ValidationError
 from node.core.utils.types import non_negative_int
 
 from ..types import AccountLock
@@ -17,7 +16,7 @@ class AccountState(BaseModel):
     node: Optional[Node]
 
     @root_validator
-    def even_one_is_not_none(cls, values):
+    def not_empty(cls, values):
         if not values['balance'] and not values['node']:
-            raise ValidationError('At least one attribute of AccountState should not be empty')
+            raise ValueError('Account state must be not empty')
         return values

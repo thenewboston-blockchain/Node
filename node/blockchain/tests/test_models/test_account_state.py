@@ -1,7 +1,7 @@
 import pytest
+from pydantic.error_wrappers import ValidationError
 
 from node.blockchain.inner_models import AccountState
-from node.core.exceptions import ValidationError
 
 
 @pytest.mark.parametrize('balance, with_node', ((10, False), (None, True)))
@@ -20,5 +20,5 @@ def test_serialize_and_deserialize(balance, with_node, self_node):
 
 
 def test_raise_when_both_are_empty():
-    with pytest.raises(ValidationError, match='At least one attribute of AccountState should not be empty'):
-        AccountState(account_lock='0' * 64)
+    with pytest.raises(ValidationError, match='Account state must be not empty'):
+        AccountState()
