@@ -32,7 +32,7 @@ def delete_lock(name):
     if result.deleted_count < 1:
         logger.warning('Lock %s was not found', name)
     else:
-        logger.warning('Deleted lock: %s', name)
+        logger.debug('Deleted lock: %s', name)
     return result
 
 

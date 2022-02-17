@@ -82,6 +82,14 @@ genesis:
 clear-blockchain:
 	poetry run python -m node.manage clear_blockchain
 
+.PHONY: sync-blockchain-with-network
+sync-blockchain-with-network:
+	poetry run python -m node.manage sync_blockchain_with_network
+
+.PHONY: ensure-node-declared
+ensure-node-declared:
+	poetry run python -m node.manage ensure_node_declared
+
 .PHONY: dot-env
 dot-env:
 	test -f .env || touch .env
