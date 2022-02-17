@@ -65,6 +65,7 @@ docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
 echo 'Waiting the node to start...'
+WAIT_PERIOD_SECONDS=10
 counter=0
 # TODO(dmu) MEDIUM: Check each address instead of just first
 OWN_ADDRESS=$(docker-compose --log-level CRITICAL run --rm node $RUN_MANAGE_PY print_own_address blockchain --no-line-breaks --index 0)
@@ -77,8 +78,8 @@ until $(curl --output /dev/null --silent --fail $CHECK_URL); do
     exit 1
   fi
 
-  echo "Node has not started yet (checked at $CHECK_URL), waiting 5 seconds for retry (${counter})"
-  sleep 10
+  echo "Node has not started yet (checked at $CHECK_URL), waiting $WAIT_PERIOD_SECONDS seconds for retry (${counter})"
+  sleep $WAIT_PERIOD_SECONDS
 done
 
 echo 'Node is up and running'
