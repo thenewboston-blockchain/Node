@@ -78,7 +78,7 @@ until $(curl --output /dev/null --silent --fail $CHECK_URL); do
   fi
 
   echo "Node has not started yet (checked at $CHECK_URL), waiting 5 seconds for retry (${counter})"
-  sleep 5
+  sleep 10
 done
 
 echo 'Node is up and running'
