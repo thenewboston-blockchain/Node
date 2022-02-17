@@ -61,7 +61,7 @@ docker logout $DOCKER_REGISTRY_HOST
 
 counter=0
 # TODO(dmu) MEDIUM: Check each address instead of just first
-OWN_ADDRESS=$(python -m node.manage print_own_address -i 0)
+OWN_ADDRESS=$($DOCKER_COMPOSE_RUN_MANAGE_PY print_own_address blockchain -i 0)
 until $(curl --output /dev/null --silent --head --fail ${OWN_ADDRESS}api/nodes/self/); do
   counter=$(($counter + 1))
   if [ ${counter} -ge 12 ]; then
