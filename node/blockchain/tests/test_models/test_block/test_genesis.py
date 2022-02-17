@@ -164,7 +164,7 @@ def test_cannot_create_invalid_genesis_block_message(
 
     message = GenesisBlockMessage(
         timestamp=datetime.utcnow(),
-        update=BlockMessageUpdate(accounts={'0' * 64: AccountState()}),
+        update=BlockMessageUpdate(accounts={'0' * 64: AccountState(balance=10)}),
         request=request,
     )
 
