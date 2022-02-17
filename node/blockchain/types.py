@@ -12,6 +12,7 @@ class Type(IntEnum):
     GENESIS = 0
     NODE_DECLARATION = 1
     COIN_TRANSFER = 2
+    PV_SCHEDULE_UPDATE = 3
 
 
 @unique

@@ -8,7 +8,10 @@ from node.core.exceptions import ValidationError
 
 from ..types import AccountNumber, Signature
 from .base import BaseModel
-from .block_message import BlockMessage, CoinTransferBlockMessage, GenesisBlockMessage, NodeDeclarationBlockMessage
+from .block_message import (
+    BlockMessage, CoinTransferBlockMessage, GenesisBlockMessage, NodeDeclarationBlockMessage,
+    PVScheduleUpdateBlockMessage
+)
 from .block_message.base import BlockMessageType
 
 
@@ -72,3 +75,7 @@ class NodeDeclarationBlock(Block):
 
 class CoinTransferBlock(Block):
     message: CoinTransferBlockMessage
+
+
+class PVScheduleUpdateBlock(Block):
+    message: PVScheduleUpdateBlockMessage

@@ -11,12 +11,8 @@ from node.blockchain.types import Type
 from ..base import CREATE, VALID, node_declaration_message_type_validation_parametrizer
 
 
-def test_create_node_declaration_change_request_message(regular_node):
-    message = NodeDeclarationSignedChangeRequestMessage(
-        node=regular_node,
-        account_lock=regular_node.identifier,
-    )
-    assert message.type == Type.NODE_DECLARATION
+def test_create_node_declaration_signed_change_request_message(node_declaration_signed_change_request_message):
+    assert node_declaration_signed_change_request_message.type == Type.NODE_DECLARATION
 
 
 @pytest.mark.parametrize(
