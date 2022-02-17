@@ -60,14 +60,15 @@ class Command(CustomCommand):
                 self.write_info(f'- {node.identifier}: {addresses}')
 
             last_block_number = BlockchainFacade.get_instance().get_next_block_number() - 1
-            self.write_info(f'Syncing from block number: {last_block_number + 1}')
 
             if last_block_number >= to_block_number:
                 self.write_info(
-                    f'Local blockchain has as many or more blocks as the majority (probably in sync): '
-                    f'{last_block_number}'
+                    f'Local blockchain has as many or more blocks (last block number: {last_block_number}) '
+                    f'as the majority (last block number: {to_block_number})'
                 )
                 break
+
+            self.write_info(f'Syncing from block number: {last_block_number + 1}')
 
             gap = to_block_number - last_block_number
             if sync_round > 0 and gap <= tolerable_gap:

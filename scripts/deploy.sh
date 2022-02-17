@@ -10,7 +10,8 @@ GITHUB_USERNAME="${GITHUB_USERNAME:-$1}"
 GITHUB_PASSWORD="${GITHUB_PASSWORD:-$2}"
 RUN_GENESIS="${RUN_GENESIS:-$3}"
 
-RUN_MANAGE_PY='node poetry run python -m node.manage'
+RUN_MANAGE_PY='poetry run python -m node.manage'
+DOCKER_COMPOSE_RUN_MANAGE_PY="docker-compose run --rm node $RUN_MANAGE_PY"
 
 docker logout $DOCKER_REGISTRY_HOST
 
@@ -32,7 +33,7 @@ grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev
 
 docker-compose pull
 
-grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(docker-compose --log-level CRITICAL run --rm -e TNB_NODE_SIGNING_KEY=dummy $RUN_MANAGE_PY generate_signing_key)" >> .env
+grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$(docker-compose --log-level CRITICAL run --rm -e TNB_NODE_SIGNING_KEY=dummy node $RUN_MANAGE_PY generate_signing_key)" >> .env
 
 echo 'Waiting replica set initialization...'
 docker-compose run --rm node poetry run python -m node.manage check_replica_set -w
@@ -42,13 +43,18 @@ if [ "$RUN_GENESIS" == True ]; then
   # Test money
   # Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
   # Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
-  docker-compose run --rm $RUN_MANAGE_PY genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
+  $DOCKER_COMPOSE_RUN_MANAGE_PY genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 else
   echo 'Syncing with the network'
-  docker-compose run --rm $RUN_MANAGE_PY sync_blockchain_with_network
+  $DOCKER_COMPOSE_RUN_MANAGE_PY sync_blockchain_with_network
 fi
-# TODO CRITICAL: Implement ensure_node_declared
-#                https://thenewboston.atlassian.net/browse/BC-197
+
+$DOCKER_COMPOSE_RUN_MANAGE_PY ensure_node_declared
+
+# TODO(dmu) HIGH: Remove this work around once run-time syncing is implemented
+#                 https://thenewboston.atlassian.net/browse/BC-247
+sleep 1
+$DOCKER_COMPOSE_RUN_MANAGE_PY sync_blockchain_with_network
 
 docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
