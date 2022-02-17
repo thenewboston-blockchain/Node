@@ -3,8 +3,8 @@ from django.core.management.base import BaseCommand
 
 class CustomCommand(BaseCommand):
 
-    def write(self, text):
-        self.stdout.write(text)
+    def write(self, text, ending=None):
+        self.stdout.write(text, ending=ending)
 
     def write_error(self, text):
         self.write(self.style.ERROR(text))
