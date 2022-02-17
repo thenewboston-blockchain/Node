@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
+from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.inner_models import Block, BlockMessage, Node, SignedChangeRequest
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import AccountState as ORMAccountState
@@ -15,8 +16,6 @@ if TYPE_CHECKING:
     from node.blockchain.models import Block as ORMBlock
 
 T = TypeVar('T', bound='BlockchainFacade')
-
-BLOCK_LOCK = 'block'
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ class BlockchainFacade:
             block.validate_business_logic()
 
         # Make blockchain state specific validations
-        block.validate_blockchain_state_dependent(self)
+        block.validate_blockchain_state_dependent(self, bypass_lock_validation=True)
 
         from node.blockchain.models import Block as ORMBlock
         orm_block = ORMBlock(_id=block.message.number, body=block.json())

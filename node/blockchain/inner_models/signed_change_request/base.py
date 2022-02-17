@@ -3,8 +3,10 @@ from typing import TypeVar, cast
 
 from pydantic import root_validator
 
+from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.mixins.crypto import HashableMixin, validate_signature_helper
 from node.blockchain.mixins.validatable import ValidatableMixin
+from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key
 
@@ -63,6 +65,7 @@ class SignedChangeRequest(ValidatableMixin, BaseModel, HashableMixin):
         if blockchain_facade.get_account_lock(self.signer) != self.message.account_lock:
             raise ValidationError('Invalid account lock')
 
+    @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.message.validate_blockchain_state_dependent(blockchain_facade)
         self.validate_account_lock(blockchain_facade)
