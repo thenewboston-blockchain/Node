@@ -1,9 +1,13 @@
 import functools
+import logging
 
+from django.db import transaction
 from pymongo.errors import DuplicateKeyError
 
 from node.core.database import get_database
 from node.core.exceptions import BlockchainIsNotLockedError, BlockchainLockingError, BlockchainUnlockingError
+
+logger = logging.getLogger(__name__)
 
 
 def get_lock_collection():
@@ -23,7 +27,13 @@ def create_lock(name):
 
 
 def delete_lock(name):
-    return get_lock_collection().delete_one(make_filter(name))
+    logger.debug('Deleting lock: %s', name)
+    result = get_lock_collection().delete_one(make_filter(name))
+    if result.deleted_count < 1:
+        logger.warning('Lock %s was not found', name)
+    else:
+        logger.warning('Deleted lock: %s', name)
+    return result
 
 
 def delete_all_locks():
@@ -52,6 +62,7 @@ def lock(name, expect_locked=False):
 
             try:
                 create_lock(name)
+                transaction.get_connection().on_rollback(lambda: delete_lock(name))
             except DuplicateKeyError:
                 raise BlockchainLockingError
 

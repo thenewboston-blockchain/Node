@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 from typing import Optional
 
 from django.db.utils import Error
@@ -36,6 +37,7 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
     def __init__(self, *args, **kwargs):
         self.session: Optional[ClientSession] = None
         self.is_autocommit = False
+        self.on_rollback_callables = deque()
         super().__init__(*args, **kwargs)
 
     def _abort_transaction(self):
@@ -67,13 +69,19 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
 
     def _rollback(self):
         if self.is_autocommit:
+            self.on_rollback_callables.clear()
             return
 
         self._abort_transaction()
         self._end_session()
 
+        on_rollback_callables = self.on_rollback_callables
+        while on_rollback_callables:
+            on_rollback_callables.popleft()()
+
     def _commit(self):
         if self.is_autocommit:
+            self.on_rollback_callables.clear()
             return
 
         if self.is_in_transaction():
@@ -83,6 +91,7 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
             logger.warning('Tried to commit outside transaction')
 
         self._end_session()
+        self.on_rollback_callables.clear()
 
     def is_in_transaction(self):
         return (session := self.session) and session.in_transaction
@@ -113,3 +122,6 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
             logger.debug('Started transaction for session: %s', id(session))
 
         return CustomCursor(self.client_connection, self.connection, self.djongo_connection, session=session)
+
+    def on_rollback(self, callable_):
+        self.on_rollback_callables.append(callable_)
