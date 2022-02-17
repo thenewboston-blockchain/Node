@@ -25,8 +25,10 @@ else
   docker login --username "$GITHUB_USERNAME" --password "$GITHUB_PASSWORD" $DOCKER_REGISTRY_HOST
 fi
 
+echo 'Getting docker-compose.yml'
 wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/docker-compose.yml -O docker-compose.yml
 
+echo 'Creating/updating .env file...'
 test -f .env || touch .env
 grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$(xxd -l 16 -p /dev/urandom)" >> .env
 grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev/urandom)" >> .env
@@ -39,38 +41,43 @@ echo 'Waiting replica set initialization...'
 docker-compose run --rm node poetry run python -m node.manage check_replica_set -w
 
 if [ "$RUN_GENESIS" == True ]; then
-  echo 'Running genesis'
+  echo 'Running genesis...'
   # Test money
   # Private: a37e2836805975f334108b55523634c995bd2a4db610062f404510617e83126e
   # Public: 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc
   $DOCKER_COMPOSE_RUN_MANAGE_PY genesis -f -e 2e8c94aa1b8de49c41407fc3fce36785f56d6983ea6777dd9c7b25bfec95e4fc https://raw.githubusercontent.com/thenewboston-developers/Account-Backups/master/latest_backup/latest.json
 else
-  echo 'Syncing with the network'
+  echo 'Syncing with the network...'
   $DOCKER_COMPOSE_RUN_MANAGE_PY sync_blockchain_with_network
 fi
 
+echo 'Ensuring the node is declared...'
 $DOCKER_COMPOSE_RUN_MANAGE_PY ensure_node_declared
 
 # TODO(dmu) HIGH: Remove this work around once run-time syncing is implemented
 #                 https://thenewboston.atlassian.net/browse/BC-247
 sleep 1
+echo 'Syncing with the network...'
 $DOCKER_COMPOSE_RUN_MANAGE_PY sync_blockchain_with_network
 
+echo 'Starting the node...'
 docker-compose up -d --force-recreate
 docker logout $DOCKER_REGISTRY_HOST
 
+echo 'Waiting the node to start...'
 counter=0
 # TODO(dmu) MEDIUM: Check each address instead of just first
-OWN_ADDRESS=$($DOCKER_COMPOSE_RUN_MANAGE_PY print_own_address blockchain -i 0)
-until $(curl --output /dev/null --silent --head --fail ${OWN_ADDRESS}api/nodes/self/); do
+OWN_ADDRESS=$(docker-compose --log-level CRITICAL run --rm node $RUN_MANAGE_PY print_own_address blockchain --no-line-breaks --index 0)
+CHECK_URL="${OWN_ADDRESS}api/nodes/self/"
+until $(curl --output /dev/null --silent --fail $CHECK_URL); do
   counter=$(($counter + 1))
   if [ ${counter} -ge 12 ]; then
-    echo 'Unable to start node.'
+    echo "Unable to start node (checked at $CHECK_URL)"
     docker-compose down
     exit 1
   fi
 
-  echo "Node has not started yet, waiting 5 seconds for retry (${counter})"
+  echo "Node has not started yet (checked at $CHECK_URL), waiting 5 seconds for retry (${counter})"
   sleep 5
 done
 

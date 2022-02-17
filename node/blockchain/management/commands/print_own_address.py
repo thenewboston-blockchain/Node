@@ -22,6 +22,7 @@ class Command(CustomCommand):
     def add_arguments(self, parser):
         parser.add_argument('source', choices=[item.value for item in Source])
         parser.add_argument('-i', '--index', type=int)
+        parser.add_argument('-b', '--no-line-breaks', action='store_true')
 
     def handle(self, *args, source, index=None, **options):
         if source == Source.DETECT.value:
@@ -36,4 +37,4 @@ class Command(CustomCommand):
         if index is None:
             self.write(json.dumps(node.addresses))
         else:
-            self.write(node.addresses[index])
+            self.write(node.addresses[index], ending='' if options['no_line_breaks'] else None)
