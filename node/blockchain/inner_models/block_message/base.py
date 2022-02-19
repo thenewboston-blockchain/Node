@@ -103,8 +103,13 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
         if blockchain_facade.get_next_block_identifier() != self.identifier:
             raise ValidationError('Invalid identifier')
 
+    def validate_update(self, blockchain_facade):
+        if self.update != self.make_block_message_update(self.request, blockchain_facade):
+            raise ValidationError('Invalid update')
+
     @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.request.validate_blockchain_state_dependent(blockchain_facade)
         self.validate_number(blockchain_facade)
         self.validate_identifier(blockchain_facade)
+        self.validate_update(blockchain_facade)

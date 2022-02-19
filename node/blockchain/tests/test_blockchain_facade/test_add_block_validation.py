@@ -49,3 +49,16 @@ def test_add_block_invalid_signer(node_declaration_block_message, regular_node_k
 
     with pytest.raises(ValidationError, match='Invalid block signer'):
         BlockchainFacade.get_instance().add_block_from_json(block_json)
+
+
+@pytest.mark.usefixtures('base_blockchain')
+def test_add_block_invalid_update(node_declaration_block_message, regular_node_key_pair):
+    block_message_dict = node_declaration_block_message.dict()
+    assert block_message_dict['update']['accounts'][regular_node_key_pair.public]['node']['fee'] != 10
+    block_message_dict['update']['accounts'][regular_node_key_pair.public]['node']['fee'] = 10
+
+    block = make_block(BlockMessage.parse_obj(block_message_dict), regular_node_key_pair.private)
+    block_json = block.json()
+
+    with pytest.raises(ValidationError, match='Invalid update'):
+        BlockchainFacade.get_instance().add_block_from_json(block_json)
