@@ -51,7 +51,7 @@ class GenesisBlockMessage(BlockMessage):
         )
 
     @classmethod
-    def make_block_message_update(cls, request: GenesisSignedChangeRequest) -> BlockMessageUpdate:
+    def make_block_message_update(cls, request: GenesisSignedChangeRequest, blockchain_facade) -> BlockMessageUpdate:
         raise NotImplementedError(
             f'Genesis block is a special block therefore {cls.make_genesis_block_message_update.__name__}() method '
             f'must be used instead'

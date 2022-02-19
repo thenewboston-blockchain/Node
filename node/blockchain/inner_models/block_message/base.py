@@ -46,7 +46,7 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
     request: SignedChangeRequest
 
     @classmethod
-    def make_block_message_update(cls, request: SignedChangeRequest) -> BlockMessageUpdate:
+    def make_block_message_update(cls, request: SignedChangeRequest, blockchain_facade) -> BlockMessageUpdate:
         raise NotImplementedError('Must be implement in child class')
 
     @classmethod
@@ -70,7 +70,7 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
             raise ValueError(f'Block number 0 must be {Type.GENESIS.name}, got {request.get_type().name}')
 
         identifier = blockchain_facade.get_next_block_identifier()
-        update = class_.make_block_message_update(request)
+        update = class_.make_block_message_update(request, blockchain_facade)
 
         return class_(
             number=number,
