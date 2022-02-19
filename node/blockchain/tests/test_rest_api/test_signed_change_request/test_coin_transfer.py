@@ -8,9 +8,7 @@ from node.blockchain.inner_models import CoinTransferSignedChangeRequestMessage,
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
 from node.blockchain.models import AccountState
 from node.blockchain.tests.base import as_role
-from node.blockchain.tests.test_models.base import (
-    CREATE, VALID, node_declaration_message_type_api_validation_parametrizer
-)
+from node.blockchain.tests.test_models.base import CREATE, VALID, coin_transfer_message_type_validation_parametrizer
 from node.blockchain.types import NodeRole
 from node.core.utils.collections import deep_update
 
@@ -18,20 +16,12 @@ from node.core.utils.collections import deep_update
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_coin_transfer_signed_change_request_as_primary_validator(
-    api_client, treasury_account_key_pair, coin_transfer_signed_change_request_message, treasury_amount
+    api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount
 ):
     facade = BlockchainFacade.get_instance()
     assert facade.get_next_block_number() == 1
 
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=coin_transfer_signed_change_request_message,
-        signing_key=treasury_account_key_pair.private,
-    )
-    assert signed_change_request.message
-    assert signed_change_request.signer
-    assert signed_change_request.signature
-
-    payload = signed_change_request.json()
+    payload = treasure_coin_transfer_signed_change_request.json()
     response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
     assert response.status_code == 201
     assert response.json() == {
@@ -58,34 +48,37 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
 
     assert facade.get_next_block_number() == 2
     account_state = AccountState.objects.get_or_none(_id=treasury_account_key_pair.public)
-    assert account_state.balance == treasury_amount - 105
+    total_amount = treasure_coin_transfer_signed_change_request.message.get_total_amount()
+    assert account_state.balance == treasury_amount - total_amount
     assert account_state.node is None
     assert account_state.pk == treasury_account_key_pair.public
 
 
 @pytest.mark.django_db
-@node_declaration_message_type_api_validation_parametrizer
-def test_type_validation_for_node_declaration(
-    id_, regular_node, node, node_addresses, node_fee, account_lock, expected_response_body, api_client
+@coin_transfer_message_type_validation_parametrizer
+def test_type_validation_for_coin_transfer(
+    id_, account_lock, transaction, recipient, is_fee, amount, memo, search_re, expected_response_body, api_client
 ):
-    regular_node_dict = regular_node.dict()
-    del regular_node_dict['identifier']
+    tx = CoinTransferTransaction(recipient='0' * 64, amount=10, is_fee=True, memo='message')
     payload = {
         'signer': '0' * 64,
         'signature': '0' * 128,
         'message': {
             'type':
-                1,
+                2,
             'account_lock':
-                regular_node.identifier if account_lock is VALID else account_lock,
-            'node':
-                regular_node_dict if node is VALID else ({
-                    'addresses': regular_node.addresses if node_addresses is VALID else node_addresses,
-                    'fee': regular_node.fee if node_fee is VALID else node_fee,
-                } if node is CREATE else node)
+                '0' * 64 if account_lock is VALID else account_lock,
+            'txs': [
+                tx.dict() if transaction is VALID else ({
+                    'recipient': tx.recipient if recipient is VALID else recipient,
+                    'is_fee': tx.is_fee if is_fee is VALID else is_fee,
+                    'amount': tx.amount if amount is VALID else amount,
+                    'memo': tx.memo if memo is VALID else memo,
+                } if transaction is CREATE else transaction)
+            ]
         }
     }
-    response = api_client.post('/api/signed-change-requests/', payload)
+    response = api_client.post('/api/signed-change-requests/', json.dumps(payload), content_type='application/json')
     assert response.status_code == 400
     response_json = response.json()
     response_json.pop('non_field_errors', None)
@@ -95,13 +88,9 @@ def test_type_validation_for_node_declaration(
 @pytest.mark.parametrize('key', ('signer', 'signature', 'message'))
 @pytest.mark.django_db
 def test_checking_missed_keys(
-    key, api_client, treasury_account_key_pair, coin_transfer_signed_change_request_message, treasury_amount
+    key, api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount
 ):
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=coin_transfer_signed_change_request_message,
-        signing_key=treasury_account_key_pair.private,
-    )
-    payload = signed_change_request.dict()
+    payload = treasure_coin_transfer_signed_change_request.dict()
     del payload[key]
     response = api_client.post('/api/signed-change-requests/', json.dumps(payload), content_type='application/json')
     assert response.status_code == 400
@@ -173,14 +162,9 @@ def test_signature_validation_for_coin_transfer(role, update_with, api_client, t
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'mock_get_primary_validator')
 def test_coin_transfer_scr_as_other_roles(
-    api_client, coin_transfer_signed_change_request_message, role, treasury_account_key_pair, primary_validator_node
+    api_client, treasure_coin_transfer_signed_change_request, role, treasury_account_key_pair, primary_validator_node
 ):
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=coin_transfer_signed_change_request_message,
-        signing_key=treasury_account_key_pair.private,
-    )
-
-    payload = signed_change_request.json()
+    payload = treasure_coin_transfer_signed_change_request.json()
 
     response = MagicMock()
     response.status_code = 201
@@ -191,7 +175,7 @@ def test_coin_transfer_scr_as_other_roles(
         with patch('node.core.clients.node.NodeClient.send_signed_change_request', return_value=response) as mock:
             response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
 
-    mock.assert_called_once_with(primary_validator_node, signed_change_request)
+    mock.assert_called_once_with(primary_validator_node, treasure_coin_transfer_signed_change_request)
 
     assert response.status_code == 201
     assert response.json() == {

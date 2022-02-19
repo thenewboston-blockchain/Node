@@ -67,17 +67,15 @@ def test_node_does_not_serialize_identifier(node_declaration_block_message, regu
     assert 'identifier' not in serialized['request']['message']['node']
 
 
-def test_block_identifier_is_mandatory(node_declaration_signed_change_request_message, regular_node_key_pair):
-    request = NodeDeclarationSignedChangeRequest.create_from_signed_change_request_message(
-        message=node_declaration_signed_change_request_message,
-        signing_key=regular_node_key_pair.private,
-    )
+def test_block_identifier_is_mandatory(
+    regular_node_declaration_signed_change_request, regular_node_key_pair, regular_node
+):
     NodeDeclarationBlockMessage(
         number=1,
         identifier='01' * 32,
         timestamp=datetime.utcnow(),
-        request=request,
-        update=BlockMessageUpdate(accounts={'0' * 64: AccountState(balance=10)}),
+        request=regular_node_declaration_signed_change_request,
+        update=BlockMessageUpdate(accounts={'0' * 64: AccountState(node=regular_node)}),
     )
 
     with pytest.raises(ValidationError) as exc_info:
@@ -85,8 +83,8 @@ def test_block_identifier_is_mandatory(node_declaration_signed_change_request_me
             number=1,
             identifier=None,
             timestamp=datetime.utcnow(),
-            request=request,
-            update=BlockMessageUpdate(accounts={'0' * 64: AccountState(balance=10)}),
+            request=regular_node_declaration_signed_change_request,
+            update=BlockMessageUpdate(accounts={'0' * 64: AccountState(node=regular_node)}),
         )
 
     assert re.search(r'identifier.*none is not an allowed value', str(exc_info.value), flags=re.DOTALL)

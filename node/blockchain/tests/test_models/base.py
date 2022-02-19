@@ -136,6 +136,161 @@ node_fee_tests = (
     ),
 )
 
+transaction_tests = (
+    (
+        None, r'txs -> 0.*none is not an allowed value', {
+            'message.txs.0': [{
+                'code': 'invalid',
+                'message': 'none is not an allowed value'
+            }]
+        }
+    ),
+    (
+        'invalid-type', r'txs -> 0.*value is not a valid dict', {
+            'message.txs.0': [{
+                'code': 'invalid',
+                'message': 'value is not a valid dict'
+            }]
+        }
+    ),
+)
+
+recipient_tests = (
+    (
+        None, r'recipient.*none is not an allowed value', {
+            'message.txs.0.recipient': [{
+                'code': 'invalid',
+                'message': 'none is not an allowed value'
+            }]
+        }
+    ),
+    (
+        '', r'recipient.*ensure this value has at least 64 characters', {
+            'message.txs.0.recipient': [{
+                'code': 'invalid',
+                'message': 'ensure this value has at least 64 characters'
+            }]
+        }
+    ),
+    (
+        'not-a-recipient-address', r'recipient.*ensure this value has at least 64 characters', {
+            'message.txs.0.recipient': [{
+                'code': 'invalid',
+                'message': 'ensure this value has at least 64 characters'
+            }]
+        }
+    ),
+    (
+        123, r'recipient.*str type expected', {
+            'message.txs.0.recipient': [{
+                'code': 'invalid',
+                'message': 'str type expected'
+            }]
+        }
+    ),
+)
+
+is_fee_tests = (
+    (
+        '', r'is_fee.*value is not a valid boolean', {
+            'message.txs.0.is_fee': [{
+                'code': 'invalid',
+                'message': 'value is not a valid boolean'
+            }]
+        }
+    ),
+    (
+        'not-a-boolean', r'is_fee.*value is not a valid boolean', {
+            'message.txs.0.is_fee': [{
+                'code': 'invalid',
+                'message': 'value is not a valid boolean'
+            }]
+        }
+    ),
+    (
+        1, r'is_fee.*value is not a valid boolean', {
+            'message.txs.0.is_fee': [{
+                'code': 'invalid',
+                'message': 'value is not a valid boolean'
+            }]
+        }
+    ),
+    (
+        'True', r'is_fee.*value is not a valid boolean', {
+            'message.txs.0.is_fee': [{
+                'code': 'invalid',
+                'message': 'value is not a valid boolean'
+            }]
+        }
+    ),
+)
+
+amount_tests = (
+    (
+        None, r'amount.*none is not an allowed value', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'none is not an allowed value'
+            }]
+        }
+    ),
+    (
+        '', r'amount.*value is not a valid integer', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        'not-a-number', r'amount.*value is not a valid integer', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        '10', r'amount.*value is not a valid integer', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        -5, r'amount.*ensure this value is greater than 0', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+    (
+        0, r'amount.*ensure this value is greater than 0', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+)
+
+memo_tests = (
+    (56, r'memo.*str type expected', {
+        'message.txs.0.memo': [{
+            'code': 'invalid',
+            'message': 'str type expected'
+        }]
+    }),
+    (True, r'memo.*str type expected', {
+        'message.txs.0.memo': [{
+            'code': 'invalid',
+            'message': 'str type expected'
+        }]
+    }),
+)
+
 node_declaration_message_type_validation_parametrizer = pytest.mark.parametrize(
     # keep `id_` to make debugging easier
     'id_, account_lock, node, node_identifier, node_addresses, node_fee, search_re',
@@ -151,6 +306,17 @@ node_declaration_message_type_api_validation_parametrizer = pytest.mark.parametr
     'id_, account_lock, node, node_addresses, node_fee, expected_response_body',
     tuple((1, item[0], VALID, None, None, item[2]) for item in account_lock_tests) +
     tuple((2, VALID, item[0], None, None, item[2]) for item in node_tests) +
-    tuple((4, VALID, CREATE, item[0], VALID, item[2]) for item in node_addresses_tests) +
-    tuple((5, VALID, CREATE, VALID, item[0], item[2]) for item in node_fee_tests)
+    tuple((3, VALID, CREATE, item[0], VALID, item[2]) for item in node_addresses_tests) +
+    tuple((4, VALID, CREATE, VALID, item[0], item[2]) for item in node_fee_tests)
+)
+
+coin_transfer_message_type_validation_parametrizer = pytest.mark.parametrize(
+    # keep `id_` to make debugging easier
+    'id_, account_lock, transaction, recipient, is_fee, amount, memo, search_re, expected_response_body',
+    tuple((1, item[0], VALID, None, None, None, None, item[1], item[2]) for item in account_lock_tests) +
+    tuple((2, VALID, item[0], None, None, None, None, item[1], item[2]) for item in transaction_tests) +
+    tuple((3, VALID, CREATE, item[0], VALID, VALID, VALID, item[1], item[2]) for item in recipient_tests) +
+    tuple((4, VALID, CREATE, VALID, item[0], VALID, VALID, item[1], item[2]) for item in is_fee_tests) +
+    tuple((5, VALID, CREATE, VALID, VALID, item[0], VALID, item[1], item[2]) for item in amount_tests) +
+    tuple((6, VALID, CREATE, VALID, VALID, VALID, item[0], item[1], item[2]) for item in memo_tests)
 )
