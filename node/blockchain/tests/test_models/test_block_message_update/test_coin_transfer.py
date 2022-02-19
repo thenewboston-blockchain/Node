@@ -1,5 +1,6 @@
 import pytest
 
+from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import AccountState, CoinTransferBlockMessage, CoinTransferSignedChangeRequest
 from node.blockchain.inner_models.signed_change_request_message import (
     CoinTransferSignedChangeRequestMessage, CoinTransferTransaction
@@ -24,7 +25,7 @@ def test_sender_has_not_enough_balance(regular_node_key_pair):
     with pytest.raises(
         ValidationError, match=f'Sender account {regular_node_key_pair.public} balance is not enough to send 8 coins'
     ):
-        CoinTransferBlockMessage.make_block_message_update(request)
+        CoinTransferBlockMessage.make_block_message_update(request, BlockchainFacade.get_instance())
 
 
 @pytest.mark.usefixtures('base_blockchain')
@@ -32,7 +33,7 @@ def test_make_block_message_update(
     treasure_coin_transfer_signed_change_request, treasury_amount, regular_node_key_pair, primary_validator_key_pair
 ):
     block_message_update = CoinTransferBlockMessage.make_block_message_update(
-        treasure_coin_transfer_signed_change_request
+        treasure_coin_transfer_signed_change_request, BlockchainFacade.get_instance()
     )
 
     assert block_message_update.accounts.get(treasure_coin_transfer_signed_change_request.signer) == AccountState(

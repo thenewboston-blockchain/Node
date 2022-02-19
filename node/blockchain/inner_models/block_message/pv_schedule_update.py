@@ -11,7 +11,9 @@ class PVScheduleUpdateBlockMessage(BlockMessage):
     request: PVScheduleUpdateSignedChangeRequest
 
     @classmethod
-    def make_block_message_update(cls, request: PVScheduleUpdateSignedChangeRequest) -> BlockMessageUpdate:
+    def make_block_message_update(
+        cls, request: PVScheduleUpdateSignedChangeRequest, blockchain_facade
+    ) -> BlockMessageUpdate:
         # TODO CRITICAL: Implement make_block_message_update for PV Schedule Update
         #               https://thenewboston.atlassian.net/browse/BC-232
         raise NotImplementedError('Must be implemented')

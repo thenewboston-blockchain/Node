@@ -12,7 +12,9 @@ class NodeDeclarationBlockMessage(BlockMessage):
     request: NodeDeclarationSignedChangeRequest
 
     @classmethod
-    def make_block_message_update(cls, request: NodeDeclarationSignedChangeRequest) -> BlockMessageUpdate:
+    def make_block_message_update(
+        cls, request: NodeDeclarationSignedChangeRequest, blockchain_facade
+    ) -> BlockMessageUpdate:
         account_state = AccountState(
             account_lock=request.make_hash(),
             node=request.message.node,
