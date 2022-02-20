@@ -32,13 +32,12 @@ def test_sender_has_not_enough_balance(regular_node_key_pair):
 def test_make_block_message_update(
     treasure_coin_transfer_signed_change_request, treasury_amount, regular_node_key_pair, primary_validator_key_pair
 ):
-    block_message_update = CoinTransferBlockMessage.make_block_message_update(
-        treasure_coin_transfer_signed_change_request, BlockchainFacade.get_instance()
-    )
+    request = treasure_coin_transfer_signed_change_request
+    block_message_update = CoinTransferBlockMessage.make_block_message_update(request, BlockchainFacade.get_instance())
 
-    assert block_message_update.accounts.get(treasure_coin_transfer_signed_change_request.signer) == AccountState(
-        balance=treasury_amount - 105,
-        account_lock=treasure_coin_transfer_signed_change_request.make_hash(),
+    assert block_message_update.accounts.get(request.signer) == AccountState(
+        balance=treasury_amount - request.message.get_total_amount(),
+        account_lock=request.make_hash(),
     )
     assert block_message_update.accounts.get(regular_node_key_pair.public) == AccountState(balance=100)
     assert block_message_update.accounts.get(primary_validator_key_pair.public) == AccountState(balance=5)
