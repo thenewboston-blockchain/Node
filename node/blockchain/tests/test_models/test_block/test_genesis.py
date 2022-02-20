@@ -6,8 +6,8 @@ from pydantic.error_wrappers import ValidationError as PydanticValidationError
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
-    AccountState, Block, BlockMessageUpdate, GenesisBlockMessage, GenesisSignedChangeRequest,
-    GenesisSignedChangeRequestMessage, SignedChangeRequest
+    AccountState, Block, BlockMessageUpdate, GenesisBlockMessage, GenesisSignedChangeRequestMessage,
+    SignedChangeRequest
 )
 from node.blockchain.models import AccountState as ORMAccountState
 from node.blockchain.models import Block as ORMBlock
@@ -155,17 +155,12 @@ def test_create_from_alpha_account_root_file(
     },
 ))
 def test_cannot_create_invalid_genesis_block_message(
-    primary_validator_key_pair, genesis_signed_change_request_message, kwargs
+    primary_validator_key_pair, genesis_signed_change_request, kwargs
 ):
-    request = GenesisSignedChangeRequest.create_from_signed_change_request_message(
-        message=genesis_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
-
     message = GenesisBlockMessage(
         timestamp=datetime.utcnow(),
         update=BlockMessageUpdate(accounts={'0' * 64: AccountState(balance=10)}),
-        request=request,
+        request=genesis_signed_change_request,
     )
 
     block = Block(signer='0' * 64, signature='0' * 128, message=message)

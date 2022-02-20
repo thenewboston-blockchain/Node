@@ -68,25 +68,20 @@ def test_serialize_deserialize_works(genesis_block_message):
     },
 ))
 def test_cannot_create_invalid_genesis_block_message(
-    primary_validator_key_pair, genesis_signed_change_request_message, kwargs
+    primary_validator_key_pair, genesis_signed_change_request, kwargs
 ):
-    request = GenesisSignedChangeRequest.create_from_signed_change_request_message(
-        message=genesis_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
-
     with pytest.raises(PydanticValidationError):
         GenesisBlockMessage(
             timestamp=datetime.utcnow(),
             update=BlockMessageUpdate(),
-            request=request,
+            request=genesis_signed_change_request,
             **(dict(kwargs, type=Type(kwargs['type'])) if 'type' in kwargs else kwargs),
         )
 
     message = GenesisBlockMessage(
         timestamp=datetime.utcnow(),
         update=BlockMessageUpdate(accounts={'0' * 64: AccountState(balance=10)}),
-        request=request,
+        request=genesis_signed_change_request,
     )
     message_dict = json.loads(message.json())
     message_dict.update(kwargs)

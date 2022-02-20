@@ -24,54 +24,46 @@ def test_create_from_genesis_signed_change_request_message(
     )
 
 
-def test_serialize_and_deserialize_genesis_type(genesis_signed_change_request_message, primary_validator_key_pair):
-    signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(
-        message=genesis_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
-    assert isinstance(signed_change_request, GenesisSignedChangeRequest)
-    serialized = signed_change_request.json()
+def test_serialize_and_deserialize_genesis_type(genesis_signed_change_request, primary_validator_key_pair):
+    assert isinstance(genesis_signed_change_request, GenesisSignedChangeRequest)
+    serialized = genesis_signed_change_request.json()
     deserialized = SignedChangeRequest.parse_raw(serialized)
     assert isinstance(deserialized, GenesisSignedChangeRequest)
-    assert deserialized.signer == signed_change_request.signer
-    assert deserialized.signature == signed_change_request.signature
-    assert deserialized.message == signed_change_request.message
-    assert deserialized == signed_change_request
+    assert deserialized.signer == genesis_signed_change_request.signer
+    assert deserialized.signature == genesis_signed_change_request.signature
+    assert deserialized.message == genesis_signed_change_request.message
+    assert deserialized == genesis_signed_change_request
 
     serialized2 = deserialized.json()
     assert serialized == serialized2
 
 
-def test_signature_validation_genesis_type(genesis_signed_change_request_message, primary_validator_key_pair):
-    signed_change_request_template = SignedChangeRequest.create_from_signed_change_request_message(
-        message=genesis_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
+def test_signature_validation_genesis_type(genesis_signed_change_request, primary_validator_key_pair):
     with pytest.raises(ValidationError) as exc_info:
         GenesisSignedChangeRequest(
-            signer=signed_change_request_template.signer,
+            signer=genesis_signed_change_request.signer,
             signature='0' * 128,
-            message=signed_change_request_template.message,
+            message=genesis_signed_change_request.message,
         )
     assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
 
     with pytest.raises(ValidationError) as exc_info:
         GenesisSignedChangeRequest(
             signer='0' * 64,
-            signature=signed_change_request_template.signature,
-            message=signed_change_request_template.message,
+            signature=genesis_signed_change_request.signature,
+            message=genesis_signed_change_request.message,
         )
     assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
 
     message = GenesisSignedChangeRequestMessage(
-        accounts=signed_change_request_template.message.accounts,
+        accounts=genesis_signed_change_request.message.accounts,
         account_lock='0' * 64,
-        type=signed_change_request_template.message.type,
+        type=genesis_signed_change_request.message.type,
     )
     with pytest.raises(ValidationError) as exc_info:
         GenesisSignedChangeRequest(
-            signer=signed_change_request_template.signer,
-            signature=signed_change_request_template.signature,
+            signer=genesis_signed_change_request.signer,
+            signature=genesis_signed_change_request.signature,
             message=message,
         )
     assert re.search(r'__root__.*Invalid signature', str(exc_info.value), flags=re.DOTALL)
