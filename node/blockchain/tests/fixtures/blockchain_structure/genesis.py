@@ -1,6 +1,7 @@
 import pytest
 
 from node.blockchain.tests.factories.block_message.genesis import make_genesis_block_message
+from node.blockchain.tests.factories.signed_change_request.genesis import make_genesis_signed_change_request
 from node.blockchain.tests.factories.signed_change_request_message.genesis import (
     make_genesis_signed_change_request_message
 )
@@ -11,6 +12,11 @@ def genesis_signed_change_request_message(primary_validator_key_pair, treasury_a
     return make_genesis_signed_change_request_message(
         primary_validator_key_pair.public, treasury_account_key_pair.public, treasury_amount
     )
+
+
+@pytest.fixture
+def genesis_signed_change_request(genesis_signed_change_request_message, primary_validator_key_pair):
+    return make_genesis_signed_change_request(genesis_signed_change_request_message, primary_validator_key_pair)
 
 
 @pytest.fixture

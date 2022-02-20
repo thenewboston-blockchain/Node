@@ -6,7 +6,12 @@ from node.blockchain.types import Type
 from node.core.fields import PydanticModelBackedJSONField
 from node.core.serializers import ValidateUnknownFieldsMixin
 
-API_SUPPORTED_TYPES = {item for item in Type if item != Type.GENESIS}
+API_UNSUPPORTED_TYPES = [
+    Type.GENESIS,
+    Type.PV_SCHEDULE_UPDATE,
+]
+
+API_SUPPORTED_TYPES = {item.value for item in Type if item not in API_UNSUPPORTED_TYPES}
 
 
 class SignedChangeRequestSerializer(serializers.Serializer, ValidateUnknownFieldsMixin):

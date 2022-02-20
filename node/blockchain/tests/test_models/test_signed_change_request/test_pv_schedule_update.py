@@ -22,21 +22,15 @@ def test_create_from_pv_schedule_update_signed_change_request_message(
     )
 
 
-def test_serialize_and_deserialize_pv_schedule_update(
-    pv_schedule_update_signed_change_request_message, primary_validator_key_pair
-):
-    signed_change_request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
-        message=pv_schedule_update_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
-    assert isinstance(signed_change_request, PVScheduleUpdateSignedChangeRequest)
-    serialized = signed_change_request.json()
+def test_serialize_and_deserialize_pv_schedule_update(pv_schedule_update_signed_change_request):
+    assert isinstance(pv_schedule_update_signed_change_request, PVScheduleUpdateSignedChangeRequest)
+    serialized = pv_schedule_update_signed_change_request.json()
     deserialized = SignedChangeRequest.parse_raw(serialized)
     assert isinstance(deserialized, PVScheduleUpdateSignedChangeRequest)
-    assert deserialized.signer == signed_change_request.signer
-    assert deserialized.signature == signed_change_request.signature
-    assert deserialized.message == signed_change_request.message
-    assert deserialized == signed_change_request
+    assert deserialized.signer == pv_schedule_update_signed_change_request.signer
+    assert deserialized.signature == pv_schedule_update_signed_change_request.signature
+    assert deserialized.message == pv_schedule_update_signed_change_request.message
+    assert deserialized == pv_schedule_update_signed_change_request
 
     serialized2 = deserialized.json()
     assert serialized == serialized2
