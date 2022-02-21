@@ -3,6 +3,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
+            '()': 'node.core.utils.formatters.TracebackSuppressingFormatter',
             'format': '%(asctime)s %(levelname)s %(name)s %(message)s'
         },
     },
