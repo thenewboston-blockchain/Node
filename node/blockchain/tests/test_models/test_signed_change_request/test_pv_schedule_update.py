@@ -17,8 +17,8 @@ def test_create_from_pv_schedule_update_signed_change_request_message(
     assert signed_change_request.message == pv_schedule_update_signed_change_request_message
     assert signed_change_request.signer == regular_node_key_pair.public
     assert signed_change_request.signature == (
-        'be5830a0520b3537bac59f6a750eff876db4122a4608942f87f2324495e9a238'
-        '95b1a7de8fc6d80626a32e704370b81d7a1a2d17c50254fb506924a87d3f4e0b'
+        '2e2ee47f64f59faab40e7166bd34508e3a8d942d13efa39ffdaaf012d0f9f462'
+        'f34449bed87e3bc909164c03173483ea33c641ade39d95ed9f0c977f78c2760c'
     )
 
 
@@ -36,16 +36,13 @@ def test_serialize_and_deserialize_pv_schedule_update(pv_schedule_update_signed_
     assert serialized == serialized2
 
 
-# TODO CRITICAL: Implement make_block_message_update for PV Schedule Update
-#               https://thenewboston.atlassian.net/browse/BC-232
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
-@pytest.mark.skip('PVScheduleUpdateBlockMessage.make_block_message_update must be implemented first')
 def test_invalid_account_lock(primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
     pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
-        account_lock='0' * 64, schedule={}
+        account_lock='0' * 64, schedule={'1': primary_validator_key_pair.public}
     )
     request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
         message=pv_schedule_update_signed_change_request_message,

@@ -35,10 +35,13 @@ def test_make_block_message_update(
     request = treasure_coin_transfer_signed_change_request
     block_message_update = CoinTransferBlockMessage.make_block_message_update(request, BlockchainFacade.get_instance())
 
-    assert block_message_update.accounts.get(request.signer) == AccountState(
+    assert block_message_update.schedule is None
+
+    accounts = block_message_update.accounts
+    assert len(accounts) == 3
+    assert accounts.get(request.signer) == AccountState(
         balance=treasury_amount - request.message.get_total_amount(),
         account_lock=request.make_hash(),
     )
-    assert block_message_update.accounts.get(regular_node_key_pair.public) == AccountState(balance=100)
-    assert block_message_update.accounts.get(primary_validator_key_pair.public) == AccountState(balance=5)
-    assert block_message_update.schedule is None
+    assert accounts.get(regular_node_key_pair.public) == AccountState(balance=100)
+    assert accounts.get(primary_validator_key_pair.public) == AccountState(balance=5)
