@@ -11,6 +11,7 @@ from node.blockchain.utils.lock import lock
 from node.core.database import ensure_in_transaction
 from node.core.utils.cryptography import derive_public_key, get_node_identifier, get_signing_key
 from node.core.utils.misc import set_if_not_none
+from node.core.utils.types import intstr
 
 if TYPE_CHECKING:
     from node.blockchain.models import Block as ORMBlock
@@ -171,7 +172,7 @@ class BlockchainFacade:
                 account_state.save()
 
     @staticmethod
-    def update_write_through_cache_schedule(schedule):
+    def update_write_through_cache_schedule(schedule: dict[intstr, AccountNumber]):
         # TODO(dmu) HIGH: Add more unittests once PV schedule block is implemented
         #                 - Add PV
         #                 - Remove PV
@@ -179,10 +180,10 @@ class BlockchainFacade:
         #                 https://thenewboston.atlassian.net/browse/BC-193
         from node.blockchain.models import Schedule
 
-        # TODO(dmu) LOW: More optimal algorithm would not delete all schedule record, but only what should be deleted
-        Schedule.objects.all().delete()
+        Schedule.objects.exclude(_id__in=schedule.keys()).delete()
+
         for block_number, node_identifier in schedule.items():
-            Schedule.objects.create(_id=block_number, node_identifier=node_identifier)
+            Schedule.objects.update_or_create(_id=block_number, defaults={'node_identifier': node_identifier})
 
     @staticmethod
     @ensure_in_transaction
@@ -197,12 +198,10 @@ class BlockchainFacade:
     def update_write_through_cache(self, block):
         block_message_update = block.message.update
 
-        accounts = block_message_update.accounts
-        if accounts:
+        if accounts := block_message_update.accounts:
             self.update_write_through_cache_accounts(accounts)
 
-        schedule = block_message_update.schedule
-        if schedule:
+        if schedule := block_message_update.schedule:
             self.update_write_through_cache_schedule(schedule)
 
     @staticmethod

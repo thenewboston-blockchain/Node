@@ -2,10 +2,9 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
-    AccountState, Block, BlockMessageUpdate, CoinTransferSignedChangeRequest, CoinTransferSignedChangeRequestMessage
+    Block, BlockMessageUpdate, PVScheduleUpdateSignedChangeRequest, PVScheduleUpdateSignedChangeRequestMessage
 )
-from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
-from node.blockchain.models import AccountState as DBAccountState
+from node.blockchain.models import Schedule
 from node.blockchain.models.block import Block as ORMBlock
 from node.blockchain.types import AccountLock, Signature, Type
 from node.core.exceptions import ValidationError
@@ -13,14 +12,14 @@ from node.core.utils.cryptography import is_signature_valid
 
 
 @pytest.mark.django_db
-def test_add_block_from_block_message(coin_transfer_block_message, primary_validator_key_pair, treasury_amount):
+def test_add_block_from_block_message(pv_schedule_update_block_message, primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
     expected_block_number = blockchain_facade.get_next_block_number()
     expected_identifier = blockchain_facade.get_next_block_identifier()
 
     block = blockchain_facade.add_block_from_block_message(
-        message=coin_transfer_block_message,
+        message=pv_schedule_update_block_message,
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
@@ -32,8 +31,8 @@ def test_add_block_from_block_message(coin_transfer_block_message, primary_valid
     message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
-    assert message.type == Type.COIN_TRANSFER
-    assert message == coin_transfer_block_message
+    assert message.type == Type.PV_SCHEDULE_UPDATE
+    assert message == pv_schedule_update_block_message
 
     # Test rereading the block from the database
     orm_block = ORMBlock.objects.get(_id=expected_block_number)
@@ -46,30 +45,27 @@ def test_add_block_from_block_message(coin_transfer_block_message, primary_valid
     message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
-    assert message.type == Type.COIN_TRANSFER
-    assert message == coin_transfer_block_message
+    assert message.type == Type.PV_SCHEDULE_UPDATE
+    assert message == pv_schedule_update_block_message
 
     # Test account state write-through cache
-    assert DBAccountState.objects.count() == 3
-    request = coin_transfer_block_message.request
-    account_state = DBAccountState.objects.get(_id=request.signer)
-    assert account_state.account_lock == request.make_hash()
-    assert account_state.balance == treasury_amount - request.message.get_total_amount()
-    assert account_state.node is None
+    assert Schedule.objects.count() == 1
+    schedule = pv_schedule_update_block_message.request.message.schedule
+
+    for id_, node_identifier in schedule.items():
+        assert Schedule.objects.get(_id=id_).node_identifier == node_identifier
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
-def test_add_block_from_signed_change_request(
-    treasure_coin_transfer_signed_change_request, regular_node_key_pair, primary_validator_key_pair, treasury_amount
-):
+def test_add_block_from_signed_change_request(pv_schedule_update_signed_change_request, primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
     expected_block_number = blockchain_facade.get_next_block_number()
     expected_identifier = blockchain_facade.get_next_block_identifier()
 
     block = blockchain_facade.add_block_from_signed_change_request(
-        treasure_coin_transfer_signed_change_request, signing_key=primary_validator_key_pair.private
+        pv_schedule_update_signed_change_request, signing_key=primary_validator_key_pair.private
     )
     assert block.signer == primary_validator_key_pair.public
     assert isinstance(block.signature, str)
@@ -79,27 +75,9 @@ def test_add_block_from_signed_change_request(
     message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
-    assert message.type == Type.COIN_TRANSFER
-    assert message.request == treasure_coin_transfer_signed_change_request
-    expected_message_update = BlockMessageUpdate(
-        accounts={
-            treasure_coin_transfer_signed_change_request.signer:
-                AccountState(
-                    balance=treasury_amount - treasure_coin_transfer_signed_change_request.message.get_total_amount(),
-                    account_lock=treasure_coin_transfer_signed_change_request.make_hash(),
-                ),
-            regular_node_key_pair.public:
-                AccountState(
-                    balance=100,
-                    account_lock=None,
-                ),
-            primary_validator_key_pair.public:
-                AccountState(
-                    balance=5,
-                    account_lock=None,
-                ),
-        }
-    )
+    assert message.type == Type.PV_SCHEDULE_UPDATE
+    assert message.request == pv_schedule_update_signed_change_request
+    expected_message_update = BlockMessageUpdate(schedule={'1': primary_validator_key_pair.public})
     assert message.update == expected_message_update
 
     orm_block = ORMBlock.objects.get(_id=expected_block_number)
@@ -112,26 +90,26 @@ def test_add_block_from_signed_change_request(
     message = block.message
     assert message.number == expected_block_number
     assert message.identifier == expected_identifier
-    assert message.type == Type.COIN_TRANSFER
-    assert message.request == treasure_coin_transfer_signed_change_request
+    assert message.type == Type.PV_SCHEDULE_UPDATE
+    assert message.request == pv_schedule_update_signed_change_request
     assert message.update == expected_message_update
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
-def test_add_block_from_signed_change_request_account_lock_validation(treasury_account_key_pair, regular_node):
+def test_add_block_from_signed_change_request_account_lock_validation(primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
     account_lock = AccountLock('0' * 64)
-    assert blockchain_facade.get_account_lock(treasury_account_key_pair.public) != account_lock
-    message = CoinTransferSignedChangeRequestMessage(
+    assert blockchain_facade.get_account_lock(primary_validator_key_pair.public) != account_lock
+    message = PVScheduleUpdateSignedChangeRequestMessage(
         account_lock=account_lock,
-        txs=[CoinTransferTransaction(recipient='1' * 64, amount=10)],
+        schedule={'1': primary_validator_key_pair.public},
     )
 
-    request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
+    request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
         message=message,
-        signing_key=treasury_account_key_pair.private,
+        signing_key=primary_validator_key_pair.private,
     )
 
     with pytest.raises(ValidationError, match='Invalid account lock'):
