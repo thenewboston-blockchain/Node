@@ -3,7 +3,7 @@ from typing import Optional
 from typing import Type as TypingType
 from typing import TypeVar
 
-from pydantic import root_validator
+from pydantic import root_validator, validator
 
 from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.inner_models.base import BaseModel
@@ -113,3 +113,9 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
         self.validate_number(blockchain_facade)
         self.validate_identifier(blockchain_facade)
         self.validate_update(blockchain_facade)
+
+    @validator('timestamp')
+    def validate_timestamp(cls, value):
+        if value.tzinfo is not None:
+            raise ValidationError('Timestamp without timezone is expected')
+        return value

@@ -11,5 +11,9 @@ def test_block_sequence():
     with pytest.raises(ValueError, match='Expected block_id is 1'):
         block.save()
 
+    block._id = 5
+    with pytest.raises(ValueError, match='Expected block_id is 1'):
+        block.save()
+
     block._id = 1
     block.save()
