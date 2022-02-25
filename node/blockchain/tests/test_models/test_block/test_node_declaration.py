@@ -57,7 +57,6 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
     assert account_state.node == node_declaration_block_message.request.message.node
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request(
     self_node_declaration_signed_change_request, regular_node_key_pair, primary_validator_key_pair
@@ -106,7 +105,6 @@ def test_add_block_from_signed_change_request(
     assert message.update == expected_message_update
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request_account_lock_validation(regular_node_key_pair, regular_node):
     blockchain_facade = BlockchainFacade.get_instance()

@@ -56,7 +56,6 @@ def test_add_block_from_block_message(pv_schedule_update_block_message, primary_
         assert Schedule.objects.get(_id=id_).node_identifier == node_identifier
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request(pv_schedule_update_signed_change_request, primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
@@ -95,7 +94,6 @@ def test_add_block_from_signed_change_request(pv_schedule_update_signed_change_r
     assert message.update == expected_message_update
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request_account_lock_validation(primary_validator_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
@@ -113,4 +111,57 @@ def test_add_block_from_signed_change_request_account_lock_validation(primary_va
     )
 
     with pytest.raises(ValidationError, match='Invalid account lock'):
+        blockchain_facade.add_block_from_signed_change_request(request)
+
+
+@pytest.mark.usefixtures('base_blockchain')
+def test_invalid_account_lock(primary_validator_key_pair):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
+        account_lock='0' * 64, schedule={'1': primary_validator_key_pair.public}
+    )
+    request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
+        message=pv_schedule_update_signed_change_request_message,
+        signing_key=primary_validator_key_pair.private,
+    )
+    with pytest.raises(ValidationError, match='Invalid account lock'):
+        blockchain_facade.add_block_from_signed_change_request(request)
+
+
+@pytest.mark.usefixtures('base_blockchain')
+def test_validate_nodes_are_declared(primary_validator_key_pair):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(primary_validator_key_pair.public),
+        schedule={
+            '1': primary_validator_key_pair.public,
+            '100': '1' * 64,
+        }
+    )
+    request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
+        message=pv_schedule_update_signed_change_request_message,
+        signing_key=primary_validator_key_pair.private,
+    )
+    with pytest.raises(ValidationError, match='All nodes in the schedule must be declared'):
+        blockchain_facade.add_block_from_signed_change_request(request)
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+def test_validate_block_numbers(primary_validator_key_pair):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(primary_validator_key_pair.public),
+        schedule={
+            '1': primary_validator_key_pair.public,
+            '3': primary_validator_key_pair.public,
+        }
+    )
+    request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
+        message=pv_schedule_update_signed_change_request_message,
+        signing_key=primary_validator_key_pair.private,
+    )
+    with pytest.raises(ValidationError, match='Schedule keys must be equal or more than next block number'):
         blockchain_facade.add_block_from_signed_change_request(request)

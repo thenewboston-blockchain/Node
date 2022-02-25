@@ -16,7 +16,6 @@ from node.blockchain.types import AccountLock, NodeRole
 from node.core.utils.collections import deep_update
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_node_declaration_signed_change_request_as_primary_validator(api_client, regular_node, regular_node_key_pair):
     facade = BlockchainFacade.get_instance()
@@ -124,7 +123,6 @@ def test_checking_missed_keys(key, api_client, self_node_declaration_signed_chan
     assert response.json() == {key: [{'code': 'required', 'message': 'This field is required.'}]}
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_node_declaration_signed_change_request_with_invalid_account_lock(
     api_client, primary_validator_node, primary_validator_key_pair
@@ -183,7 +181,6 @@ def test_signature_validation_for_node_declaration(
 
 
 @pytest.mark.parametrize('role', (NodeRole.CONFIRMATION_VALIDATOR, NodeRole.REGULAR_NODE))
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain', 'mock_get_primary_validator')
 def test_node_declaration_scr_as_other_roles(
     api_client, regular_node_declaration_signed_change_request, role, primary_validator_node

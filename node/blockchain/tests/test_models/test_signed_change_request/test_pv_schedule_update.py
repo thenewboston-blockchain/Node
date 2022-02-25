@@ -1,9 +1,14 @@
-import pytest
+import json
+import re
 
-from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import PVScheduleUpdateSignedChangeRequestMessage, SignedChangeRequest
+import pytest
+from pydantic import ValidationError as PydanticValidationError
+
+from node.blockchain.inner_models import SignedChangeRequest
 from node.blockchain.inner_models.signed_change_request import PVScheduleUpdateSignedChangeRequest
-from node.core.exceptions import ValidationError
+from node.blockchain.tests.test_models.base import (
+    VALID, pv_schedule_update_message_type_validation_on_parsing_parametrizer
+)
 
 
 def test_create_from_pv_schedule_update_signed_change_request_message(
@@ -36,17 +41,25 @@ def test_serialize_and_deserialize_pv_schedule_update(pv_schedule_update_signed_
     assert serialized == serialized2
 
 
-@pytest.mark.django_db
-@pytest.mark.usefixtures('base_blockchain')
-def test_invalid_account_lock(primary_validator_key_pair):
-    blockchain_facade = BlockchainFacade.get_instance()
+@pv_schedule_update_message_type_validation_on_parsing_parametrizer
+def test_type_validation_for_pv_schedule_update_message_on_parsing(
+    id_, account_lock, schedule_block_number, node_identifier, search_re, regular_node_key_pair
+):
+    if node_identifier is VALID:
+        node_identifier = regular_node_key_pair.public
+    serialized = {
+        'signer': '0' * 64,
+        'signature': '0' * 128,
+        'message': {
+            'type': 3,
+            'account_lock': '0' * 64 if account_lock is VALID else account_lock,
+            'schedule': {
+                '1' if schedule_block_number is VALID else schedule_block_number: node_identifier
+            }
+        }
+    }
+    serialized_json = json.dumps(serialized)
+    with pytest.raises(PydanticValidationError) as exc_info:
+        SignedChangeRequest.parse_raw(serialized_json)
 
-    pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
-        account_lock='0' * 64, schedule={'1': primary_validator_key_pair.public}
-    )
-    request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
-        message=pv_schedule_update_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
-    )
-    with pytest.raises(ValidationError, match='Invalid account lock'):
-        blockchain_facade.add_block_from_signed_change_request(request)
+    assert re.search(search_re, str(exc_info.value), flags=re.DOTALL)

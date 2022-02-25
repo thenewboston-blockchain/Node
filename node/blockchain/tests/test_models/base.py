@@ -44,15 +44,35 @@ node_tests = (
 )
 
 node_identifier_tests = (  # type: ignore
-    (None, r'identifier.*none is not an allowed value'),
-    ('', r'identifier.*ensure this value has at least 64 characters'),
-    ('a', r'identifier.*ensure this value has at least 64 characters'),
+    (
+        None,
+        r'identifier.*none is not an allowed value',
+        r'schedule -> 1.*none is not an allowed value'
+    ),
+    (
+        '',
+        r'identifier.*ensure this value has at least 64 characters',
+        r'schedule -> 1.*ensure this value has at least 64 characters'
+    ),
+    (
+        'a',
+        r'identifier.*ensure this value has at least 64 characters',
+        r'schedule -> 1.*ensure this value has at least 64 characters'
+    ),
     (
         '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bbd',
-        r'identifier.*ensure this value has at most 64 characters'
+        r'identifier.*ensure this value has at most 64 characters',
+        r'schedule -> 1.*ensure this value has at most 64 characters'
     ),
-    ('@c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb', r'identifier.*string does not match regex'),
-    ({}, r'identifier.*str type expected'),
+    (
+        '@c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb',
+        r'identifier.*string does not match regex',
+        r'schedule -> 1.*string does not match regex'),
+    (
+        {},
+        r'identifier.*str type expected',
+        r'schedule -> 1.*str type expected'
+    ),
 )
 
 node_addresses_tests = (
@@ -291,6 +311,100 @@ memo_tests = (
     }),
 )
 
+schedule_block_number_on_instantiation_tests = (
+    (
+        None, r'schedule -> __key__.*none is not an allowed value', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'none is not an allowed value'
+            }]
+        }
+    ),
+    (
+        '', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        'not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        10, r'schedule -> __key__.*str type expected', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        -5, r'schedule -> __key__.*str type expected', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+    (
+        '-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+)
+
+schedule_block_number_on_parsing_tests = (
+    (
+        None, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'none is not an allowed value'
+            }]
+        }
+    ),
+    (
+        '', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        'not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'value is not a valid integer'
+            }]
+        }
+    ),
+    (
+        -5, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+    (
+        '-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
+            'message.txs.0.amount': [{
+                'code': 'invalid',
+                'message': 'ensure this value is greater than 0'
+            }]
+        }
+    ),
+)
+
 node_declaration_message_type_validation_parametrizer = pytest.mark.parametrize(
     # keep `id_` to make debugging easier
     'id_, account_lock, node, node_identifier, node_addresses, node_fee, search_re',
@@ -319,4 +433,20 @@ coin_transfer_message_type_validation_parametrizer = pytest.mark.parametrize(
     tuple((4, VALID, CREATE, VALID, item[0], VALID, VALID, item[1], item[2]) for item in is_fee_tests) +
     tuple((5, VALID, CREATE, VALID, VALID, item[0], VALID, item[1], item[2]) for item in amount_tests) +
     tuple((6, VALID, CREATE, VALID, VALID, VALID, item[0], item[1], item[2]) for item in memo_tests)
+)
+
+pv_schedule_update_message_type_validation_on_instantiation_parametrizer = pytest.mark.parametrize(
+    # keep `id_` to make debugging easier
+    'id_, account_lock, schedule_block_number, node_identifier, search_re, expected_response_body',
+    tuple((1, item[0], VALID, VALID, item[1], item[2]) for item in account_lock_tests) +
+    tuple((2, VALID, item[0], VALID, item[1], item[2]) for item in schedule_block_number_on_instantiation_tests) +
+    tuple((3, VALID, VALID, item[0], item[2], item[2]) for item in node_identifier_tests)
+)
+
+pv_schedule_update_message_type_validation_on_parsing_parametrizer = pytest.mark.parametrize(
+    # keep `id_` to make debugging easier
+    'id_, account_lock, schedule_block_number, node_identifier, search_re',
+    tuple((1, item[0], VALID, VALID, item[1]) for item in account_lock_tests) +
+    tuple((2, VALID, item[0], VALID, item[1]) for item in schedule_block_number_on_parsing_tests) +
+    tuple((3, VALID, VALID, item[0], item[2]) for item in node_identifier_tests)
 )

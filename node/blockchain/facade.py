@@ -212,8 +212,6 @@ class BlockchainFacade:
     def get_node_role(self) -> Optional[NodeRole]:
         # TODO(dmu) MEDIUM: Should we optimize the implementation to make only one database request and
         #                   process the response in Python?
-        # TODO(dmu) CRITICAL: Fix: get_node_role() must return None if node is node declared
-        #                     https://thenewboston.atlassian.net/browse/BC-241
         from node.blockchain.models import Schedule
 
         node_identifier = get_node_identifier()
