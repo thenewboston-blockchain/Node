@@ -11,7 +11,6 @@ from node.blockchain.inner_models import (
 from node.blockchain.types import Type
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_create_from_signed_change_request(
     coin_transfer_signed_change_request_message, treasury_account_key_pair, treasury_amount

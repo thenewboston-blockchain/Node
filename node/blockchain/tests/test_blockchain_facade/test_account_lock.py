@@ -4,7 +4,6 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import NodeDeclarationSignedChangeRequest
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures('base_blockchain')
 def test_account_lock_change_when_block_is_added(
     node_declaration_signed_change_request_message, regular_node_key_pair, primary_validator_key_pair
