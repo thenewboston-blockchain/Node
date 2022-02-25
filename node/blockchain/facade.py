@@ -28,7 +28,6 @@ def get_block_model():
 
 
 class BlockchainFacade:
-
     _instance = None
 
     def __init__(self, signing_key: SigningKey):

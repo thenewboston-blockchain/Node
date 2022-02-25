@@ -4,6 +4,7 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
+from node.blockchain.facade import BlockchainFacade
 from node.blockchain.tests.base import as_role
 from node.blockchain.types import NodeRole
 
@@ -13,7 +14,7 @@ from node.blockchain.types import NodeRole
 def test_node_declaration(test_server_address, force_smart_mocked_node_client, primary_validator_key_pair):
     out = StringIO()
     call_command(
-        'send_signed_change_request',
+        'add_signed_change_request',
         '1',
         test_server_address,
         primary_validator_key_pair.private,
@@ -54,7 +55,7 @@ def test_coin_transfer(
     }
     fee_transaction = {'recipient': regular_node_key_pair.public, 'is_fee': True, 'amount': 5, 'memo': 'fee'}
     call_command(
-        'send_signed_change_request',
+        'add_signed_change_request',
         '2',
         test_server_address,
         treasury_account_key_pair.private,
@@ -84,3 +85,21 @@ def test_coin_transfer(
             'a9605266074794f4d1045527e236b66902ed935d2a2f3ab4d54296fe22004e02',
         'signer': treasury_account_key_pair.public
     }
+
+
+@as_role(NodeRole.PRIMARY_VALIDATOR)
+@pytest.mark.usefixtures('rich_blockchain')
+def test_pv_schedule_update(
+    test_server_address, force_smart_mocked_node_client, primary_validator_key_pair, self_node_key_pair
+):
+    out = StringIO()
+    schedule = {
+        '100': primary_validator_key_pair.public,
+    }
+    call_command(
+        'add_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out
+    )
+    assert 'Block added to local blockchain' in out.getvalue()
+
+    block = BlockchainFacade.get_instance().get_last_block().get_block()
+    assert block.message.update.schedule == schedule

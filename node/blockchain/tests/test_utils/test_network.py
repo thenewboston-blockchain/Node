@@ -206,7 +206,7 @@ def test_get_nodes_majority():
 
 @pytest.mark.usefixtures('rich_blockchain')
 def test_get_nodes_for_syncing(node_list_json_file_content, node_list_json_file):
-    assert ORMNode.objects.all().exists()
+    assert ORMNode.objects.exists()
     nodes = get_nodes_for_syncing()
     self_identifier = get_node_identifier()
     assert sort_nodes(nodes) == sort_nodes(

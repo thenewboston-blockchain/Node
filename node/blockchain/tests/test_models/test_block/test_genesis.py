@@ -21,7 +21,7 @@ def test_create_from_block_message(
     genesis_block_message, primary_validator_key_pair, primary_validator_node, treasury_account_key_pair,
     treasury_amount
 ):
-    assert not ORMAccountState.objects.all().exists()
+    assert not ORMAccountState.objects.exists()
 
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -75,7 +75,7 @@ def test_create_from_block_message(
 def test_create_from_alpha_account_root_file(
     primary_validator_key_pair, primary_validator_node, treasury_account_key_pair, account_root_file
 ):
-    assert not ORMAccountState.objects.all().exists()
+    assert not ORMAccountState.objects.exists()
 
     blockchain_facade = BlockchainFacade.get_instance()
 
