@@ -1,8 +1,10 @@
+import time
+
 import pytest
 from django.conf import settings
 from pymongo import MongoClient
 
-from node.blockchain.utils.lock import lock
+from node.blockchain.utils.lock import create_lock, lock
 from node.core.database import get_database
 from node.core.exceptions import BlockchainIsNotLockedError, BlockchainLockingError, BlockchainUnlockingError
 
@@ -37,7 +39,7 @@ def test_setting_lock_if_already_locked():
     @lock('mylock')
     def lock_and_call():
         assert has_lock('mylock')
-        with pytest.raises(BlockchainLockingError):
+        with pytest.raises(BlockchainLockingError, match='Blockchain locking timeout for lock'):
             locked_function()
 
         raise BlockchainLockingError  # prevent exception swallowing by pytest.raises()
@@ -90,3 +92,21 @@ def test_ensure_locked_if_not_locked():
         expect_locked_function(expect_locked=True)
 
     assert not has_lock('mylock')
+
+
+@pytest.mark.django_db
+def test_cannot_create_lock_twice():
+    create_lock('mylock')
+    with pytest.raises(BlockchainLockingError, match='Lock could not be acquired'):
+        create_lock('mylock')
+
+
+@pytest.mark.django_db
+def test_cannot_create_lock_twice_with_longer_timeout():
+    create_lock('mylock')
+    start = time.time()
+    with pytest.raises(BlockchainLockingError, match='Blockchain locking timeout for lock'):
+        create_lock('mylock', timeout_seconds=0.1)
+
+    end = time.time()
+    assert 0.1 <= end - start <= 0.2
