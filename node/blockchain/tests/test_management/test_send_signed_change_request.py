@@ -5,7 +5,6 @@ import pytest
 from django.core.management import call_command
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import PVScheduleUpdateSignedChangeRequest
 from node.blockchain.tests.base import as_role
 from node.blockchain.types import NodeRole
 
@@ -15,7 +14,7 @@ from node.blockchain.types import NodeRole
 def test_node_declaration(test_server_address, force_smart_mocked_node_client, primary_validator_key_pair):
     out = StringIO()
     call_command(
-        'send_signed_change_request',
+        'add_signed_change_request',
         '1',
         test_server_address,
         primary_validator_key_pair.private,
@@ -56,7 +55,7 @@ def test_coin_transfer(
     }
     fee_transaction = {'recipient': regular_node_key_pair.public, 'is_fee': True, 'amount': 5, 'memo': 'fee'}
     call_command(
-        'send_signed_change_request',
+        'add_signed_change_request',
         '2',
         test_server_address,
         treasury_account_key_pair.private,
@@ -98,20 +97,9 @@ def test_pv_schedule_update(
         '100': primary_validator_key_pair.public,
     }
     call_command(
-        'send_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out
+        'add_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out
     )
-    _, output = out.getvalue().split('Response (raw):')
+    assert 'Block added to local blockchain' in out.getvalue()
 
-    signed_change_request = PVScheduleUpdateSignedChangeRequest.parse_raw(output)
-
-    assert json.loads(output) == {
-        'message': {
-            'account_lock': BlockchainFacade.get_instance().get_account_lock(self_node_key_pair.public),
-            'schedule': {
-                '100': primary_validator_key_pair.public
-            },
-            'type': 3
-        },
-        'signature': signed_change_request.message.make_signature(self_node_key_pair.private),
-        'signer': self_node_key_pair.public
-    }
+    block = BlockchainFacade.get_instance().get_last_block().get_block()
+    assert block.message.update.schedule == schedule

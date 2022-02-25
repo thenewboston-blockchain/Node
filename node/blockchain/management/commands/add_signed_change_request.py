@@ -1,34 +1,37 @@
 import json
 import logging
 
+from django.db import transaction
+
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     CoinTransferSignedChangeRequestMessage, Node, NodeDeclarationSignedChangeRequestMessage,
     PVScheduleUpdateSignedChangeRequestMessage, SignedChangeRequest
 )
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
-from node.blockchain.types import AccountNumber, SigningKey, Type
+from node.blockchain.types import AccountNumber, Type
 from node.core.clients.node import NodeClient
 from node.core.commands import CustomCommand
-from node.core.utils.cryptography import derive_public_key, get_node_identifier
+from node.core.database import is_in_transaction
+from node.core.utils.cryptography import derive_public_key, get_signing_key
 
 logger = logging.getLogger(__name__)
 
-LOCAL_BLOCKCHAIN = 'local'
+LOCAL = 'local'
 
 
 def add_common_args(parser):
-    parser.add_argument('node-address', type=str, help='node address or "local" to denote local blockchain operation')
-    parser.add_argument('signing-key', type=SigningKey)
+    parser.add_argument('node-address', help='remote node address or "local" to denote local blockchain operation')
+    parser.add_argument('signing-key', help='signing key or "local" to denote local node singing key')
     parser.add_argument('-d', '--dry-run', action='store_true')
 
 
-def get_account_lock(node_address, type_, signing_key):
-    if node_address == LOCAL_BLOCKCHAIN:
-        assert type_ == Type.PV_SCHEDULE_UPDATE.value
-        return BlockchainFacade.get_instance().get_account_lock(get_node_identifier())
+def get_account_lock_from_local_blockchain(public_key):
+    return BlockchainFacade.get_instance().get_account_lock(public_key)
 
-    account_state = NodeClient.get_instance().get_account_state(node_address, derive_public_key(signing_key))
+
+def get_account_lock_from_node(node_address, public_key):
+    account_state = NodeClient.get_instance().get_account_state(node_address, public_key)
     return account_state.account_lock
 
 
@@ -53,13 +56,11 @@ def make_message(type_, account_lock, options):
     raise NotImplementedError(f'Support for signed change request type {type_} is not implemented')
 
 
-def send_signed_change_request(node_address, signed_change_request, signing_key):
-    if node_address == LOCAL_BLOCKCHAIN:
-        block = BlockchainFacade.get_instance().add_block_from_signed_change_request(
-            signed_change_request=signed_change_request, signing_key=signing_key, validate=True
-        )
-        return block.message.request.json()
+def add_block_from_signed_change_request(signed_change_request):
+    return BlockchainFacade.get_instance().add_block_from_signed_change_request(signed_change_request)
 
+
+def send_signed_change_request(node_address, signed_change_request):
     response = NodeClient.get_instance().send_signed_change_request(node_address, signed_change_request)
     return response.text
 
@@ -67,10 +68,8 @@ def send_signed_change_request(node_address, signed_change_request, signing_key)
 class Command(CustomCommand):
     help = 'Submit signed change requests of different types'  # noqa: A003
 
-    def add_arguments(self, parser):
-        subparsers = parser.add_subparsers(dest='type', help='Signed Change Request type')
-
-        # Node Declaration
+    @staticmethod
+    def add_node_declaration_arguments(subparsers):
         node_declaration_parser = subparsers.add_parser(
             str(Type.NODE_DECLARATION.value), help=Type.NODE_DECLARATION.name
         )
@@ -78,7 +77,8 @@ class Command(CustomCommand):
         node_declaration_parser.add_argument('fee', type=int)
         node_declaration_parser.add_argument('address', nargs='+')
 
-        # Coin Transfer
+    @staticmethod
+    def add_coin_transfer_arguments(subparsers):
         coin_transfer_parser = subparsers.add_parser(str(Type.COIN_TRANSFER.value), help=Type.COIN_TRANSFER.name)
         add_common_args(coin_transfer_parser)
         transaction_example = CoinTransferTransaction(recipient=AccountNumber('0' * 64), amount=10,
@@ -87,7 +87,8 @@ class Command(CustomCommand):
             'transaction', nargs='+', help=f'Transaction JSON (example: {transaction_example})'
         )
 
-        # Coin Transfer
+    @staticmethod
+    def add_pv_schedule_arguments(subparsers):
         pv_schedule_update_parser = subparsers.add_parser(
             str(Type.PV_SCHEDULE_UPDATE.value), help=Type.PV_SCHEDULE_UPDATE.name
         )
@@ -98,12 +99,26 @@ class Command(CustomCommand):
         })
         pv_schedule_update_parser.add_argument('schedule', help=f'Schedule JSON (example: {schedule_example})')
 
+    def add_arguments(self, parser):
+        subparsers = parser.add_subparsers(dest='type', help='Signed Change Request type')
+        self.add_node_declaration_arguments(subparsers)
+        self.add_coin_transfer_arguments(subparsers)
+        self.add_pv_schedule_arguments(subparsers)
+
     def handle(self, *args, **options):
         node_address = options.pop('node-address')
         type_ = Type(int(options.pop('type')))
-        signing_key = SigningKey(options['signing-key'])
+        signing_key = options['signing-key']
+        if signing_key == LOCAL:
+            options['signing-key'] = signing_key = get_signing_key()
 
-        account_lock = get_account_lock(node_address, type_, signing_key)
+        public_key = derive_public_key(signing_key)
+
+        if node_address == LOCAL:
+            account_lock = get_account_lock_from_local_blockchain(public_key)
+        else:
+            account_lock = get_account_lock_from_node(node_address, public_key)
+
         message = make_message(type_, account_lock, options)
         signed_change_request = SignedChangeRequest.create_from_signed_change_request_message(message, signing_key)
 
@@ -113,5 +128,14 @@ class Command(CustomCommand):
         if options.pop('dry_run'):
             return
 
-        self.write('Response (raw):')
-        self.write(send_signed_change_request(node_address, signed_change_request, signing_key))
+        if node_address == LOCAL:
+            if is_in_transaction():
+                block = add_block_from_signed_change_request(signed_change_request)
+            else:
+                with transaction.atomic():
+                    block = add_block_from_signed_change_request(signed_change_request)
+
+            self.write(f'Block added to local blockchain: {block}')
+        else:
+            self.write('Response (raw):')
+            self.write(send_signed_change_request(node_address, signed_change_request))
