@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings
 
 from node.core.database import get_database
 
@@ -25,3 +26,9 @@ def clean_up_block_lock(lock_collection):
     lock_collection.delete_one({'_id': 'block'})
     yield
     lock_collection.delete_one({'_id': 'block'})
+
+
+@pytest.fixture(autouse=True)
+def quick_lock_timeout():
+    with override_settings(LOCK_DEFAULT_TIMEOUT_SECONDS=0.001):
+        yield

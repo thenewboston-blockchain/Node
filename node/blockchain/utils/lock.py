@@ -1,6 +1,9 @@
 import functools
 import logging
+import time
+from typing import Optional
 
+from django.conf import settings
 from django.db import transaction
 from pymongo.errors import DuplicateKeyError
 
@@ -22,8 +25,38 @@ def is_locked(name):
     return bool(get_lock_collection().find_one(make_filter(name)))
 
 
-def create_lock(name):
+def insert_lock(name):
     get_lock_collection().insert_one(make_filter(name))
+
+
+def create_lock(name, timeout_seconds: Optional[float] = None):
+    # TODO(dmu) HIGH: Make sure that timeout works correctly in conjunction with async behavior (Daphne)
+    #                 https://thenewboston.atlassian.net/browse/BC-258
+    if timeout_seconds is None:  # shortcut
+        try:
+            insert_lock(name)
+        except DuplicateKeyError:
+            raise BlockchainLockingError('Lock could not be acquired: %s', name)
+
+        return
+
+    sleep_seconds = timeout_seconds / 10
+    timeout_moment = time.time() + timeout_seconds
+    while True:
+        if not is_locked(name):
+            try:
+                insert_lock(name)
+                return
+            except DuplicateKeyError:
+                logger.warning('Could not manage to get the lock :(')
+
+        logger.debug('Waiting to acquire lock: %s', name)
+        time.sleep(sleep_seconds)
+
+        if time.time() >= timeout_moment:  # this makes sure we have at least one iteration
+            break
+
+    raise BlockchainLockingError('Blockchain locking timeout for lock: %s', name)
 
 
 def delete_lock(name):
@@ -61,7 +94,7 @@ def lock(name, expect_locked=False):
                 return func(*args, **kwargs)
 
             try:
-                create_lock(name)
+                create_lock(name, timeout_seconds=settings.LOCK_DEFAULT_TIMEOUT_SECONDS)
                 transaction.get_connection().on_rollback(lambda: delete_lock(name))
             except DuplicateKeyError:
                 raise BlockchainLockingError
