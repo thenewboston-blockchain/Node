@@ -4,6 +4,8 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
+from node.blockchain.facade import BlockchainFacade
+from node.blockchain.inner_models import PVScheduleUpdateSignedChangeRequest
 from node.blockchain.tests.base import as_role
 from node.blockchain.types import NodeRole
 
@@ -83,4 +85,33 @@ def test_coin_transfer(
             '3fef560daf38cedd90c12d7479930d007dd079140142ce6d671a2e06f8a2e0c6'
             'a9605266074794f4d1045527e236b66902ed935d2a2f3ab4d54296fe22004e02',
         'signer': treasury_account_key_pair.public
+    }
+
+
+@as_role(NodeRole.PRIMARY_VALIDATOR)
+@pytest.mark.usefixtures('rich_blockchain')
+def test_pv_schedule_update(
+    test_server_address, force_smart_mocked_node_client, primary_validator_key_pair, self_node_key_pair
+):
+    out = StringIO()
+    schedule = {
+        '100': primary_validator_key_pair.public,
+    }
+    call_command(
+        'send_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out
+    )
+    _, output = out.getvalue().split('Response (raw):')
+
+    signed_change_request = PVScheduleUpdateSignedChangeRequest.parse_raw(output)
+
+    assert json.loads(output) == {
+        'message': {
+            'account_lock': BlockchainFacade.get_instance().get_account_lock(self_node_key_pair.public),
+            'schedule': {
+                '100': primary_validator_key_pair.public
+            },
+            'type': 3
+        },
+        'signature': signed_change_request.message.make_signature(self_node_key_pair.private),
+        'signer': self_node_key_pair.public
     }
