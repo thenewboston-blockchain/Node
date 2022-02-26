@@ -129,8 +129,10 @@ def clusterize_nodes(node_wrappers: list[Wrapper]):
     return node_clusters
 
 
-def get_best_cluster(clusters, majority_count):
-    clusters = list(filter(lambda cluster: len(cluster[1]) >= majority_count, clusters))
+def get_best_cluster(clusters, consensus_count):
+    # Keep only clusters that have at least consensus_count nodes (the same node may participate in multiple
+    # clusters, therefore there may be more than one cluster satisfying the condition)
+    clusters = list(filter(lambda cluster: len(cluster[1]) >= consensus_count, clusters))
     if not clusters:
         return None
 
@@ -151,12 +153,12 @@ def clear_cache(func):
 
 
 @clear_cache
-def get_nodes_majority(nodes: list[Node]) -> Optional[list[Node]]:
+def get_nodes_consensus(nodes: list[Node]) -> Optional[list[Node]]:
     available_nodes = get_available_nodes(nodes)
     if not available_nodes:
         return None
 
-    majority_count = len(available_nodes) // 2 + 1
+    consensus_count = int(len(available_nodes) * 2 / 3 + 0.5)  # at least 2 / 3 of the nodes
     clusters = clusterize_nodes(available_nodes)
 
-    return get_best_cluster(clusters, majority_count) or None
+    return get_best_cluster(clusters, consensus_count) or None
