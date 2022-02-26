@@ -1,6 +1,6 @@
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.utils.blockchain_sync import sync_with_node
-from node.blockchain.utils.network import get_nodes_for_syncing, get_nodes_majority
+from node.blockchain.utils.network import get_nodes_consensus, get_nodes_for_syncing
 from node.core.commands import CustomCommand
 from node.core.utils.cryptography import get_node_identifier
 
@@ -48,7 +48,7 @@ class Command(CustomCommand):
                 self.write_info('Nodes for syncing were not found')
                 break
 
-            majority = get_nodes_majority(nodes)
+            majority = get_nodes_consensus(nodes)
             if not majority:
                 self.write_error('Majority was not found')
                 break

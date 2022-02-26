@@ -8,7 +8,7 @@ from node.blockchain.inner_models import Node
 from node.blockchain.models import Block
 from node.blockchain.models import Node as ORMNode
 from node.blockchain.utils.network import (
-    clusterize_nodes, get_best_cluster, get_node_block, get_nodes_for_syncing, get_nodes_majority, node_block_cache
+    clusterize_nodes, get_best_cluster, get_node_block, get_nodes_consensus, get_nodes_for_syncing, node_block_cache
 )
 from node.core.clients.node import NodeClient
 from node.core.utils.cryptography import get_node_identifier
@@ -197,7 +197,7 @@ def test_get_nodes_majority():
         return make_block(block_number)
 
     with patch('node.blockchain.utils.network.get_node_block', new=get_block_node):
-        _, majority = get_nodes_majority(nodes)
+        _, majority = get_nodes_consensus(nodes)
 
     assert majority is not None
     # cluster2 is the best because it has the longest blockchain among clusters satisfying majority of nodes
