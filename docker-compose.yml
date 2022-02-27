@@ -30,6 +30,17 @@ services:
     depends_on:
       - node-mongo
 
+  celery-broker:
+    # We need explicit hostname to avoid bloating of the RabbitMQ volume
+    hostname: celery-broker
+    image: rabbitmq:3.9.13-management-alpine
+    restart: always
+    ports:
+      # Because this container will be used for production we do not expose port on
+      # public interface (use `ssh` proxying for secure access to RabbmitMQ management)
+      - 127.0.0.1:5672:5672
+      - 127.0.0.1:15672:15672
+
   node:
     image: ghcr.io/thenewboston-developers/node:latest
     command: ./run.sh
