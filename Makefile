@@ -11,11 +11,11 @@ build-reverse-proxy:
 
 .PHONY: build-node-mongo
 build-node-mongo:
-	docker build . --target=node-mongo -t node-mongo:current
+	DOCKER_BUILDKIT=1 docker build . --target=node-mongo -t node-mongo:current
 
 .PHONY: up-dependencies-only
 up-dependencies-only: build-node-mongo
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate --build node-mongo mongo-express
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate node-mongo mongo-express celery-broker
 
 .PHONY: up
 up:

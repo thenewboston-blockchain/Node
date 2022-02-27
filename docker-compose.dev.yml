@@ -15,6 +15,9 @@ services:
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://root:root@node-mongo:27017/
 
+  celery-broker:
+    restart: 'no'
+
   node:
     image: node:current
     build:
