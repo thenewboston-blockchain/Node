@@ -6,8 +6,7 @@ services:
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-    env_file:
-      - .env
+    env_file: .env
     ports:
       - 127.0.0.1:27017:27017
     volumes:
@@ -41,15 +40,27 @@ services:
       - 127.0.0.1:5672:5672
       - 127.0.0.1:15672:15672
 
+  # TODO(dmu) LOW: Make `celery` service DRY with `node` service
+  celery:
+    image: ghcr.io/thenewboston-developers/node:latest
+    environment:
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+      TNB_CELERY_BROKER_URL: 'amqp://guest:guest@celery-broker:5672//'
+    env_file: .env
+    command: poetry run celery -A node.config.celery worker --loglevel=INFO
+    depends_on:
+      - node-mongo
+      - celery-broker
+
   node:
     image: ghcr.io/thenewboston-developers/node:latest
     command: ./run.sh
     environment:
       TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
-    env_file:
-      - .env
+    env_file: .env
     depends_on:
       - node-mongo
+      - celery-broker
 
   node-reverse-proxy:
     image: ghcr.io/thenewboston-developers/node-reverse-proxy:latest

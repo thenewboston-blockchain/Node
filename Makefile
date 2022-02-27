@@ -56,6 +56,10 @@ superuser:
 run-server:
 	poetry run python -m node.manage runserver 127.0.0.1:8555
 
+.PHONY: run-celery
+run-celery:
+	poetry run celery -A node.config.celery worker --loglevel=INFO
+
 .PHONY: shell
 shell:
 	poetry run python -m node.manage shell

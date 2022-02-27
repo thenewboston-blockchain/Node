@@ -18,6 +18,14 @@ services:
   celery-broker:
     restart: 'no'
 
+  celery:
+    image: node:current
+    build:
+      context: .
+      target: node
+    environment:
+      TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"root"}}}'
+
   node:
     image: node:current
     build:
