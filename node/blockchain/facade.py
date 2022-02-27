@@ -11,7 +11,7 @@ from node.blockchain.utils.lock import lock
 from node.core.database import ensure_in_transaction
 from node.core.utils.cryptography import derive_public_key, get_node_identifier, get_signing_key
 from node.core.utils.misc import set_if_not_none
-from node.core.utils.types import intstr
+from node.core.utils.types import non_negative_intstr
 
 if TYPE_CHECKING:
     from node.blockchain.models import Block as ORMBlock
@@ -171,7 +171,7 @@ class BlockchainFacade:
                 account_state.save()
 
     @staticmethod
-    def update_write_through_cache_schedule(schedule: dict[intstr, AccountNumber]):
+    def update_write_through_cache_schedule(schedule: dict[non_negative_intstr, AccountNumber]):
         # TODO(dmu) HIGH: Add more unittests once PV schedule block is implemented
         #                 - Add PV
         #                 - Remove PV

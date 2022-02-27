@@ -16,8 +16,7 @@ class CoinTransferSignedChangeRequest(SignedChangeRequest):
         self.validate_amount(blockchain_facade)
 
     def validate_circular_transactions(self):
-        recipients = (tx.recipient for tx in self.message.txs)
-        if self.signer in recipients:
+        if self.signer in (tx.recipient for tx in self.message.txs):
             raise ValidationError('Circular transactions detected')
 
     def validate_amount(self, blockchain_facade):

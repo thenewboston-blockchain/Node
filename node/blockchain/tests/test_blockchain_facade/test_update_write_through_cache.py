@@ -3,7 +3,7 @@ import pytest
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.models import Schedule
 from node.blockchain.types import AccountNumber
-from node.core.utils.types import intstr
+from node.core.utils.types import non_negative_intstr
 
 SCHEDULE_0 = {
     '0': '0' * 64,
@@ -11,7 +11,7 @@ SCHEDULE_0 = {
     '200': '2' * 64,
 }
 
-SCHEDULE_EMPTY: dict[intstr, AccountNumber] = {}
+SCHEDULE_EMPTY: dict[non_negative_intstr, AccountNumber] = {}
 
 SCHEDULE_0_WITH_UPDATED_NODE_IDENTIFIERS = {
     '0': '7' * 64,

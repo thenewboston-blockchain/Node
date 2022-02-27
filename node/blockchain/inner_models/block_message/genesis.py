@@ -73,7 +73,7 @@ class GenesisBlockMessage(BlockMessage):
         # Because signed change request does not contain enough information (it lacks primary validator)
         # to generate genesis block update we can't fully validate `update` of genesis block.
         # Partial validation would be a bit complicated
-        # TODO(dmu) MEDIUM: Is it critical not to be able to validated genesis block?
+        # TODO(dmu) MEDIUM: Is it critical not to be able to validate genesis block?
         pass
 
     def validate_blockchain_state_dependent(self, blockchain_facade):

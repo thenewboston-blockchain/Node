@@ -2,14 +2,14 @@ from django.conf import settings
 from pydantic import Field, validator
 
 from node.core.exceptions import ValidationError
-from node.core.utils.types import intstr
+from node.core.utils.types import non_negative_intstr
 
 from ...types import AccountNumber, Type
 from .base import SignedChangeRequestMessage
 
 
 class PVScheduleUpdateSignedChangeRequestMessage(SignedChangeRequestMessage):
-    schedule: dict[intstr, AccountNumber]
+    schedule: dict[non_negative_intstr, AccountNumber]
     type: Type = Field(default=Type.PV_SCHEDULE_UPDATE, const=True)  # noqa: A003
 
     @validator('schedule')
