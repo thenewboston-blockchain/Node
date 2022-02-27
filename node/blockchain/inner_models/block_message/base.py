@@ -11,7 +11,7 @@ from node.blockchain.mixins.crypto import SignableMixin
 from node.blockchain.mixins.validatable import ValidatableMixin
 from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
-from node.core.utils.types import intstr, positive_int
+from node.core.utils.types import non_negative_intstr, positive_int
 
 from ...types import AccountNumber, BlockIdentifier, Type
 from ..account_state import AccountState
@@ -25,7 +25,7 @@ class BlockMessageUpdate(BaseModel):
     # TODO(dmu) MEDIUM: Consider removing `schedule` field since it will be equal to `null` in most blocks
     #                   Or subclass `BlockMessageUpdate` for certain block types (genesis and schedule) and
     #                   have that field just there
-    schedule: Optional[dict[intstr, AccountNumber]]
+    schedule: Optional[dict[non_negative_intstr, AccountNumber]]
 
     @root_validator
     def not_empty(cls, values):

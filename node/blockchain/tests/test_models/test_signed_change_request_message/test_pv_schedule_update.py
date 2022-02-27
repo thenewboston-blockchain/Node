@@ -48,7 +48,7 @@ def test_schedule_capacity():
 
 @pv_schedule_update_message_type_validation_on_instantiation_parametrizer
 def test_type_validation_on_instantiation(
-    id_, account_lock, schedule_block_number, node_identifier, search_re, expected_response_body, regular_node_key_pair
+    id_, account_lock, schedule_block_number, node_identifier, search_re, regular_node_key_pair
 ):
     with pytest.raises(PydanticValicationError) as exc_info:
         if node_identifier is VALID:

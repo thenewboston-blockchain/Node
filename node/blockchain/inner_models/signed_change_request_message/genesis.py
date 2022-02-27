@@ -6,6 +6,7 @@ from pydantic import Field
 
 from node.blockchain.inner_models.base import BaseModel
 from node.core.exceptions import ValidationError
+from node.core.utils.types import non_negative_int
 
 from ...types import AlphaAccountLock, AlphaAccountNumber, Type
 from .base import SignedChangeRequestMessage
@@ -14,7 +15,7 @@ T = TypeVar('T', bound='GenesisSignedChangeRequestMessage')
 
 
 class AlphaAccount(BaseModel):
-    balance: int
+    balance: non_negative_int
     balance_lock: AlphaAccountLock
 
 

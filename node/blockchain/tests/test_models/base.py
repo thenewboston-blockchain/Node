@@ -312,97 +312,22 @@ memo_tests = (
 )
 
 schedule_block_number_on_instantiation_tests = (
-    (
-        None, r'schedule -> __key__.*none is not an allowed value', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'none is not an allowed value'
-            }]
-        }
-    ),
-    (
-        '', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'value is not a valid integer'
-            }]
-        }
-    ),
-    (
-        'not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'value is not a valid integer'
-            }]
-        }
-    ),
-    (
-        10, r'schedule -> __key__.*str type expected', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'value is not a valid integer'
-            }]
-        }
-    ),
-    (
-        -5, r'schedule -> __key__.*str type expected', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'ensure this value is greater than 0'
-            }]
-        }
-    ),
-    (
-        '-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'ensure this value is greater than 0'
-            }]
-        }
-    ),
+    (None, r'schedule -> __key__.*none is not an allowed value'),
+    ('', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    (10, r'schedule -> __key__.*str type expected'),
+    (-5, r'schedule -> __key__.*str type expected'),
+    ('-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('03', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
 )
 
 schedule_block_number_on_parsing_tests = (
-    (
-        None, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'none is not an allowed value'
-            }]
-        }
-    ),
-    (
-        '', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'value is not a valid integer'
-            }]
-        }
-    ),
-    (
-        'not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'value is not a valid integer'
-            }]
-        }
-    ),
-    (
-        -5, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'ensure this value is greater than 0'
-            }]
-        }
-    ),
-    (
-        '-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"', {
-            'message.txs.0.amount': [{
-                'code': 'invalid',
-                'message': 'ensure this value is greater than 0'
-            }]
-        }
-    ),
+    (None, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('not-a-number', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    (-5, r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('-3', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
+    ('03', r'schedule -> __key__.*string does not match regex "\^\(\?\:0\|\[1-9\]\[0-9\]\*\)\$"'),
 )
 
 node_declaration_message_type_validation_parametrizer = pytest.mark.parametrize(
@@ -437,10 +362,10 @@ coin_transfer_message_type_validation_parametrizer = pytest.mark.parametrize(
 
 pv_schedule_update_message_type_validation_on_instantiation_parametrizer = pytest.mark.parametrize(
     # keep `id_` to make debugging easier
-    'id_, account_lock, schedule_block_number, node_identifier, search_re, expected_response_body',
-    tuple((1, item[0], VALID, VALID, item[1], item[2]) for item in account_lock_tests) +
-    tuple((2, VALID, item[0], VALID, item[1], item[2]) for item in schedule_block_number_on_instantiation_tests) +
-    tuple((3, VALID, VALID, item[0], item[2], item[2]) for item in node_identifier_tests)
+    'id_, account_lock, schedule_block_number, node_identifier, search_re',
+    tuple((1, item[0], VALID, VALID, item[1]) for item in account_lock_tests) +
+    tuple((2, VALID, item[0], VALID, item[1]) for item in schedule_block_number_on_instantiation_tests) +
+    tuple((3, VALID, VALID, item[0], item[2]) for item in node_identifier_tests)
 )
 
 pv_schedule_update_message_type_validation_on_parsing_parametrizer = pytest.mark.parametrize(
