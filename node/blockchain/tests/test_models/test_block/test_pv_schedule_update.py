@@ -6,7 +6,8 @@ from node.blockchain.inner_models import (
 )
 from node.blockchain.models import Schedule
 from node.blockchain.models.block import Block as ORMBlock
-from node.blockchain.types import AccountLock, Signature, Type
+from node.blockchain.tests.base import as_role
+from node.blockchain.types import AccountLock, NodeRole, Signature, Type
 from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import is_signature_valid
 
@@ -148,20 +149,40 @@ def test_validate_nodes_are_declared(primary_validator_key_pair):
         blockchain_facade.add_block_from_signed_change_request(request)
 
 
+@as_role(NodeRole.PRIMARY_VALIDATOR)
+@pytest.mark.parametrize(
+    'schedule_keys, should_raise', (
+        (['0'], False),
+        (['0', '100', '200'], False),
+        (['100', '0', '200'], False),
+        (['1'], False),
+        (['3'], False),
+        (['3', '200', '100'], False),
+        (['100', '200', '3'], False),
+        (['1', '3', '5'], True),
+        (['3', '5', '1'], True),
+        (['1', '2'], True),
+        (['2', '1'], True),
+        (['100'], True),
+        (['100', '200', '300'], True),
+        (['300', '200', '100'], True),
+    )
+)
 @pytest.mark.usefixtures('rich_blockchain')
-def test_validate_block_numbers(primary_validator_key_pair):
+def test_validate_block_numbers(schedule_keys, should_raise, primary_validator_node, self_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
 
+    schedule = {k: primary_validator_node.identifier for k in schedule_keys}
+
     pv_schedule_update_signed_change_request_message = PVScheduleUpdateSignedChangeRequestMessage(
-        account_lock=blockchain_facade.get_account_lock(primary_validator_key_pair.public),
-        schedule={
-            '1': primary_validator_key_pair.public,
-            '3': primary_validator_key_pair.public,
-        }
+        account_lock=blockchain_facade.get_account_lock(self_node_key_pair.public), schedule=schedule
     )
     request = PVScheduleUpdateSignedChangeRequest.create_from_signed_change_request_message(
         message=pv_schedule_update_signed_change_request_message,
-        signing_key=primary_validator_key_pair.private,
+        signing_key=self_node_key_pair.private,
     )
-    with pytest.raises(ValidationError, match='Schedule keys must be equal or more than next block number'):
+    if should_raise:
+        with pytest.raises(ValidationError, match='Schedule with lowest key must cover next block number'):
+            blockchain_facade.add_block_from_signed_change_request(request)
+    else:
         blockchain_facade.add_block_from_signed_change_request(request)

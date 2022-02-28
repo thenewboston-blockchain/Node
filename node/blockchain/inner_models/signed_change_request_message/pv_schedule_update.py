@@ -30,8 +30,13 @@ class PVScheduleUpdateSignedChangeRequestMessage(SignedChangeRequestMessage):
                 raise ValidationError('All nodes in the schedule must be declared')
 
     def validate_block_numbers(self, blockchain_facade):
-        if min(int(key) for key in self.schedule.keys()) < blockchain_facade.get_next_block_number():
-            raise ValidationError('Schedule keys must be equal or more than next block number')
+        sorted_keys = sorted([int(key) for key in self.schedule.keys()])
+        first_key = sorted_keys.pop(0)
+        second_key = sorted_keys.pop(0) if sorted_keys else None
+        next_block_number = blockchain_facade.get_next_block_number()
+        is_valid = first_key <= next_block_number < second_key if second_key else first_key <= next_block_number
+        if not is_valid:
+            raise ValidationError('Schedule with lowest key must cover next block number')
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
         super().validate_blockchain_state_dependent(blockchain_facade)

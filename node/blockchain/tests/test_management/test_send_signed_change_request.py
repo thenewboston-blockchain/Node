@@ -93,13 +93,17 @@ def test_pv_schedule_update(
     test_server_address, force_smart_mocked_node_client, primary_validator_key_pair, self_node_key_pair
 ):
     out = StringIO()
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    assert blockchain_facade.get_next_block_number() == 3
+
     schedule = {
-        '100': primary_validator_key_pair.public,
+        '3': primary_validator_key_pair.public,
     }
     call_command(
         'add_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out
     )
     assert 'Block added to local blockchain' in out.getvalue()
 
-    block = BlockchainFacade.get_instance().get_last_block().get_block()
+    block = blockchain_facade.get_last_block().get_block()
     assert block.message.update.schedule == schedule
