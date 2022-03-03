@@ -151,26 +151,22 @@ def test_validate_nodes_are_declared(primary_validator_key_pair):
 
 @as_role(NodeRole.PRIMARY_VALIDATOR)
 @pytest.mark.parametrize(
-    'schedule_keys, should_raise', (
-        (['0'], False),
-        (['0', '100', '200'], False),
-        (['100', '0', '200'], False),
-        (['1'], False),
-        (['3'], False),
-        (['3', '200', '100'], False),
-        (['100', '200', '3'], False),
-        (['1', '3', '5'], True),
-        (['3', '5', '1'], True),
-        (['1', '2'], True),
-        (['2', '1'], True),
-        (['100'], True),
-        (['100', '200', '300'], True),
-        (['300', '200', '100'], True),
+    'schedule_keys,exception_match', (
+        (['0'], None),
+        (['0', '100', '200'], None),
+        (['1'], None),
+        (['3'], None),
+        (['3', '200', '100'], None),
+        (['1', '3', '5'], 'Outdated block numbers detected in schedule'),
+        (['1', '2'], 'Outdated block numbers detected in schedule'),
+        (['100'], 'Schedule with lowest key must cover next block number'),
+        (['100', '200', '300'], 'Schedule with lowest key must cover next block number'),
     )
 )
 @pytest.mark.usefixtures('rich_blockchain')
-def test_validate_block_numbers(schedule_keys, should_raise, primary_validator_node, self_node_key_pair):
+def test_validate_block_numbers(schedule_keys, exception_match, primary_validator_node, self_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
+    assert blockchain_facade.get_next_block_number() == 3
 
     schedule = {k: primary_validator_node.identifier for k in schedule_keys}
 
@@ -181,8 +177,8 @@ def test_validate_block_numbers(schedule_keys, should_raise, primary_validator_n
         message=pv_schedule_update_signed_change_request_message,
         signing_key=self_node_key_pair.private,
     )
-    if should_raise:
-        with pytest.raises(ValidationError, match='Schedule with lowest key must cover next block number'):
+    if exception_match:
+        with pytest.raises(ValidationError, match=exception_match):
             blockchain_facade.add_block_from_signed_change_request(request)
     else:
         blockchain_facade.add_block_from_signed_change_request(request)

@@ -1,3 +1,5 @@
+from bisect import bisect_right
+
 from django.conf import settings
 from pydantic import Field, validator
 
@@ -30,13 +32,13 @@ class PVScheduleUpdateSignedChangeRequestMessage(SignedChangeRequestMessage):
                 raise ValidationError('All nodes in the schedule must be declared')
 
     def validate_block_numbers(self, blockchain_facade):
-        sorted_keys = sorted([int(key) for key in self.schedule.keys()])
-        first_key = sorted_keys.pop(0)
-        second_key = sorted_keys.pop(0) if sorted_keys else None
-        next_block_number = blockchain_facade.get_next_block_number()
-        is_valid = first_key <= next_block_number < second_key if second_key else first_key <= next_block_number
-        if not is_valid:
+        sorted_block_numbers = sorted(map(int, self.schedule))
+        insertion_point = bisect_right(sorted_block_numbers, blockchain_facade.get_next_block_number())
+        if insertion_point < 1:
             raise ValidationError('Schedule with lowest key must cover next block number')
+
+        if insertion_point > 1:
+            raise ValidationError('Outdated block numbers detected in schedule')
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
         super().validate_blockchain_state_dependent(blockchain_facade)
