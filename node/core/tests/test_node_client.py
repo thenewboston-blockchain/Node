@@ -38,7 +38,9 @@ def test_send_signed_change_request(
 def test_send_scr_to_address_integration(
     test_server_address, regular_node_declaration_signed_change_request, smart_mocked_node_client
 ):
-    assert BlockchainFacade.get_instance().get_next_block_number() == 1
+    blockchain_facade = BlockchainFacade.get_instance()
+    assert blockchain_facade.get_next_block_number() == 1
+    assert blockchain_facade.get_node_by_identifier(regular_node_declaration_signed_change_request.signer) is None
     assert not ORMNode.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
     client = smart_mocked_node_client
@@ -47,6 +49,7 @@ def test_send_scr_to_address_integration(
     assert response.status_code == 201
 
     assert BlockchainFacade.get_instance().get_next_block_number() == 2
+    assert blockchain_facade.get_node_by_identifier(regular_node_declaration_signed_change_request.signer) is not None
     assert ORMNode.objects.filter(_id=regular_node_declaration_signed_change_request.signer).exists()
 
 
@@ -181,6 +184,7 @@ def test_yield_blocks_filtered(test_server_address, bloated_blockchain, smart_mo
 def test_get_node_online_address(test_server_address, smart_mocked_node_client, self_node):
     assert self_node.identifier == get_node_identifier()
     assert test_server_address in self_node.addresses
+    assert BlockchainFacade.get_instance().get_node_by_identifier(self_node.identifier) is not None
     assert ORMNode.objects.filter(_id=self_node.identifier).exists()
 
     assert smart_mocked_node_client.get_node_online_address(self_node) == test_server_address

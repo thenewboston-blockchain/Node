@@ -9,8 +9,10 @@ from node.core.utils.cryptography import get_node_identifier
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_get_node_role_as_not_declared():
+    blockchain_facade = BlockchainFacade.get_instance()
+    assert blockchain_facade.get_node_by_identifier(get_node_identifier()) is None
+    assert blockchain_facade.get_node_role() is None
     assert not ORMNode.objects.filter(_id=get_node_identifier()).exists()
-    assert BlockchainFacade.get_instance().get_node_role() is None
 
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
