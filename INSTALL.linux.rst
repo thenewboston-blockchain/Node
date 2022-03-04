@@ -168,7 +168,7 @@ Manual deployment
 
 #. Add optional configuration::
 
-    cat 'TNB_SENTRY_DSN=<replace with Sentry DSN>' >> .env
+    echo 'TNB_SENTRY_DSN=<replace with Sentry DSN>' >> .env
 
 Configure continuous deployment
 +++++++++++++++++++++++++++++++
