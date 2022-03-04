@@ -166,6 +166,10 @@ Manual deployment
 
     bash <(wget -qO- https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh)
 
+#. Add optional configuration::
+
+    cat 'TNB_SENTRY_DSN=<replace with Sentry DSN>' >> .env
+
 Configure continuous deployment
 +++++++++++++++++++++++++++++++
 

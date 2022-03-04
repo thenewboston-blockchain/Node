@@ -7,6 +7,11 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(name)s %(message)s'
         },
     },
+    'filters': {
+        'sentry': {
+            '()': 'node.core.logging.SentryFilter'
+        }
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
@@ -14,6 +19,11 @@ LOGGING = {
             'formatter': 'standard',
             'filters': [],
         },
+        'pre_sentry_handler': {
+            'level': 'DEBUG',
+            'class': 'node.core.logging.FilteringNullHandler',
+            'filters': ['sentry'],
+        }
     },
     'loggers': {
         logger_name: {
