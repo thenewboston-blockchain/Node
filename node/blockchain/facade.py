@@ -70,7 +70,7 @@ class BlockchainFacade:
         block.validate_blockchain_state_dependent(self, bypass_lock_validation=True)
 
         from node.blockchain.models import Block as ORMBlock
-        orm_block = ORMBlock(_id=block.message.number, body=block.json())
+        orm_block = ORMBlock(_id=block.get_block_number(), body=block.json())
         orm_block.save()
 
         self.update_write_through_cache(block)
