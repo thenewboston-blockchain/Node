@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import CoinTransferSignedChangeRequestMessage, SignedChangeRequest
+from node.blockchain.inner_models import (
+    CoinTransferSignedChangeRequest, CoinTransferSignedChangeRequestMessage, SignedChangeRequest
+)
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
 from node.blockchain.models import AccountState
 from node.blockchain.tests.base import as_role
@@ -15,7 +17,7 @@ from node.core.utils.collections import deep_update
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_coin_transfer_signed_change_request_as_primary_validator(
-    api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount
+    api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount, self_node
 ):
     facade = BlockchainFacade.get_instance()
     assert facade.get_next_block_number() == 1
@@ -29,19 +31,19 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
             'txs': [{
                 'amount': 100,
                 'is_fee': False,
-                'memo': 'message',
+                'memo': 'payment',
                 'recipient': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
             }, {
-                'amount': 5,
+                'amount': 4,
                 'is_fee': True,
-                'memo': 'message',
-                'recipient': 'b9dc49411424cce606d27eeaa8d74cb84826d8a1001d17603638b73bdc6077f1'
+                'memo': 'fee',
+                'recipient': self_node.identifier
             }],
             'type': 2
         },
         'signature':
-            '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
-            '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09',
+            '628b293aeceec992d094c62f60f5031879b4893047f4c4ab158e506c04b916b0'
+            '489b5a750d3b1af7cfe9b99c03253424b483450bcafe1b1f608529cad012a502',
         'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
 
@@ -98,10 +100,13 @@ def test_checking_missed_keys(
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_coin_transfer_signed_change_request_with_invalid_account_lock(
-    api_client, treasury_account_key_pair, regular_node_key_pair
+    api_client, treasury_account_key_pair, regular_node_key_pair, self_node
 ):
     message = CoinTransferSignedChangeRequestMessage(
-        txs=[CoinTransferTransaction(recipient=regular_node_key_pair.public, amount=5)],
+        txs=[
+            CoinTransferTransaction(recipient=regular_node_key_pair.public, amount=5),
+            CoinTransferTransaction(recipient=self_node.identifier, amount=5, is_fee=True),
+        ],
         account_lock='0' * 64,
     )
 
@@ -159,7 +164,8 @@ def test_signature_validation_for_coin_transfer(role, update_with, api_client, t
 @pytest.mark.parametrize('role', (NodeRole.CONFIRMATION_VALIDATOR, NodeRole.REGULAR_NODE))
 @pytest.mark.usefixtures('base_blockchain', 'mock_get_primary_validator')
 def test_coin_transfer_scr_as_other_roles(
-    api_client, treasure_coin_transfer_signed_change_request, role, treasury_account_key_pair, primary_validator_node
+    api_client, treasure_coin_transfer_signed_change_request, role, treasury_account_key_pair, primary_validator_node,
+    self_node
 ):
     payload = treasure_coin_transfer_signed_change_request.json()
 
@@ -181,18 +187,40 @@ def test_coin_transfer_scr_as_other_roles(
             'txs': [{
                 'amount': 100,
                 'is_fee': False,
-                'memo': 'message',
+                'memo': 'payment',
                 'recipient': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
             }, {
-                'amount': 5,
+                'amount': 4,
                 'is_fee': True,
-                'memo': 'message',
-                'recipient': 'b9dc49411424cce606d27eeaa8d74cb84826d8a1001d17603638b73bdc6077f1'
+                'memo': 'fee',
+                'recipient': self_node.identifier
             }],
             'type': 2
         },
         'signature':
-            '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
-            '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09',
+            '628b293aeceec992d094c62f60f5031879b4893047f4c4ab158e506c04b916b0'
+            '489b5a750d3b1af7cfe9b99c03253424b483450bcafe1b1f608529cad012a502',
         'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
+
+
+@pytest.mark.parametrize('fees', ([], [1, 2], [3]))
+@pytest.mark.usefixtures('base_blockchain')
+def test_validate_node_fee(fees, api_client, treasury_account_key_pair, self_node):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
+        txs=[
+            CoinTransferTransaction(recipient=self_node.identifier, amount=100),
+            *[CoinTransferTransaction(recipient=self_node.identifier, amount=fee, is_fee=True) for fee in fees]
+        ]
+    )
+    signed_change_request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
+        message=signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
+    )
+    payload = signed_change_request.json()
+    response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
+    assert response.status_code == 400
+    assert response.json() == {'non_field_errors': [{'message': 'Fee amount is not enough', 'code': 'invalid'}]}

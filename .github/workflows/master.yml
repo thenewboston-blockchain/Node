@@ -65,8 +65,6 @@ jobs:
         run: make test
         env:
           TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo"}}}'
-          TNB_SECRET_KEY: dummy
-          TNB_NODE_SIGNING_KEY: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # QUALITY-ASSURANCE-END
 
   publish-images:

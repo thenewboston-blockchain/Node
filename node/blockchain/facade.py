@@ -145,7 +145,9 @@ class BlockchainFacade:
     @staticmethod
     def get_account_lock(account_number) -> AccountLock:
         account_state = ORMAccountState.objects.get_or_none(_id=account_number)
-        return AccountLock(account_state.account_lock) if account_state else account_number
+        return AccountLock(
+            account_state.account_lock
+        ) if account_state and account_state.account_lock else account_number
 
     @staticmethod
     def get_account_balance(account_number: AccountNumber) -> int:

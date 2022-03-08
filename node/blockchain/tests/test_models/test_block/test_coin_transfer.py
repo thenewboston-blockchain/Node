@@ -50,7 +50,7 @@ def test_add_block_from_block_message(coin_transfer_block_message, primary_valid
     assert message == coin_transfer_block_message
 
     # Test account state write-through cache
-    assert DBAccountState.objects.count() == 3
+    assert DBAccountState.objects.count() == 4
     request = coin_transfer_block_message.request
     account_state = DBAccountState.objects.get(_id=request.signer)
     assert account_state.account_lock == request.make_hash()
@@ -60,7 +60,7 @@ def test_add_block_from_block_message(coin_transfer_block_message, primary_valid
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_add_block_from_signed_change_request(
-    treasure_coin_transfer_signed_change_request, regular_node_key_pair, primary_validator_key_pair, treasury_amount
+    treasure_coin_transfer_signed_change_request, regular_node, self_node, primary_validator_key_pair, treasury_amount
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -87,14 +87,14 @@ def test_add_block_from_signed_change_request(
                     balance=treasury_amount - treasure_coin_transfer_signed_change_request.message.get_total_amount(),
                     account_lock=treasure_coin_transfer_signed_change_request.make_hash(),
                 ),
-            regular_node_key_pair.public:
+            regular_node.identifier:
                 AccountState(
                     balance=100,
                     account_lock=None,
                 ),
-            primary_validator_key_pair.public:
+            self_node.identifier:
                 AccountState(
-                    balance=5,
+                    balance=4,
                     account_lock=None,
                 ),
         }
@@ -117,14 +117,19 @@ def test_add_block_from_signed_change_request(
 
 
 @pytest.mark.usefixtures('base_blockchain')
-def test_add_block_from_signed_change_request_account_lock_validation(treasury_account_key_pair, regular_node):
+def test_add_block_from_signed_change_request_account_lock_validation(
+    treasury_account_key_pair, regular_node, self_node
+):
     blockchain_facade = BlockchainFacade.get_instance()
 
     account_lock = AccountLock('0' * 64)
     assert blockchain_facade.get_account_lock(treasury_account_key_pair.public) != account_lock
     message = CoinTransferSignedChangeRequestMessage(
         account_lock=account_lock,
-        txs=[CoinTransferTransaction(recipient='1' * 64, amount=10)],
+        txs=[
+            CoinTransferTransaction(recipient='1' * 64, amount=10),
+            CoinTransferTransaction(recipient=self_node.identifier, amount=self_node.fee, is_fee=True),
+        ],
     )
 
     request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
