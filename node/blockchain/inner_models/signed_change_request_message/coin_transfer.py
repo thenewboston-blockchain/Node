@@ -28,5 +28,12 @@ class CoinTransferSignedChangeRequestMessage(SignedChangeRequestMessage):
             raise ValidationError('Request should contain at least one transaction')
         return txs
 
-    def get_total_amount(self):
-        return sum(tx.amount for tx in self.txs)
+    def get_total_amount(self, recipient: AccountNumber = None, is_fee: bool = None) -> int:
+        conditions = []
+        if recipient:
+            conditions.append(lambda tx: tx.recipient == recipient)
+
+        if is_fee is not None:
+            conditions.append(lambda tx: tx.is_fee is is_fee)
+
+        return sum(tx.amount for tx in self.txs if all(condition(tx) for condition in conditions))

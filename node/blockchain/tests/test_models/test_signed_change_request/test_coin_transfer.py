@@ -25,8 +25,8 @@ def test_create_from_coin_transfer_signed_change_request_message(
     assert signed_change_request.message == coin_transfer_signed_change_request_message
     assert signed_change_request.signer == treasury_account_key_pair.public
     assert signed_change_request.signature == (
-        '16fefa4441a2f877ecc2e08e7055dfc7ad1c9f4357ada4085dba76bbd37f7fd8'
-        '77b18eb45f08ef3562d8029e740717c29a352421d7040cc1fae5b80308da2a09'
+        '628b293aeceec992d094c62f60f5031879b4893047f4c4ab158e506c04b916b0'
+        '489b5a750d3b1af7cfe9b99c03253424b483450bcafe1b1f608529cad012a502'
     )
 
 
@@ -48,25 +48,28 @@ def test_serialize_and_deserialize_coin_transfer(
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_coin_transfer(
-    treasure_coin_transfer_signed_change_request, treasury_account_key_pair, regular_node_key_pair,
-    primary_validator_key_pair, treasury_amount
+    treasure_coin_transfer_signed_change_request, treasury_account_key_pair, regular_node, self_node, treasury_amount
 ):
     blockchain_facade = BlockchainFacade.get_instance()
     blockchain_facade.add_block_from_signed_change_request(treasure_coin_transfer_signed_change_request)
 
     total_amount = treasure_coin_transfer_signed_change_request.message.get_total_amount()
     assert blockchain_facade.get_account_balance(treasury_account_key_pair.public) == treasury_amount - total_amount
-    assert blockchain_facade.get_account_balance(regular_node_key_pair.public) == 100
-    assert blockchain_facade.get_account_balance(primary_validator_key_pair.public) == 5
+    assert blockchain_facade.get_account_balance(regular_node.identifier) == 100
+    assert blockchain_facade.get_account_balance(self_node.identifier) == 4
 
 
 @pytest.mark.usefixtures('base_blockchain')
-def test_invalid_account_lock(treasury_account_key_pair):
+def test_invalid_account_lock(treasury_account_key_pair, self_node):
     blockchain_facade = BlockchainFacade.get_instance()
 
     request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
         message=CoinTransferSignedChangeRequestMessage(
-            account_lock='0' * 64, txs=[CoinTransferTransaction(recipient='0' * 64, amount=10)]
+            account_lock='0' * 64,
+            txs=[
+                CoinTransferTransaction(recipient='0' * 64, amount=10),
+                CoinTransferTransaction(recipient=self_node.identifier, amount=self_node.fee, is_fee=True),
+            ]
         ),
         signing_key=treasury_account_key_pair.private,
     )
@@ -76,7 +79,7 @@ def test_invalid_account_lock(treasury_account_key_pair):
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_validate_amount_when_balance_is_not_enough(
-    treasure_coin_transfer_signed_change_request, regular_node_key_pair
+    treasure_coin_transfer_signed_change_request, regular_node_key_pair, self_node
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -84,14 +87,18 @@ def test_validate_amount_when_balance_is_not_enough(
     assert blockchain_facade.get_account_balance(regular_node_key_pair.public) == 100
 
     signed_change_request_message = CoinTransferSignedChangeRequestMessage(
-        account_lock='0' * 64, txs=[CoinTransferTransaction(recipient='0' * 64, amount=150)]
+        account_lock='0' * 64,
+        txs=[
+            CoinTransferTransaction(recipient='0' * 64, amount=150),
+            CoinTransferTransaction(recipient=self_node.identifier, amount=self_node.fee, is_fee=True)
+        ]
     )
     request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
         message=signed_change_request_message,
         signing_key=regular_node_key_pair.private,
     )
     matched_message = 'Sender account 1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb ' \
-                      'balance is not enough to send 150 coins'
+                      'balance is not enough to send 154 coins'
     with pytest.raises(ValidationError, match=matched_message):
         blockchain_facade.add_block_from_signed_change_request(request)
 
@@ -99,9 +106,8 @@ def test_validate_amount_when_balance_is_not_enough(
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_validate_circular_transactions(treasury_account_key_pair, regular_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
-
     signed_change_request_message = CoinTransferSignedChangeRequestMessage(
-        account_lock=BlockchainFacade.get_instance().get_account_lock(treasury_account_key_pair.public),
+        account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
         txs=[
             CoinTransferTransaction(recipient=regular_node_key_pair.public, amount=100),
             CoinTransferTransaction(recipient=treasury_account_key_pair.public, amount=100),
@@ -114,6 +120,61 @@ def test_validate_circular_transactions(treasury_account_key_pair, regular_node_
     )
 
     with pytest.raises(ValidationError, match='Circular transactions detected'):
+        blockchain_facade.add_block_from_signed_change_request(request)
+
+
+@pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
+def test_validate_node_fee_when_send_coins_through_itself(
+    treasury_account_key_pair, self_node, self_node_key_pair, regular_node
+):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
+        txs=[
+            CoinTransferTransaction(recipient=self_node.identifier, amount=100),
+            CoinTransferTransaction(recipient=self_node.identifier, amount=self_node.fee, is_fee=True),
+        ]
+    )
+    treasure_request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
+        message=signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
+    )
+    blockchain_facade.add_block_from_signed_change_request(treasure_request)
+    assert blockchain_facade.get_account_balance(self_node.identifier) == 104
+
+    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(self_node_key_pair.public),
+        txs=[
+            CoinTransferTransaction(recipient=regular_node.identifier, amount=104),
+        ]
+    )
+    self_request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
+        message=signed_change_request_message,
+        signing_key=self_node_key_pair.private,
+    )
+    blockchain_facade.add_block_from_signed_change_request(self_request)
+    assert blockchain_facade.get_account_balance(self_node.identifier) == 0
+    assert blockchain_facade.get_account_balance(regular_node.identifier) == 104
+
+
+@pytest.mark.parametrize('fees', ([], [1, 2], [3]))
+@pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
+def test_validate_node_fee(fees, treasury_account_key_pair, self_node, self_node_key_pair, regular_node):
+    blockchain_facade = BlockchainFacade.get_instance()
+
+    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
+        account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
+        txs=[
+            CoinTransferTransaction(recipient=self_node.identifier, amount=100),
+            *[CoinTransferTransaction(recipient=self_node.identifier, amount=f, is_fee=True) for f in fees]
+        ]
+    )
+    request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
+        message=signed_change_request_message,
+        signing_key=treasury_account_key_pair.private,
+    )
+    with pytest.raises(ValidationError, match='Fee amount is not enough'):
         blockchain_facade.add_block_from_signed_change_request(request)
 
 

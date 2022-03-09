@@ -44,16 +44,13 @@ def test_node_declaration(test_server_address, force_smart_mocked_node_client, p
 @as_role(NodeRole.PRIMARY_VALIDATOR)
 @pytest.mark.usefixtures('rich_blockchain')
 def test_coin_transfer(
-    test_server_address, force_smart_mocked_node_client, treasury_account_key_pair, regular_node_key_pair
+    test_server_address, force_smart_mocked_node_client, treasury_account_key_pair, regular_node, self_node
 ):
     out = StringIO()
-    payment_transaction = {
-        'recipient': regular_node_key_pair.public,
-        'is_fee': False,
-        'amount': 100,
-        'memo': 'message'
-    }
-    fee_transaction = {'recipient': regular_node_key_pair.public, 'is_fee': True, 'amount': 5, 'memo': 'fee'}
+
+    payment_transaction = {'recipient': regular_node.identifier, 'is_fee': False, 'amount': 100, 'memo': 'payment'}
+    fee_transaction = {'recipient': self_node.identifier, 'is_fee': True, 'amount': self_node.fee, 'memo': 'fee'}
+
     call_command(
         'add_signed_change_request',
         '2',
@@ -70,20 +67,20 @@ def test_coin_transfer(
             'txs': [{
                 'amount': 100,
                 'is_fee': False,
-                'memo': 'message',
-                'recipient': regular_node_key_pair.public
+                'memo': 'payment',
+                'recipient': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
             }, {
-                'amount': 5,
+                'amount': 4,
                 'is_fee': True,
                 'memo': 'fee',
-                'recipient': regular_node_key_pair.public
+                'recipient': self_node.identifier
             }],
             'type': 2
         },
         'signature':
-            '3fef560daf38cedd90c12d7479930d007dd079140142ce6d671a2e06f8a2e0c6'
-            'a9605266074794f4d1045527e236b66902ed935d2a2f3ab4d54296fe22004e02',
-        'signer': treasury_account_key_pair.public
+            '628b293aeceec992d094c62f60f5031879b4893047f4c4ab158e506c04b916b0'
+            '489b5a750d3b1af7cfe9b99c03253424b483450bcafe1b1f608529cad012a502',
+        'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
 
 

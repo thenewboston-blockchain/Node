@@ -11,24 +11,20 @@ from node.blockchain.tests.factories.signed_change_request_message.coin_transfer
 
 
 @pytest.fixture
-def coin_transfer_signed_change_request_message(
-    treasury_account_key_pair, regular_node_key_pair, primary_validator_key_pair, db
-):
+def coin_transfer_signed_change_request_message(treasury_account_key_pair, regular_node, self_node, db):
     return make_coin_transfer_signed_change_request_message(
         treasury_account_key_pair.public,
-        regular_node_key_pair.public,  # TODO(dmu) LOW: Better use `user_account`
-        primary_validator_key_pair.public,
+        regular_node.identifier,  # TODO(dmu) LOW: Better use `user_account`
+        self_node.identifier,
     )
 
 
 @pytest.fixture
-def treasure_coin_transfer_signed_change_request(
-    treasury_account_key_pair, regular_node_key_pair, primary_validator_key_pair, db
-):
+def treasure_coin_transfer_signed_change_request(treasury_account_key_pair, regular_node, self_node, db):
     return make_coin_transfer_signed_change_request(
         treasury_account_key_pair,
-        regular_node_key_pair,  # TODO(dmu) LOW: Better use `user_account`
-        primary_validator_key_pair,
+        regular_node.identifier,  # TODO(dmu) LOW: Better use `user_account`
+        self_node.identifier,
     )
 
 

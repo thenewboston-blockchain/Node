@@ -8,7 +8,7 @@ from node.blockchain.inner_models.signed_change_request_message.coin_transfer im
     CoinTransferSignedChangeRequestMessage, CoinTransferTransaction
 )
 from node.blockchain.tests.test_models.base import CREATE, VALID, coin_transfer_message_type_validation_parametrizer
-from node.blockchain.types import Type
+from node.blockchain.types import AccountNumber, Type
 from node.core.exceptions import ValidationError
 
 
@@ -37,6 +37,39 @@ def test_coin_transfer_should_contain_at_least_one_transaction():
 
 def test_create_coin_transfer_signed_change_request_message(coin_transfer_signed_change_request_message):
     assert coin_transfer_signed_change_request_message.type == Type.COIN_TRANSFER
+
+
+@pytest.mark.parametrize(
+    'transactions, recipient, is_fee, expected_amount', (
+        ([CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=False)], '0' * 64, False, 3),
+        ([CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=False)], '0' * 64, True, 0),
+        ([CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=False)], '1' * 64, False, 0),
+        ([CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=True)], '0' * 64, True, 3),
+        ([
+            CoinTransferTransaction(recipient='0' * 64, amount=1, is_fee=True),
+            CoinTransferTransaction(recipient='1' * 64, amount=2, is_fee=True),
+            CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=True),
+        ], '0' * 64, True, 4),
+        ([
+            CoinTransferTransaction(recipient='0' * 64, amount=1, is_fee=True),
+            CoinTransferTransaction(recipient='1' * 64, amount=2, is_fee=False),
+            CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=False),
+        ], '0' * 64, True, 1),
+        ([
+            CoinTransferTransaction(recipient='0' * 64, amount=1, is_fee=True),
+            CoinTransferTransaction(recipient='1' * 64, amount=2, is_fee=False),
+            CoinTransferTransaction(recipient='0' * 64, amount=3, is_fee=False),
+        ], '0' * 64, False, 3),
+        ([
+            CoinTransferTransaction(recipient='0' * 64, amount=1, is_fee=True),
+            CoinTransferTransaction(recipient='1' * 64, amount=2, is_fee=False),
+            CoinTransferTransaction(recipient='2' * 64, amount=3, is_fee=False),
+        ], '3' * 64, False, 0),
+    )
+)
+def test_get_amount_by_recipient(transactions, recipient, is_fee, expected_amount):
+    message = CoinTransferSignedChangeRequestMessage(account_lock='0' * 64, txs=transactions)
+    assert message.get_total_amount(recipient=AccountNumber(recipient), is_fee=is_fee) == expected_amount
 
 
 @coin_transfer_message_type_validation_parametrizer

@@ -17,6 +17,6 @@ class AccountState(BaseModel):
 
     @root_validator
     def not_empty(cls, values):
-        if not values['balance'] and not values['node']:
+        if values['balance'] is None and not values['node']:
             raise ValueError('Account state must be not empty')
         return values

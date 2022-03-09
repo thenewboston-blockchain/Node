@@ -30,7 +30,7 @@ def test_sender_has_not_enough_balance(regular_node_key_pair):
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_make_block_message_update(
-    treasure_coin_transfer_signed_change_request, treasury_amount, regular_node_key_pair, primary_validator_key_pair
+    treasure_coin_transfer_signed_change_request, treasury_amount, regular_node, self_node
 ):
     request = treasure_coin_transfer_signed_change_request
     block_message_update = CoinTransferBlockMessage.make_block_message_update(request, BlockchainFacade.get_instance())
@@ -43,5 +43,5 @@ def test_make_block_message_update(
         balance=treasury_amount - request.message.get_total_amount(),
         account_lock=request.make_hash(),
     )
-    assert accounts.get(regular_node_key_pair.public) == AccountState(balance=100)
-    assert accounts.get(primary_validator_key_pair.public) == AccountState(balance=5)
+    assert accounts.get(regular_node.identifier) == AccountState(balance=100)
+    assert accounts.get(self_node.identifier) == AccountState(balance=4)
