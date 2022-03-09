@@ -8,7 +8,7 @@ from node.blockchain.inner_models.signed_change_request_message.coin_transfer im
     CoinTransferSignedChangeRequestMessage, CoinTransferTransaction
 )
 from node.blockchain.tests.test_models.base import CREATE, VALID, coin_transfer_message_type_validation_parametrizer
-from node.blockchain.types import Type
+from node.blockchain.types import AccountNumber, Type
 from node.core.exceptions import ValidationError
 
 
@@ -69,7 +69,7 @@ def test_create_coin_transfer_signed_change_request_message(coin_transfer_signed
 )
 def test_get_amount_by_recipient(transactions, recipient, is_fee, expected_amount):
     message = CoinTransferSignedChangeRequestMessage(account_lock='0' * 64, txs=transactions)
-    assert message.get_total_amount_by_recipient(recipient, is_fee) == expected_amount
+    assert message.get_total_amount(recipient=AccountNumber(recipient), is_fee=is_fee) == expected_amount
 
 
 @coin_transfer_message_type_validation_parametrizer

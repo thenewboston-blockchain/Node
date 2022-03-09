@@ -25,8 +25,8 @@ class CoinTransferSignedChangeRequest(SignedChangeRequest):
 
     def validate_node_fee(self):
         node_identifier = get_node_identifier()
-        if self.signer != node_identifier and self.message.get_total_amount_by_recipient(
-            node_identifier, True
+        if self.signer != node_identifier and self.message.get_total_amount(
+            recipient=node_identifier, is_fee=True
         ) < settings.NODE_FEE:
             raise ValidationError('Fee amount is not enough')
 

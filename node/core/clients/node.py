@@ -65,7 +65,11 @@ def raise_for_status_advanced(response):
     try:
         response.raise_for_status()
     except requests.HTTPError as ex:
-        ex.args = (ex.args[0] + f' (BODY: {response.text})',) + ex.args[1:]
+        args = ex.args
+        if args:
+            ex.args = (args[0] + f' (BODY: {response.text})',) + args[1:]
+        else:
+            ex.args = (f'Response BODY: {response.text}',)
         raise
 
 
