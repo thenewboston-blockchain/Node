@@ -1,4 +1,6 @@
 import yaml
+from django.conf import settings
+from django.db import transaction
 
 from .types import hexstr
 
@@ -30,3 +32,10 @@ def bytes_to_hex(bytes_: bytes) -> hexstr:
 def set_if_not_none(dict_, key, value):
     if value is not None:
         dict_[key] = value
+
+
+def apply_on_commit(callable_):
+    if settings.USE_ON_COMMIT_HOOK:
+        transaction.on_commit(callable_)
+    else:
+        callable_()

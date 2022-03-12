@@ -1,8 +1,12 @@
 import json
+from unittest.mock import patch
 
 import pytest
 
-from node.blockchain.models import Block
+from node.blockchain.facade import BlockchainFacade
+from node.blockchain.models import Block, PendingBlock
+from node.blockchain.tests.factories.block import make_block
+from node.blockchain.tests.factories.block_message.node_declaration import make_node_declaration_block_message
 
 
 @pytest.mark.usefixtures('rich_blockchain')
@@ -78,3 +82,24 @@ def test_retrieve_block(api_client):
     response = api_client.get('/api/blocks/1/')
     assert response.status_code == 200
     assert response.json() == json.loads(Block.objects.get(_id=1).body)
+
+
+@pytest.mark.usefixtures('base_blockchain')
+def test_create_pending_block(regular_node, regular_node_key_pair, primary_validator_key_pair, api_client):
+    assert not PendingBlock.objects.exists()
+
+    facade = BlockchainFacade.get_instance()
+    block_message = make_node_declaration_block_message(regular_node, regular_node_key_pair, facade)
+
+    assert facade.get_primary_validator().identifier == primary_validator_key_pair.public
+    block = make_block(block_message, primary_validator_key_pair.private)
+
+    payload = block.json()
+    with patch('node.blockchain.views.block.start_process_pending_blocks_task') as mock:
+        response = api_client.post('/api/blocks/', payload, content_type='application/json')
+
+    assert response.status_code == 204
+    mock.assert_called()
+    pending_block = PendingBlock.objects.get_or_none(number=block.get_block_number(), hash=block.make_hash())
+    assert pending_block
+    assert pending_block.body == payload
