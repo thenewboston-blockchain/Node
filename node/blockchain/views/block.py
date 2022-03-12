@@ -1,6 +1,6 @@
-import django_filters
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend, RangeFilter
+from django_filters import FilterSet, RangeFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from node.blockchain.models import Block
@@ -10,7 +10,7 @@ from node.core.pagination import CustomLimitOffsetNoCountPagination
 from ..constants import LAST_BLOCK_ID
 
 
-class BlockFilterSet(django_filters.FilterSet):
+class BlockFilterSet(FilterSet):
     block_number = RangeFilter('_id')
 
     class Meta:

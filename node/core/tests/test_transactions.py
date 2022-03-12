@@ -15,7 +15,7 @@ def test_create_object_in_database(iteration):
     assert AccountState.objects.count() == 1
     db_account_state = AccountState.objects.first()
     assert db_account_state
-    assert db_account_state._id == account_state._id
+    assert db_account_state.identifier == account_state.identifier
 
 
 @pytest.mark.django_db(transaction=True)
@@ -33,7 +33,7 @@ def test_rollback():
             assert AccountState.objects.count() == 1
             db_account_state = AccountState.objects.first()
             assert db_account_state
-            assert db_account_state._id == account_state._id
+            assert db_account_state.identifier == account_state.identifier
 
             raise TestError
     except TestError:
@@ -51,7 +51,7 @@ def test_commit():
     assert AccountState.objects.count() == 1
     db_account_state = AccountState.objects.first()
     assert db_account_state
-    assert db_account_state._id == account_state._id
+    assert db_account_state.identifier == account_state.identifier
 
 
 def test_ensure_in_transaction():

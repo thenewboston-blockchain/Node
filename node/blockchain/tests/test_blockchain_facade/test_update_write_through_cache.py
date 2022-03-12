@@ -1,7 +1,7 @@
 import pytest
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.models import Schedule
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.types import AccountNumber
 from node.core.utils.types import non_negative_intstr
 
@@ -66,11 +66,11 @@ SCHEDULE_500 = {
 )
 def test_add_delete_update(first_schedule, second_schedule):
     blockchain_facade = BlockchainFacade.get_instance()
-    assert Schedule.objects.count() == 0
+    assert ORMNode.objects.exclude(block_number__isnull=True).count() == 0
 
     for schedule in [first_schedule, second_schedule]:
         blockchain_facade.update_write_through_cache_schedule(schedule)
 
-        assert Schedule.objects.count() == len(schedule)
-        assert Schedule.objects.filter(_id__in=schedule.keys()).count() == len(schedule)
-        assert Schedule.objects.filter(node_identifier__in=schedule.values()).count() == len(schedule)
+        assert ORMNode.objects.exclude(block_number__isnull=True).count() == len(schedule)
+        assert ORMNode.objects.filter(block_number__in=schedule.keys()).count() == len(schedule)
+        assert ORMNode.objects.filter(identifier__in=schedule.values()).count() == len(schedule)

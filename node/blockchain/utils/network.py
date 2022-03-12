@@ -42,8 +42,7 @@ def get_nodes_from_json_file(path) -> Optional[list[Node]]:
 
 
 def get_nodes_for_syncing() -> list[Node]:
-    nodes = ORMNode.objects.exclude(_id=get_node_identifier()).all()
-    if nodes:
+    if nodes := ORMNode.objects.exclude(identifier=get_node_identifier()).all():
         logger.debug('Got nodes from local blockchain')
         return [node.get_node() for node in nodes]
     logger.debug('No nodes in local blockchain')

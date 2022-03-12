@@ -28,9 +28,4 @@ class AccountStateViewSet(RetrieveModelMixin, GenericViewSet):
 
             # If account is not found then we virtually assume that it exists (although not know to the blockchain)
             # TODO(dmu) MEDIUM: Should we move this logic to AccountStateManage or BlockchainFacade?
-            return AccountState(
-                _id=account_number,
-                balance=0,
-                account_lock=account_number,
-                node=None,
-            )
+            return AccountState(identifier=account_number, balance=0, account_lock=account_number)

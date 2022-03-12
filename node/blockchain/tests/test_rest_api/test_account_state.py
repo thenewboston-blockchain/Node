@@ -18,7 +18,7 @@ def test_retrieve_account_state(api_client, treasury_account_key_pair, treasury_
 @pytest.mark.usefixtures('base_blockchain')
 def test_retrieve_not_known_account_state(api_client):
     account_number = '0' * 64
-    assert not AccountState.objects.filter(_id=account_number).exists()
+    assert not AccountState.objects.filter(identifier=account_number).exists()
     response = api_client.get(f'/api/account-states/{account_number}/')
     assert response.status_code == 200
     assert response.json() == {'_id': account_number, 'balance': 0, 'account_lock': account_number, 'node': None}

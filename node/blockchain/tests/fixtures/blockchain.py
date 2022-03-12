@@ -41,14 +41,7 @@ def rich_blockchain(
 
 
 @pytest.fixture
-def bloated_blockchain(
-    rich_blockchain,
-    primary_validator_key_pair,
-    regular_node_declaration_signed_change_request,
-    self_node_declaration_signed_change_request,
-    test_server_address,
-    primary_validator_node,
-):
+def bloated_blockchain(rich_blockchain, primary_validator_key_pair, test_server_address, primary_validator_node):
     blockchain_facade = BlockchainFacade.get_instance()
 
     for _ in range(24):

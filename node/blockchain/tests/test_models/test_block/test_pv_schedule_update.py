@@ -4,7 +4,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     Block, BlockMessageUpdate, PVScheduleUpdateSignedChangeRequest, PVScheduleUpdateSignedChangeRequestMessage
 )
-from node.blockchain.models import Schedule
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.models.block import Block as ORMBlock
 from node.blockchain.tests.base import as_role
 from node.blockchain.types import AccountLock, NodeRole, Signature, Type
@@ -50,11 +50,11 @@ def test_add_block_from_block_message(pv_schedule_update_block_message, primary_
     assert message == pv_schedule_update_block_message
 
     # Test account state write-through cache
-    assert Schedule.objects.count() == 1
+    assert ORMNode.objects.exclude(role=NodeRole.REGULAR_NODE.value).count() == 1
     schedule = pv_schedule_update_block_message.request.message.schedule
 
-    for id_, node_identifier in schedule.items():
-        assert Schedule.objects.get(_id=id_).node_identifier == node_identifier
+    for block_number, node_identifier in schedule.items():
+        assert ORMNode.objects.get(block_number=block_number).identifier == node_identifier
 
 
 @pytest.mark.usefixtures('base_blockchain')

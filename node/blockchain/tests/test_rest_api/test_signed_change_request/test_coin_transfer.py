@@ -8,7 +8,7 @@ from node.blockchain.inner_models import (
     CoinTransferSignedChangeRequest, CoinTransferSignedChangeRequestMessage, SignedChangeRequest
 )
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
-from node.blockchain.models import AccountState
+from node.blockchain.models import AccountState, Node
 from node.blockchain.tests.base import as_role
 from node.blockchain.tests.test_models.base import CREATE, VALID, coin_transfer_message_type_validation_parametrizer
 from node.blockchain.types import NodeRole
@@ -48,11 +48,11 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
     }
 
     assert facade.get_next_block_number() == 2
-    account_state = AccountState.objects.get_or_none(_id=treasury_account_key_pair.public)
+    account_state = AccountState.objects.get(identifier=treasury_account_key_pair.public)
     total_amount = treasure_coin_transfer_signed_change_request.message.get_total_amount()
     assert account_state.balance == treasury_amount - total_amount
-    assert account_state.node is None
     assert account_state.pk == treasury_account_key_pair.public
+    assert Node.objects.filter(identifier=treasury_account_key_pair.public).exists() is False
 
 
 @pytest.mark.django_db

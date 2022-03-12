@@ -11,8 +11,8 @@ from node.blockchain.inner_models import (
 )
 from node.blockchain.models import AccountState as ORMAccountState
 from node.blockchain.models import Block as ORMBlock
-from node.blockchain.models import Schedule
-from node.blockchain.types import AccountLock, Signature, Type
+from node.blockchain.models import Node as ORMNode
+from node.blockchain.types import AccountLock, NodeRole, Signature, Type
 from node.core.utils.cryptography import is_signature_valid
 
 
@@ -57,24 +57,26 @@ def test_create_from_block_message(
 
     # Test account state write-through cache
     assert ORMAccountState.objects.count() == 2
-    account_state = ORMAccountState.objects.get(_id=primary_validator_key_pair.public)
+    account_state = ORMAccountState.objects.get(identifier=primary_validator_key_pair.public)
     assert account_state.account_lock == primary_validator_key_pair.public
     assert account_state.balance == 0
-    assert account_state.node == primary_validator_node.dict()
 
-    account_state = ORMAccountState.objects.get(_id=treasury_account_key_pair.public)
+    node = account_state.node
+    assert node.identifier == primary_validator_node.identifier
+    assert node.addresses == primary_validator_node.addresses
+    assert node.fee == primary_validator_node.fee
+
+    account_state = ORMAccountState.objects.get(identifier=treasury_account_key_pair.public)
     assert account_state.account_lock == treasury_account_key_pair.public
     assert account_state.balance == treasury_amount
 
     # Test schedule write-through cache
-    schedule = Schedule.objects.order_by('_id').all()
-    assert tuple((item._id, item.node_identifier) for item in schedule) == ((0, primary_validator_key_pair.public),)
+    nodes = ORMNode.objects.exclude(role=NodeRole.REGULAR_NODE.value).order_by('block_number').all()
+    assert tuple((n.block_number, n.identifier) for n in nodes) == ((0, primary_validator_key_pair.public),)
 
 
 @pytest.mark.django_db
-def test_create_from_alpha_account_root_file(
-    primary_validator_key_pair, primary_validator_node, treasury_account_key_pair, account_root_file
-):
+def test_create_from_alpha_account_root_file(primary_validator_key_pair, primary_validator_node, account_root_file):
     assert not ORMAccountState.objects.exists()
 
     blockchain_facade = BlockchainFacade.get_instance()
@@ -122,25 +124,33 @@ def test_create_from_alpha_account_root_file(
 
     # Test account state write-through cache
     assert ORMAccountState.objects.count() == 4
-    account_state = ORMAccountState.objects.get(_id=primary_validator_key_pair.public)
-    assert account_state.account_lock == primary_validator_key_pair.public
+    account_state = ORMAccountState.objects.get(identifier=primary_validator_node.identifier)
+    assert account_state.account_lock == primary_validator_node.identifier
     assert account_state.balance == 0
-    assert account_state.node == primary_validator_node.dict()
 
-    account_state = ORMAccountState.objects.get(_id='8bf7df36676adbc294ba1a78ff9565dd65e2da73e4d46d5e11c7c3a6c803dff7')
+    node = account_state.node
+    assert node.identifier == primary_validator_node.identifier
+    assert node.addresses == primary_validator_node.addresses
+    assert node.fee == primary_validator_node.fee
+
+    account_state = ORMAccountState.objects.get(
+        identifier='8bf7df36676adbc294ba1a78ff9565dd65e2da73e4d46d5e11c7c3a6c803dff7'
+    )
     account_root_file_entry = account_root_file['8BF7DF36676ADBC294BA1A78FF9565DD65E2DA73E4D46D5E11C7C3A6C803DFF7']
     assert account_state.account_lock == account_root_file_entry['balance_lock'].lower()
     assert account_state.balance == account_root_file_entry['balance']
 
-    account_state = ORMAccountState.objects.get(_id='009073c5985d3a715c3d44a33d5f928e893935fbab206d1d676d7d8b6e27ec85')
+    account_state = ORMAccountState.objects.get(
+        identifier='009073c5985d3a715c3d44a33d5f928e893935fbab206d1d676d7d8b6e27ec85'
+    )
 
     account_root_file_entry = account_root_file['009073c5985d3a715c3d44a33d5f928e893935fbab206d1d676d7d8b6e27ec85']
     assert account_state.account_lock == account_root_file_entry['balance_lock']
     assert account_state.balance == account_root_file_entry['balance']
 
     # Test schedule write-through cache
-    schedule = Schedule.objects.order_by('_id').all()
-    assert tuple((item._id, item.node_identifier) for item in schedule) == ((0, primary_validator_key_pair.public),)
+    nodes = ORMNode.objects.exclude(role=NodeRole.REGULAR_NODE.value).order_by('block_number').all()
+    assert tuple((n.block_number, n.identifier) for n in nodes) == ((0, primary_validator_key_pair.public),)
 
 
 @pytest.mark.parametrize('kwargs', (

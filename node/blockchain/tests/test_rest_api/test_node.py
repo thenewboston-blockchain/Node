@@ -1,5 +1,7 @@
 import pytest
 
+from node.blockchain.types import NodeRole
+
 
 @pytest.mark.usefixtures('base_blockchain')
 def test_list_nodes_smoke(api_client):
@@ -49,3 +51,9 @@ def test_retrieve_self_node(self_node, api_client):
         'addresses': self_node.addresses,
         'fee': self_node.fee
     }
+
+
+@pytest.mark.usefixtures('bloated_blockchain')
+def test_role_filter(primary_validator_node, api_client):
+    response = api_client.get(f'/api/nodes/?roles={NodeRole.PRIMARY_VALIDATOR},{NodeRole.CONFIRMATION_VALIDATOR}')
+    assert response.status_code == 200

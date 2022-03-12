@@ -1,4 +1,5 @@
 import logging
+from bisect import bisect_right
 from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
 from node.blockchain.constants import BLOCK_LOCK
@@ -144,14 +145,14 @@ class BlockchainFacade:
 
     @staticmethod
     def get_account_lock(account_number) -> AccountLock:
-        account_state = ORMAccountState.objects.get_or_none(_id=account_number)
+        account_state = ORMAccountState.objects.get_or_none(identifier=account_number)
         return AccountLock(
             account_state.account_lock
         ) if account_state and account_state.account_lock else account_number
 
     @staticmethod
     def get_account_balance(account_number: AccountNumber) -> int:
-        account_state = ORMAccountState.objects.get_or_none(_id=account_number)
+        account_state = ORMAccountState.objects.get_or_none(identifier=account_number)
         return account_state.balance if account_state else 0
 
     @staticmethod
@@ -160,31 +161,42 @@ class BlockchainFacade:
             fields_for_update = {}
             set_if_not_none(fields_for_update, 'account_lock', account_state.account_lock)
             set_if_not_none(fields_for_update, 'balance', account_state.balance)
-            node = None if account_state.node is None else account_state.node.dict()
-            set_if_not_none(fields_for_update, 'node', node)
+
+            node = account_state.node
+            if node is not None:
+                set_if_not_none(fields_for_update, 'addresses', node.addresses)
+                set_if_not_none(fields_for_update, 'fee', node.fee)
+
             assert fields_for_update
 
-            account_state, is_created = ORMAccountState.objects.get_or_create(
-                _id=account_number, defaults=fields_for_update
-            )
-            if not is_created:
-                for field, value in fields_for_update.items():
-                    setattr(account_state, field, value)
-                account_state.save()
+            cache_model = ORMAccountState if node is None else ORMNode
+            cache_model.objects.update_or_create(identifier=account_number, defaults=fields_for_update)
 
-    @staticmethod
-    def update_write_through_cache_schedule(schedule: dict[non_negative_intstr, AccountNumber]):
+    def update_write_through_cache_schedule(self, schedule: dict[non_negative_intstr, AccountNumber]):
         # TODO(dmu) HIGH: Add more unittests once PV schedule block is implemented
         #                 - Add PV
         #                 - Remove PV
         #                 - Replace PV
         #                 https://thenewboston.atlassian.net/browse/BC-193
-        from node.blockchain.models import Schedule
-
-        Schedule.objects.exclude(_id__in=schedule.keys()).delete()
+        ORMNode.objects.exclude(role=NodeRole.REGULAR_NODE.value
+                                ).update(role=NodeRole.REGULAR_NODE.value, block_number=None)
 
         for block_number, node_identifier in schedule.items():
-            Schedule.objects.update_or_create(_id=block_number, defaults={'node_identifier': node_identifier})
+            insertion_point = self.get_insertion_point(schedule, self.get_next_block_number())
+            defaults = {
+                'block_number':
+                    block_number,
+                'role':
+                    NodeRole.PRIMARY_VALIDATOR.value
+                    if insertion_point == 1 else NodeRole.CONFIRMATION_VALIDATOR.value  # noqa
+            }
+            ORMNode.objects.update_or_create(identifier=node_identifier, defaults=defaults)
+
+    @staticmethod
+    def get_insertion_point(
+        schedule: dict[non_negative_intstr, AccountNumber], next_block_number: non_negative_intstr
+    ) -> int:
+        return bisect_right(sorted(map(int, schedule)), next_block_number)
 
     @staticmethod
     @ensure_in_transaction
@@ -193,8 +205,6 @@ class BlockchainFacade:
         get_block_model().objects.all().delete()
 
         ORMAccountState.objects.all().delete()
-        from node.blockchain.models import Schedule
-        Schedule.objects.all().delete()
 
     def update_write_through_cache(self, block):
         block_message_update = block.message.update
@@ -207,49 +217,41 @@ class BlockchainFacade:
 
     @staticmethod
     def get_node_by_identifier(identifier) -> Optional[Node]:
-        node = ORMNode.objects.get_or_none(_id=identifier)
+        node = ORMNode.objects.get_or_none(identifier=identifier)
         return node.get_node() if node else None
 
     def get_node_role(self) -> Optional[NodeRole]:
         # TODO(dmu) MEDIUM: Should we optimize the implementation to make only one database request and
         #                   process the response in Python?
-        from node.blockchain.models import Schedule
 
         node_identifier = get_node_identifier()
-        node = self.get_node_by_identifier(node_identifier)
+        node = ORMNode.objects.get_or_none(identifier=node_identifier)
         if not node:
             return None
 
-        if not Schedule.objects.filter(node_identifier=node_identifier).exists():
-            return NodeRole.REGULAR_NODE
-
         next_block_number = self.get_next_block_number()
-        schedule = Schedule.objects.filter(_id__lte=next_block_number).order_by('-_id').first()
-        if schedule and schedule.node_identifier == node_identifier:
+        node_ = ORMNode.objects.filter(block_number__lte=next_block_number).order_by('-block_number').first()
+        if node_ and node_.identifier == node_identifier:
+            assert node.role == NodeRole.PRIMARY_VALIDATOR.value
             return NodeRole.PRIMARY_VALIDATOR
 
-        if Schedule.objects.filter(_id__gt=next_block_number, node_identifier=node_identifier).exists():
+        if ORMNode.objects.filter(block_number__gt=next_block_number, identifier=node_identifier).exists():
+            assert node.role == NodeRole.CONFIRMATION_VALIDATOR.value
             return NodeRole.CONFIRMATION_VALIDATOR
 
+        assert node.role == NodeRole.REGULAR_NODE.value
         return NodeRole.REGULAR_NODE
 
     def get_primary_validator(self) -> Optional[Node]:
         """
         Return primary validator that should sign the next block
         """
-        from node.blockchain.models import Schedule
 
-        schedule = Schedule.objects.filter(_id__lte=self.get_next_block_number()).order_by('-_id').first()
-        if not schedule:
-            logger.warning('Schedule for the next block was not found')
-            return None
-
-        node_identifier = schedule.node_identifier
-        node = self.get_node_by_identifier(node_identifier)
+        node = ORMNode.objects.filter(block_number__lte=self.get_next_block_number()).order_by('-block_number').first()
         if not node:
             # TODO(dmu) HIGH: Implement workaround for the case when
             #                 node unregisters itself by the moment it is scheduled
             #                 https://thenewboston.atlassian.net/browse/BC-236
-            logger.warning('Primary validator %s is in PV schedule but not declared as a node', node_identifier)
-
-        return node
+            logger.warning('Schedule for the next block was not found')
+            return None
+        return node.get_node()

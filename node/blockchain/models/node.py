@@ -1,38 +1,19 @@
-from djongo.models.fields import DjongoManager
+from djongo import models
 
 from node.blockchain.inner_models import Node as PydanticNode
-from node.core.managers import CustomQuerySet
+from node.core.fields import NullableJSONField
 
+from ..types import NodeRole
 from .account_state import AccountState
 
 
-class NodeManager(DjongoManager.from_queryset(CustomQuerySet)):  # type: ignore
-
-    def get_queryset(self):
-        return super().get_queryset().filter(node__isnull=False)
-
-
 class Node(AccountState):
+    NODE_ROLE = [(r.value, r.name) for r in NodeRole]
 
-    objects = NodeManager()
-
-    class Meta:
-        proxy = True
-
-    def get_node_attribute(self, name):
-        return (self.node or {}).get(name)
-
-    @property
-    def identifier(self):
-        return self._id
-
-    @property
-    def addresses(self):
-        return self.get_node_attribute('addresses')
-
-    @property
-    def fee(self):
-        return self.get_node_attribute('fee')
+    addresses = NullableJSONField(blank=True, null=True)
+    fee = models.PositiveBigIntegerField(default=0)
+    block_number = models.PositiveBigIntegerField('Block number', blank=True, null=True)
+    role = models.PositiveSmallIntegerField(choices=NODE_ROLE, default=NodeRole.REGULAR_NODE.value)
 
     def get_node(self) -> PydanticNode:
         return PydanticNode(

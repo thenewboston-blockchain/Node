@@ -5,7 +5,8 @@ from node.blockchain.inner_models import (
     AccountState, Block, BlockMessageUpdate, CoinTransferSignedChangeRequest, CoinTransferSignedChangeRequestMessage
 )
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
-from node.blockchain.models import AccountState as DBAccountState
+from node.blockchain.models import AccountState as ORMAccountState
+from node.blockchain.models import Node as ORMNode
 from node.blockchain.models.block import Block as ORMBlock
 from node.blockchain.types import AccountLock, Signature, Type
 from node.core.exceptions import ValidationError
@@ -50,12 +51,12 @@ def test_add_block_from_block_message(coin_transfer_block_message, primary_valid
     assert message == coin_transfer_block_message
 
     # Test account state write-through cache
-    assert DBAccountState.objects.count() == 4
+    assert ORMAccountState.objects.count() == 4
     request = coin_transfer_block_message.request
-    account_state = DBAccountState.objects.get(_id=request.signer)
+    account_state = ORMAccountState.objects.get(identifier=request.signer)
     assert account_state.account_lock == request.make_hash()
     assert account_state.balance == treasury_amount - request.message.get_total_amount()
-    assert account_state.node is None
+    assert ORMNode.objects.filter(identifier=request.signer).exists() is False
 
 
 @pytest.mark.usefixtures('base_blockchain')

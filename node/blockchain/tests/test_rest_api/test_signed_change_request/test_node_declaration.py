@@ -19,7 +19,7 @@ def test_node_declaration_signed_change_request_as_primary_validator(api_client,
     blockchain_facade = BlockchainFacade.get_instance()
     assert blockchain_facade.get_next_block_number() == 1
     assert blockchain_facade.get_node_by_identifier(regular_node.identifier) is None
-    assert not Node.objects.filter(_id=regular_node.identifier).exists()
+    assert not Node.objects.filter(identifier=regular_node.identifier).exists()
 
     message = NodeDeclarationSignedChangeRequestMessage(
         node=regular_node,

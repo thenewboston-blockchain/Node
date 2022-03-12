@@ -51,10 +51,15 @@ def test_add_block_from_block_message(node_declaration_block_message, primary_va
 
     # Test account state write-through cache
     assert DBAccountState.objects.count() == 3
-    account_state = DBAccountState.objects.get(_id=node_declaration_block_message.request.signer)
+    account_state = DBAccountState.objects.get(identifier=node_declaration_block_message.request.signer)
     assert account_state.account_lock == node_declaration_block_message.request.make_hash()
     assert account_state.balance == 0
-    assert account_state.node == node_declaration_block_message.request.message.node
+
+    orm_node = account_state.node
+    node = node_declaration_block_message.request.message.node
+    assert orm_node.identifier == node.identifier
+    assert orm_node.addresses == node.addresses
+    assert orm_node.fee == node.fee
 
 
 @pytest.mark.usefixtures('base_blockchain')
