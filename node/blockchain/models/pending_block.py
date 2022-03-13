@@ -13,8 +13,8 @@ class PendingBlock(CustomModel):
     body = models.BinaryField()
 
     class Meta:
-        unique_together = ('block_number', 'block_hash')
+        unique_together = ('number', 'hash')
         ordering = unique_together
 
     def __str__(self):
-        return f'block_number={self.block_number}, hash={self.block_hash}'
+        return f'block_number={self.number}, hash={self.hash}'
