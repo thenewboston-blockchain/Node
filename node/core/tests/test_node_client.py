@@ -118,7 +118,7 @@ def test_send_block_to_address_integration(
     (0, 0),
     (1, 1),
     (2, 2),
-    ('last', 2),
+    ('last', 4),
 ))
 def test_get_block_raw(test_server_address, smart_mocked_node_client, block_identifier, block_number):
     block = smart_mocked_node_client.get_block_raw(test_server_address, block_identifier)
@@ -140,9 +140,9 @@ def test_yield_nodes(test_server_address, smart_mocked_node_client):
 
     assert isinstance(node_generator, GeneratorType)
     nodes = list(node_generator)
-    assert len(nodes) == 3
+    assert len(nodes) == 4
 
-    node1, node2, node3 = nodes
+    node1, node2, node3, _ = nodes
 
     assert isinstance(node1, InnerNode)
     assert node1.identifier == '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'
@@ -180,14 +180,14 @@ def test_yield_nodes_pagination(
     test_server_address, bloated_blockchain, smart_mocked_node_client, primary_validator_node,
     primary_validator_key_pair
 ):
-    assert len(list(smart_mocked_node_client.yield_nodes(test_server_address))) == 27
+    assert len(list(smart_mocked_node_client.yield_nodes(test_server_address))) == 28
 
 
 @pytest.mark.django_db
 def test_yield_blocks(test_server_address, bloated_blockchain, smart_mocked_node_client):
     blocks = list(smart_mocked_node_client.yield_blocks_dict(test_server_address))
-    assert len(blocks) == 27
-    assert [block['message']['number'] for block in blocks] == list(range(27))
+    assert len(blocks) == 29
+    assert [block['message']['number'] for block in blocks] == list(range(29))
     block_objs = [Block.parse_obj(block) for block in blocks]
     assert block_objs == [block.get_block() for block in ORMBlock.objects.all().order_by('_id')]
 

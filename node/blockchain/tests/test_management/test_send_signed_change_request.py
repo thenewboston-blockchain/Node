@@ -92,10 +92,10 @@ def test_pv_schedule_update(
     out = StringIO()
     blockchain_facade = BlockchainFacade.get_instance()
 
-    assert blockchain_facade.get_next_block_number() == 3
+    assert blockchain_facade.get_next_block_number() == 5
 
     schedule = {
-        '3': primary_validator_key_pair.public,
+        '5': primary_validator_key_pair.public,
     }
     call_command(
         'add_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out

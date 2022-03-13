@@ -9,7 +9,8 @@ from node.blockchain.tests.factories.signed_change_request_message.pv_schedule_u
 
 @pytest.fixture
 def pv_schedule_update_signed_change_request_message(primary_validator_node, db):
-    return make_pv_schedule_update_signed_change_request_message(primary_validator_node)
+    return make_pv_schedule_update_signed_change_request_message({'1': primary_validator_node.identifier},
+                                                                 primary_validator_node.identifier)
 
 
 @pytest.fixture

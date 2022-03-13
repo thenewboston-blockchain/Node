@@ -22,9 +22,9 @@ def test_list_blocks(api_client):
     response_json = response.json()
     results = response_json.get('results')
     assert isinstance(results, list)
-    assert len(results) == 3
+    assert len(results) == 5
 
-    for block_number in range(2):
+    for block_number in range(5):
         block = Block.objects.get(_id=block_number)
         response_block = results[block_number]
         expected_block = json.loads(block.body)
@@ -65,7 +65,7 @@ def test_blocks_pagination(api_client):
     assert len(results) == 1
     assert results[0] == json.loads(Block.objects.get(_id=1).body)
 
-    response = api_client.get('/api/blocks/?limit=1&offset=3')
+    response = api_client.get('/api/blocks/?limit=1&offset=5')
     assert response.status_code == 200
     response_json = response.json()
     results = response_json.get('results')

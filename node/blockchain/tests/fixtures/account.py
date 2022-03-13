@@ -21,6 +21,14 @@ def primary_validator_key_pair() -> KeyPair:
 
 
 @pytest.fixture
+def confirmation_validator_key_pair() -> KeyPair:
+    return KeyPair(
+        public=AccountNumber('d171de280d593efc740e4854ee2d2bd658cd1deb967eb51a02b89c6e636f46e1'),
+        private=SigningKey('cd4c6388fcf3fe01ca5f2fcd902a6a5ed98a312674b3a330057742dcd95afd80'),
+    )
+
+
+@pytest.fixture
 def regular_node_key_pair() -> KeyPair:
     return KeyPair(
         public=AccountNumber('1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb'),

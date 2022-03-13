@@ -14,6 +14,10 @@ class BlockManager(CustomManager):
     def get_last_block(self):
         return self.order_by('-_id').first()
 
+    def get_next_block_number(self):
+        last_block = self.get_last_block()
+        return last_block._id + 1 if last_block else 0
+
 
 class Block(CustomModel):
     _id = models.PositiveBigIntegerField('Block number', primary_key=True)

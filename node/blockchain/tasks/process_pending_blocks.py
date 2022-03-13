@@ -1,8 +1,8 @@
 from celery import shared_task
 
 
-@shared_task(bind=True)
-def process_pending_blocks_task(self):
+@shared_task
+def process_pending_blocks_task():
     # TODO(dmu) CRITICAL: Process pending blocks. To be implemented in
     #                     https://thenewboston.atlassian.net/browse/BC-263
     pass

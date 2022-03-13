@@ -127,11 +127,11 @@ class BlockchainFacade:
     def get_last_block():
         return get_block_model().objects.get_last_block()
 
-    def get_next_block_number(self) -> int:
+    @staticmethod
+    def get_next_block_number() -> int:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
-        last_block = self.get_last_block()
-        return last_block._id + 1 if last_block else 0
+        return get_block_model().objects.get_next_block_number()
 
     def get_next_block_identifier(self) -> Optional[BlockIdentifier]:
         # TODO(dmu) HIGH: Implement method via write-through cache
@@ -239,7 +239,7 @@ class BlockchainFacade:
         """
         from node.blockchain.models import Schedule
 
-        schedule = Schedule.objects.filter(_id__lte=self.get_next_block_number()).order_by('-_id').first()
+        schedule = Schedule.objects.get_schedule_for_next_block()
         if not schedule:
             logger.warning('Schedule for the next block was not found')
             return None

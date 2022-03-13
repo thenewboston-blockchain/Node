@@ -166,7 +166,7 @@ def test_validate_nodes_are_declared(primary_validator_key_pair):
 @pytest.mark.usefixtures('rich_blockchain')
 def test_validate_block_numbers(schedule_keys, exception_match, primary_validator_node, self_node_key_pair):
     blockchain_facade = BlockchainFacade.get_instance()
-    assert blockchain_facade.get_next_block_number() == 3
+    assert blockchain_facade.get_next_block_number() == 5
 
     schedule = {k: primary_validator_node.identifier for k in schedule_keys}
 
