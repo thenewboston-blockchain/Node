@@ -14,6 +14,9 @@ class BlockManager(CustomManager):
     def get_last_block(self):
         return self.order_by('-_id').first()
 
+    def get_block_by_number(self, number):
+        return self.get_or_none(_id=number)
+
     def get_next_block_number(self):
         last_block = self.get_last_block()
         return last_block._id + 1 if last_block else 0

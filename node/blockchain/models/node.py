@@ -15,9 +15,14 @@ class NodeQuerySet(CustomQuerySet):
 
     def filter_by_roles(self, roles: Collection[NodeRole]):
         # self.annotate() does not work with Djongo
-        roles = set(roles or ())
-        if not roles or set(roles) == NODE_ROLES:
+        if not roles:
+            return self.none()
+
+        roles = set(roles)
+        if roles == NODE_ROLES:
             return self
+
+        assert not (roles - NODE_ROLES)
 
         from node.blockchain.models import Schedule
 

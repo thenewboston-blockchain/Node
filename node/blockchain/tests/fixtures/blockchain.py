@@ -25,9 +25,11 @@ def rich_blockchain(
     base_blockchain,
     primary_validator_key_pair,
     confirmation_validator_key_pair,
+    confirmation_validator_key_pair_2,
     regular_node_declaration_signed_change_request,
     self_node_declaration_signed_change_request,
     confirmation_validator_declaration_signed_change_request,
+    confirmation_validator_2_declaration_signed_change_request,
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -50,9 +52,16 @@ def rich_blockchain(
     )
 
     blockchain_facade.add_block_from_signed_change_request(
+        signed_change_request=confirmation_validator_2_declaration_signed_change_request,
+        signing_key=primary_validator_key_pair.private,
+        validate=False,
+    )
+
+    blockchain_facade.add_block_from_signed_change_request(
         signed_change_request=make_pv_schedule_update_signed_change_request({
             '0': primary_validator_key_pair.public,
             '10000': confirmation_validator_key_pair.public,
+            '20000': confirmation_validator_key_pair_2.public,
         }, primary_validator_key_pair),
         signing_key=primary_validator_key_pair.private,
         validate=False,
