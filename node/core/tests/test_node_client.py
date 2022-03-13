@@ -9,6 +9,9 @@ from node.blockchain.inner_models import Block
 from node.blockchain.inner_models import Node as InnerNode
 from node.blockchain.models import Block as ORMBlock
 from node.blockchain.models import Node as ORMNode
+from node.blockchain.models import PendingBlock
+from node.blockchain.tests.factories.block import make_block
+from node.blockchain.tests.factories.block_message.node_declaration import make_node_declaration_block_message
 from node.blockchain.tests.factories.node import make_node
 from node.core.utils.cryptography import get_node_identifier
 
@@ -85,6 +88,28 @@ def test_send_scr_to_node(
             timeout=2,
         ),
     ))
+
+
+@pytest.mark.usefixtures('base_blockchain', 'as_confirmation_validator')
+def test_send_block_to_address_integration(
+    test_server_address, primary_validator_key_pair, regular_node, regular_node_key_pair, smart_mocked_node_client
+):
+    assert not PendingBlock.objects.exists()
+
+    facade = BlockchainFacade.get_instance()
+    block_message = make_node_declaration_block_message(regular_node, regular_node_key_pair, facade)
+
+    assert facade.get_primary_validator().identifier == primary_validator_key_pair.public
+    block = make_block(block_message, primary_validator_key_pair.private)
+
+    with patch('node.blockchain.views.block.start_process_pending_blocks_task') as mock:
+        response = smart_mocked_node_client.send_block(test_server_address, block)
+
+    assert response.status_code == 204
+    mock.assert_called()
+    pending_block = PendingBlock.objects.get_or_none(number=block.get_block_number(), hash=block.make_hash())
+    assert pending_block
+    assert pending_block.body == block.json()
 
 
 @pytest.mark.django_db
