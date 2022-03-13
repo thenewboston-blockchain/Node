@@ -189,6 +189,11 @@ class NodeClient:
         #                enums to basic types in dict while still having enums in model instance representation
         return self.http_post(address, 'signed-change-requests', data=signed_change_request.json())
 
+    @with_node
+    def send_block(self, /, address: str, block: Block):
+        logger.debug('Sending %s to %s', block, address)
+        return self.http_post(address, 'blocks', data=block.json())
+
     def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
         for item in self.yield_resource(address, 'nodes', by_limit=LIST_NODES_LIMIT):
             yield Node.parse_obj(item)
