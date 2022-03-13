@@ -26,6 +26,13 @@ def self_node_declaration_signed_change_request(self_node, self_node_key_pair, d
 
 
 @pytest.fixture
+def confirmation_validator_declaration_signed_change_request(
+    confirmation_validator_node, confirmation_validator_key_pair, db
+):
+    return make_node_declaration_signed_change_request(confirmation_validator_node, confirmation_validator_key_pair)
+
+
+@pytest.fixture
 def node_declaration_block_message(
     node_declaration_signed_change_request_message, regular_node_key_pair, base_blockchain, db
 ):

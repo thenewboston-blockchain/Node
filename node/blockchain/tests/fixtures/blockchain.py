@@ -5,6 +5,9 @@ from node.blockchain.tests.factories.node import make_node
 from node.blockchain.tests.factories.signed_change_request.node_declaration import (
     make_node_declaration_signed_change_request
 )
+from node.blockchain.tests.factories.signed_change_request.pv_schedule_update import (
+    make_pv_schedule_update_signed_change_request
+)
 from node.core.utils.cryptography import generate_key_pair
 
 
@@ -21,8 +24,10 @@ def base_blockchain(genesis_block_message, primary_validator_key_pair, db):
 def rich_blockchain(
     base_blockchain,
     primary_validator_key_pair,
+    confirmation_validator_key_pair,
     regular_node_declaration_signed_change_request,
     self_node_declaration_signed_change_request,
+    confirmation_validator_declaration_signed_change_request,
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -37,6 +42,22 @@ def rich_blockchain(
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )
+
+    blockchain_facade.add_block_from_signed_change_request(
+        signed_change_request=confirmation_validator_declaration_signed_change_request,
+        signing_key=primary_validator_key_pair.private,
+        validate=False,
+    )
+
+    blockchain_facade.add_block_from_signed_change_request(
+        signed_change_request=make_pv_schedule_update_signed_change_request({
+            '0': primary_validator_key_pair.public,
+            '10000': confirmation_validator_key_pair.public,
+        }, primary_validator_key_pair),
+        signing_key=primary_validator_key_pair.private,
+        validate=False,
+    )
+
     # TODO(dmu) MEDIUM: Add more blocks as new block types are developed
 
 
