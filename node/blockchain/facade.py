@@ -141,7 +141,7 @@ class BlockchainFacade:
 
     @staticmethod
     def get_block_by_number(number) -> Block:
-        block = get_block_model().objects.get_block_by_number(_id=number)
+        block = get_block_model().objects.get_block_by_number(number)
         return block.get_block() if block else None
 
     @staticmethod
