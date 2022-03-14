@@ -44,8 +44,7 @@ class Block(ValidatableMixin, BlockType, HashableMixin):
         if cls == Block:  # only child classes signature validation makes sense
             return values
 
-        validate_signature_helper(values)
-        return values
+        return validate_signature_helper(values)
 
     def validate_business_logic(self):
         self.message.validate_business_logic()

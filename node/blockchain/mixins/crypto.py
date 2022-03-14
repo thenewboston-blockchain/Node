@@ -19,6 +19,8 @@ def validate_signature_helper(values: dict):
         # TODO(dmu) LOW: Pydantic does not recognize custom ValidationError. Fix?
         raise ValueError('Invalid signature')
 
+    return values
+
 
 class CryptoAuxiliaryMixin:
 
