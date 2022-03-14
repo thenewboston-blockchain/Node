@@ -137,10 +137,12 @@ class BlockchainFacade:
         # TODO(dmu) HIGH: Implement method via write-through cache
         #                 https://thenewboston.atlassian.net/browse/BC-175
         last_block = self.get_last_block()
-        if not last_block:
-            return None
+        return HashableStringWrapper(last_block.body).make_hash() if last_block else None
 
-        return HashableStringWrapper(last_block.body).make_hash()
+    @staticmethod
+    def get_block_by_number(number) -> Block:
+        block = get_block_model().objects.get_block_by_number(_id=number)
+        return block.get_block() if block else None
 
     @staticmethod
     def get_account_lock(account_number) -> AccountLock:
@@ -253,3 +255,8 @@ class BlockchainFacade:
             logger.warning('Primary validator %s is in PV schedule but not declared as a node', node_identifier)
 
         return node
+
+    @staticmethod
+    def yield_nodes(roles=None):
+        for node in ORMNode.objects.filter_by_roles(roles):
+            yield node.get_node()

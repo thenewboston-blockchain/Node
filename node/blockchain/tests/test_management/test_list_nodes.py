@@ -16,6 +16,10 @@ def test_list_nodes(test_server_address, force_smart_mocked_node_client):
         'fee': 4,
         'identifier': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb',
     }, {
+        'addresses': ['http://not-existing-confirmation-validator-2-address-674898923.com:8555/'],
+        'fee': 4,
+        'identifier': '5db9a262236cc148fd2adf841dbe0967e9bfe77e5e482dc7e0ef0c59d7fb56cf',
+    }, {
         'addresses': ['http://not-existing-self-address-674898923.com:8555/', test_server_address],
         'fee': 4,
         'identifier': get_node_identifier(),

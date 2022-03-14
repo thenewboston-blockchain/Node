@@ -17,7 +17,8 @@ from node.core.utils.collections import deep_update
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
 def test_coin_transfer_signed_change_request_as_primary_validator(
-    api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount, self_node
+    api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount, self_node,
+    start_send_new_block_task_mock
 ):
     facade = BlockchainFacade.get_instance()
     assert facade.get_next_block_number() == 1
@@ -53,6 +54,8 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
     assert account_state.balance == treasury_amount - total_amount
     assert account_state.node is None
     assert account_state.pk == treasury_account_key_pair.public
+
+    start_send_new_block_task_mock.assert_called_once_with(1)
 
 
 @pytest.mark.django_db
@@ -213,7 +216,7 @@ def test_validate_node_fee(fees, api_client, treasury_account_key_pair, self_nod
         account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
         txs=[
             CoinTransferTransaction(recipient=self_node.identifier, amount=100),
-            *[CoinTransferTransaction(recipient=self_node.identifier, amount=fee, is_fee=True) for fee in fees]
+            *(CoinTransferTransaction(recipient=self_node.identifier, amount=fee, is_fee=True) for fee in fees)
         ]
     )
     signed_change_request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(

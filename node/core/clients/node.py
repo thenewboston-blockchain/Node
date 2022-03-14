@@ -190,9 +190,9 @@ class NodeClient:
         return self.http_post(address, 'signed-change-requests', data=signed_change_request.json())
 
     @with_node
-    def send_block(self, /, address: str, block: Block):
+    def send_block(self, /, address: str, block: Union[Block, str]):
         logger.debug('Sending %s to %s', block, address)
-        return self.http_post(address, 'blocks', data=block.json())
+        return self.http_post(address, 'blocks', data=block.json() if isinstance(block, Block) else block)
 
     def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
         for item in self.yield_resource(address, 'nodes', by_limit=LIST_NODES_LIMIT):

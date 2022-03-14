@@ -15,7 +15,9 @@ from node.core.utils.collections import deep_update
 
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-def test_node_declaration_signed_change_request_as_primary_validator(api_client, regular_node, regular_node_key_pair):
+def test_node_declaration_signed_change_request_as_primary_validator(
+    api_client, regular_node, regular_node_key_pair, start_send_new_block_task_mock
+):
     blockchain_facade = BlockchainFacade.get_instance()
     assert blockchain_facade.get_next_block_number() == 1
     assert blockchain_facade.get_node_by_identifier(regular_node.identifier) is None
@@ -59,6 +61,8 @@ def test_node_declaration_signed_change_request_as_primary_validator(api_client,
     assert node.identifier == regular_node.identifier
     assert node.fee == regular_node.fee
     assert node.addresses == regular_node.addresses
+
+    start_send_new_block_task_mock.assert_called_once_with(1)
 
 
 @pytest.mark.django_db
