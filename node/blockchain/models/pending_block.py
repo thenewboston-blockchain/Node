@@ -7,7 +7,7 @@ from node.core.models import CustomModel
 
 class PendingBlock(CustomModel):
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)  # noqa: A003
+    _id = models.UUIDField(primary_key=True, default=uuid.uuid4)  # noqa: A003
     number = models.PositiveBigIntegerField()
     hash = models.CharField(max_length=128)  # noqa: A003
     body = models.BinaryField()
