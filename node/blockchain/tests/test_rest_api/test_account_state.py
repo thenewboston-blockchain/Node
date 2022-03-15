@@ -1,6 +1,8 @@
 import pytest
 
+from node.blockchain.constants import ACCOUNT_STATE_DETAILS_EXAMPLE
 from node.blockchain.models import AccountState
+from node.blockchain.tests.examples import save_response_as_example
 
 
 @pytest.mark.usefixtures('base_blockchain')
@@ -31,10 +33,12 @@ def test_not_found(api_client):
 
 
 @pytest.mark.usefixtures('base_blockchain')
-def test_retrieve_when_node_is_not_empty(primary_validator_node, api_client):
+@save_response_as_example(ACCOUNT_STATE_DETAILS_EXAMPLE)
+def test_retrieve_node(primary_validator_node, api_client):
     response = api_client.get(f'/api/account-states/{primary_validator_node.identifier}/')
     assert response.status_code == 200
-    assert response.json() == {
+    response_json = response.json()
+    assert response_json == {
         '_id': primary_validator_node.identifier,
         'balance': 0,
         'account_lock': primary_validator_node.identifier,
@@ -44,3 +48,4 @@ def test_retrieve_when_node_is_not_empty(primary_validator_node, api_client):
             'fee': primary_validator_node.fee
         }
     }
+    return response_json

@@ -15,6 +15,12 @@ API_SUPPORTED_TYPES = {item.value for item in Type if item not in API_UNSUPPORTE
 
 
 class SignedChangeRequestSerializer(serializers.Serializer, ValidateUnknownFieldsMixin):
+    """
+    Signed change request is a data update request. Next types are allowed:<br>
+    * Transfers of coins between accounts;<br>
+    * New nodes being added to the network.<br>
+    """
+
     signer = serializers.CharField()
     signature = serializers.CharField()
     message = PydanticModelBackedJSONField()

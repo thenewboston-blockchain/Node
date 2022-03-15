@@ -17,6 +17,7 @@ INSTALLED_APPS = [
 
     # 3rd party
     'rest_framework',
+    'drf_spectacular',
 
     # Apps
     'node.core',

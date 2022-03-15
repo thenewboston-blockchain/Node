@@ -53,6 +53,7 @@ nosetests.xml
 
 # pytest
 .pytest_cache
+node/blockchain/tests/examples/testing.json
 
 # mypy
 .mypy_cache
