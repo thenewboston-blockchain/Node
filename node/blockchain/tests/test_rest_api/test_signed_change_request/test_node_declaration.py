@@ -3,12 +3,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from node.blockchain.constants import SIGNED_CHANGE_REQUEST_NODE_DECLARATION_EXAMPLE
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import NodeDeclarationSignedChangeRequestMessage, SignedChangeRequest
 from node.blockchain.models.node import Node
 from node.blockchain.tests.base import as_role
-from node.blockchain.tests.examples import save_response_as_example
 from node.blockchain.tests.test_models.base import (
     CREATE, VALID, node_declaration_message_type_api_validation_parametrizer
 )
@@ -17,7 +15,6 @@ from node.core.utils.collections import deep_update
 
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-@save_response_as_example(SIGNED_CHANGE_REQUEST_NODE_DECLARATION_EXAMPLE)
 def test_node_declaration_signed_change_request_as_primary_validator(
     api_client, regular_node, regular_node_key_pair, start_send_new_block_task_mock
 ):
@@ -42,8 +39,7 @@ def test_node_declaration_signed_change_request_as_primary_validator(
     payload = signed_change_request.json()
     response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
     assert response.status_code == 201
-    response_json = response.json()
-    assert response_json == {
+    assert response.json() == {
         'message': {
             'account_lock': '1c8e5f54a15b63a9f3d540ce505fd0799575ffeaac62ce625c917e6d915ea8bb',
             'node': {
@@ -67,8 +63,6 @@ def test_node_declaration_signed_change_request_as_primary_validator(
     assert node.addresses == regular_node.addresses
 
     start_send_new_block_task_mock.assert_called_once_with(1)
-
-    return response_json
 
 
 @pytest.mark.django_db

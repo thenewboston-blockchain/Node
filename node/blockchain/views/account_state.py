@@ -1,6 +1,4 @@
 from django.http import Http404
-from drf_spectacular.plumbing import get_doc
-from drf_spectacular.utils import OpenApiExample, extend_schema
 from pydantic.errors import PydanticValueError
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet
@@ -9,21 +7,10 @@ from node.blockchain.models import AccountState
 from node.blockchain.serializers.account_state import AccountStateSerializer
 from node.blockchain.types import AccountNumber
 
-from ..constants import ACCOUNT_STATE_DETAILS_EXAMPLE
-from ..tests.examples import load_example
-
 
 class AccountStateViewSet(RetrieveModelMixin, GenericViewSet):
     serializer_class = AccountStateSerializer
     queryset = AccountStateSerializer.Meta.model.objects.all()
-
-    @extend_schema(
-        summary='Retrieve Account state by ID',
-        examples=[OpenApiExample('Retrieve Account state by ID', value=load_example(ACCOUNT_STATE_DETAILS_EXAMPLE))],
-        description=get_doc(AccountStateSerializer)
-    )
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
 
     def get_object(self):
         try:

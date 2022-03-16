@@ -6,10 +6,6 @@ from .node import NodeSerializer
 
 
 class AccountStateSerializer(serializers.ModelSerializer):
-    """
-    Account state, which defines a set of attributes about the current account state, such as account balance
-    (the amount of coins owned by an account). These attributes change over time.
-    """
 
     _id = serializers.CharField()
     balance = serializers.IntegerField()

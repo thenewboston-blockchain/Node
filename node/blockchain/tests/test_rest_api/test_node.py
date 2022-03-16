@@ -1,16 +1,11 @@
 import pytest
 
-from node.blockchain.constants import NODE_DETAILS_EXAMPLE, NODE_LIST_EXAMPLE
-from node.blockchain.tests.examples import save_response_as_example
-
 
 @pytest.mark.usefixtures('base_blockchain')
-@save_response_as_example(NODE_LIST_EXAMPLE)
 def test_list_nodes(primary_validator_node, api_client):
     response = api_client.get('/api/nodes/')
     assert response.status_code == 200
-    response_json = response.json()
-    assert response_json == {
+    assert response.json() == {
         'count':
             1,
         'results': [{
@@ -19,21 +14,17 @@ def test_list_nodes(primary_validator_node, api_client):
             'fee': primary_validator_node.fee
         }]
     }
-    return response_json
 
 
 @pytest.mark.usefixtures('base_blockchain')
-@save_response_as_example(NODE_DETAILS_EXAMPLE)
 def test_retrieve_node(primary_validator_node, api_client):
     response = api_client.get(f'/api/nodes/{primary_validator_node.identifier}/')
     assert response.status_code == 200
-    response_json = response.json()
-    assert response_json == {
+    assert response.json() == {
         'identifier': primary_validator_node.identifier,
         'addresses': primary_validator_node.addresses,
         'fee': primary_validator_node.fee
     }
-    return response_json
 
 
 @pytest.mark.django_db

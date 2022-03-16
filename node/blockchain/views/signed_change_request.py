@@ -1,17 +1,11 @@
 from django.http import HttpResponse
-from drf_spectacular.plumbing import get_doc
-from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from node.blockchain.constants import (
-    SIGNED_CHANGE_REQUEST_COIN_TRANSFER_EXAMPLE, SIGNED_CHANGE_REQUEST_NODE_DECLARATION_EXAMPLE
-)
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.serializers.signed_change_request import SignedChangeRequestSerializer
 from node.blockchain.tasks.send_new_block import start_send_new_block_task
-from node.blockchain.tests.examples import load_example
 from node.blockchain.types import NodeRole
 from node.core.clients.node import NodeClient
 from node.core.utils.cryptography import get_signing_key
@@ -21,14 +15,6 @@ from node.core.utils.misc import apply_on_commit
 class SignedChangeRequestViewSet(GenericViewSet):
     serializer_class = SignedChangeRequestSerializer
 
-    @extend_schema(
-        summary='Send Signed Change Request',
-        examples=[
-            OpenApiExample('Coin Transfer', value=load_example(SIGNED_CHANGE_REQUEST_COIN_TRANSFER_EXAMPLE)),
-            OpenApiExample('Node Declaration', value=load_example(SIGNED_CHANGE_REQUEST_NODE_DECLARATION_EXAMPLE)),
-        ],
-        description=get_doc(SignedChangeRequestSerializer)
-    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

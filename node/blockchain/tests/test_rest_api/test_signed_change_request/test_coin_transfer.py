@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from node.blockchain.constants import SIGNED_CHANGE_REQUEST_COIN_TRANSFER_EXAMPLE
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import (
     CoinTransferSignedChangeRequest, CoinTransferSignedChangeRequestMessage, SignedChangeRequest
@@ -11,14 +10,12 @@ from node.blockchain.inner_models import (
 from node.blockchain.inner_models.signed_change_request_message import CoinTransferTransaction
 from node.blockchain.models import AccountState
 from node.blockchain.tests.base import as_role
-from node.blockchain.tests.examples import save_response_as_example
 from node.blockchain.tests.test_models.base import CREATE, VALID, coin_transfer_message_type_validation_parametrizer
 from node.blockchain.types import NodeRole
 from node.core.utils.collections import deep_update
 
 
 @pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-@save_response_as_example(SIGNED_CHANGE_REQUEST_COIN_TRANSFER_EXAMPLE)
 def test_coin_transfer_signed_change_request_as_primary_validator(
     api_client, treasury_account_key_pair, treasure_coin_transfer_signed_change_request, treasury_amount, self_node,
     start_send_new_block_task_mock
@@ -29,8 +26,7 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
     payload = treasure_coin_transfer_signed_change_request.json()
     response = api_client.post('/api/signed-change-requests/', payload, content_type='application/json')
     assert response.status_code == 201
-    response_json = response.json()
-    assert response_json == {
+    assert response.json() == {
         'message': {
             'account_lock': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732',
             'txs': [{
@@ -60,8 +56,6 @@ def test_coin_transfer_signed_change_request_as_primary_validator(
     assert account_state.pk == treasury_account_key_pair.public
 
     start_send_new_block_task_mock.assert_called_once_with(1)
-
-    return response_json
 
 
 @pytest.mark.django_db

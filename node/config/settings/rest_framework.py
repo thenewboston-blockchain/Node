@@ -10,6 +10,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+# TODO(dmu) LOW: Do we really need reading from `pyproject.toml`?
 pyproject = toml.load(os.path.join(Path(__file__).parent.parent.parent.parent, 'pyproject.toml'))
 poetry_section = pyproject['tool']['poetry']
 SPECTACULAR_SETTINGS = {

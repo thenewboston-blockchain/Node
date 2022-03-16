@@ -11,14 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class BlockSerializer(serializers.ModelSerializer):
-    """
-    Block are structure that store data. These data describe changes to the network and originate
-    from signed change requests, such as:<br>
-    * Genesis;<br>
-    * Transfers of coins between accounts;<br>
-    * New nodes being added to the network;<br>
-    * Primary Validator Schedule Updates.
-    """
 
     signer = serializers.CharField(min_length=64, max_length=64, write_only=True)
     signature = serializers.CharField(min_length=128, max_length=128, write_only=True)

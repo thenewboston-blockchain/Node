@@ -3,13 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
-from node.blockchain.constants import (
-    BLOCK_DETAILS_COIN_TRANSFER_EXAMPLE, BLOCK_DETAILS_GENESIS_EXAMPLE, BLOCK_DETAILS_NODE_DECLARATION_EXAMPLE,
-    BLOCK_DETAILS_PV_SCHEDULE_UPDATE_EXAMPLE, BLOCK_LIST_EXAMPLE
-)
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.models import Block, PendingBlock
-from node.blockchain.tests.examples import save_example, save_response_as_example
 from node.blockchain.tests.factories.block import make_block
 from node.blockchain.tests.factories.block_message.node_declaration import make_node_declaration_block_message
 from node.blockchain.types import Type
@@ -54,17 +49,6 @@ def test_list_blocks_range(api_client):
 
 
 @pytest.mark.usefixtures('rich_blockchain')
-@save_response_as_example(BLOCK_LIST_EXAMPLE)
-def test_blocks_pagination_with_limit(api_client):
-    response = api_client.get('/api/blocks/?limit=2')
-    assert response.status_code == 200
-    response_json = response.json()
-    results = response_json.get('results')
-    assert len(results) == 2
-    return results
-
-
-@pytest.mark.usefixtures('rich_blockchain')
 def test_blocks_pagination(api_client):
     response = api_client.get('/api/blocks/?limit=1')
     assert response.status_code == 200
@@ -90,23 +74,9 @@ def test_blocks_pagination(api_client):
     assert len(results) == 0
 
 
-@pytest.mark.parametrize(
-    'type_, example_name', (
-        (Type.GENESIS, BLOCK_DETAILS_GENESIS_EXAMPLE),
-        (Type.COIN_TRANSFER, BLOCK_DETAILS_COIN_TRANSFER_EXAMPLE),
-        (Type.NODE_DECLARATION, BLOCK_DETAILS_NODE_DECLARATION_EXAMPLE),
-        (Type.PV_SCHEDULE_UPDATE, BLOCK_DETAILS_PV_SCHEDULE_UPDATE_EXAMPLE),
-    )
-)
 @pytest.mark.usefixtures('rich_blockchain')
-def test_list_blocks_blockchain_has_all_types(type_, example_name, smart_mocked_node_client, test_server_address):
-    blocks = list(smart_mocked_node_client.yield_blocks_dict(test_server_address))
-    for block in blocks:
-        if block['message']['type'] == type_.value:
-            save_example(example_name, block)
-            return
-
-    raise Exception(f"Rich Blockchain doesn't contain {type_} block to save it as '{example_name}' example")
+def test_list_blocks_blockchain_has_all_types():
+    assert {block.get_block().message.type for block in Block.objects.order_by('_id')} == set(Type)
 
 
 @pytest.mark.usefixtures('rich_blockchain')
