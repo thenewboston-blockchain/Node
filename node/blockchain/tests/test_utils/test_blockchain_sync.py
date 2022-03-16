@@ -16,7 +16,7 @@ def test_sync_with_node_mocked(self_node_declared, test_server_address):
     with patch('node.blockchain.utils.blockchain_sync.sync_with_address', return_value=iter(((1, 1),))) as mock:
         next(sync_with_node(self_node_declared))
 
-    mock.assert_called_once_with(test_server_address, to_block_number=5)
+    mock.assert_called_once_with(test_server_address, to_block_number=6)
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.models import Block, PendingBlock
 from node.blockchain.tests.factories.block import make_block
 from node.blockchain.tests.factories.block_message.node_declaration import make_node_declaration_block_message
+from node.blockchain.types import Type
 
 
 @pytest.mark.usefixtures('rich_blockchain')
@@ -65,12 +66,17 @@ def test_blocks_pagination(api_client):
     assert len(results) == 1
     assert results[0] == json.loads(Block.objects.get(_id=1).body)
 
-    response = api_client.get('/api/blocks/?limit=1&offset=6')
+    response = api_client.get('/api/blocks/?limit=1&offset=7')
     assert response.status_code == 200
     response_json = response.json()
     results = response_json.get('results')
     assert isinstance(results, list)
     assert len(results) == 0
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+def test_list_blocks_blockchain_has_all_types():
+    assert {block.get_block().message.type for block in Block.objects.order_by('_id')} == set(Type)
 
 
 @pytest.mark.usefixtures('rich_blockchain')

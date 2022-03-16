@@ -12,4 +12,4 @@ class BlockAdmin(admin.ModelAdmin):
 
 @admin.register(AccountState)
 class AccountStateAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('_id',)

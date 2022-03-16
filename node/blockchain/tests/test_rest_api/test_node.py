@@ -2,12 +2,6 @@ import pytest
 
 
 @pytest.mark.usefixtures('base_blockchain')
-def test_list_nodes_smoke(api_client):
-    response = api_client.get('/api/nodes/')
-    assert response.status_code == 200
-
-
-@pytest.mark.usefixtures('base_blockchain')
 def test_list_nodes(primary_validator_node, api_client):
     response = api_client.get('/api/nodes/')
     assert response.status_code == 200

@@ -120,7 +120,7 @@ def test_send_block_to_address_integration(
     (0, 0),
     (1, 1),
     (2, 2),
-    ('last', 5),
+    ('last', 6),
 ))
 def test_get_block_raw(test_server_address, smart_mocked_node_client, block_identifier, block_number):
     block = smart_mocked_node_client.get_block_raw(test_server_address, block_identifier)
@@ -188,8 +188,8 @@ def test_yield_nodes_pagination(
 @pytest.mark.django_db
 def test_yield_blocks(test_server_address, bloated_blockchain, smart_mocked_node_client):
     blocks = list(smart_mocked_node_client.yield_blocks_dict(test_server_address))
-    assert len(blocks) == 30
-    assert [block['message']['number'] for block in blocks] == list(range(30))
+    assert len(blocks) == 31
+    assert [block['message']['number'] for block in blocks] == list(range(31))
     block_objs = [Block.parse_obj(block) for block in blocks]
     assert block_objs == [block.get_block() for block in ORMBlock.objects.all().order_by('_id')]
 

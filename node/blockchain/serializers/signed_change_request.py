@@ -15,6 +15,7 @@ API_SUPPORTED_TYPES = {item.value for item in Type if item not in API_UNSUPPORTE
 
 
 class SignedChangeRequestSerializer(serializers.Serializer, ValidateUnknownFieldsMixin):
+
     signer = serializers.CharField()
     signature = serializers.CharField()
     message = PydanticModelBackedJSONField()

@@ -2,6 +2,9 @@ import pytest
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.tests.factories.node import make_node
+from node.blockchain.tests.factories.signed_change_request.coin_transfer import (
+    make_coin_transfer_signed_change_request
+)
 from node.blockchain.tests.factories.signed_change_request.node_declaration import (
     make_node_declaration_signed_change_request
 )
@@ -22,14 +25,10 @@ def base_blockchain(genesis_block_message, primary_validator_key_pair, db):
 
 @pytest.fixture
 def rich_blockchain(
-    base_blockchain,
-    primary_validator_key_pair,
-    confirmation_validator_key_pair,
-    confirmation_validator_key_pair_2,
-    regular_node_declaration_signed_change_request,
-    self_node_declaration_signed_change_request,
+    base_blockchain, primary_validator_key_pair, confirmation_validator_key_pair, confirmation_validator_key_pair_2,
+    regular_node_declaration_signed_change_request, self_node_declaration_signed_change_request,
     confirmation_validator_declaration_signed_change_request,
-    confirmation_validator_2_declaration_signed_change_request,
+    confirmation_validator_2_declaration_signed_change_request, treasury_account_key_pair, regular_node, self_node
 ):
     blockchain_facade = BlockchainFacade.get_instance()
 
@@ -63,6 +62,14 @@ def rich_blockchain(
             '10000': confirmation_validator_key_pair.public,
             '20000': confirmation_validator_key_pair_2.public,
         }, primary_validator_key_pair),
+        signing_key=primary_validator_key_pair.private,
+        validate=False,
+    )
+
+    blockchain_facade.add_block_from_signed_change_request(
+        signed_change_request=make_coin_transfer_signed_change_request(
+            treasury_account_key_pair, regular_node.identifier, self_node.identifier
+        ),
         signing_key=primary_validator_key_pair.private,
         validate=False,
     )

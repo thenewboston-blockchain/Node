@@ -6,6 +6,7 @@ from .node import NodeSerializer
 
 
 class AccountStateSerializer(serializers.ModelSerializer):
+
     _id = serializers.CharField()
     balance = serializers.IntegerField()
     account_lock = serializers.CharField()

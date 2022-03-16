@@ -63,7 +63,7 @@ def test_coin_transfer(
     _, output = out.getvalue().split('Response (raw):')
     assert json.loads(output) == {
         'message': {
-            'account_lock': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732',
+            'account_lock': '572795e9eb525f7c5ff601b001e8c13bac148b488fbe0142dfdaa6841148648d',
             'txs': [{
                 'amount': 100,
                 'is_fee': False,
@@ -78,8 +78,8 @@ def test_coin_transfer(
             'type': 2
         },
         'signature':
-            '628b293aeceec992d094c62f60f5031879b4893047f4c4ab158e506c04b916b0'
-            '489b5a750d3b1af7cfe9b99c03253424b483450bcafe1b1f608529cad012a502',
+            '07f11055cba3d968123d2312e7d46cf95ad18be057b5ba0c1cb3c72670e5bee5'
+            '70a7fbbb2f33ae4888a314d05142353d3472cf51ba5726aa12be01655bfbc906',
         'signer': '4d3cf1d9e4547d324de2084b568f807ef12045075a7a01b8bec1e7f013fc3732'
     }
 
@@ -92,10 +92,10 @@ def test_pv_schedule_update(
     out = StringIO()
     blockchain_facade = BlockchainFacade.get_instance()
 
-    assert blockchain_facade.get_next_block_number() == 6
+    assert blockchain_facade.get_next_block_number() == 7
 
     schedule = {
-        '6': primary_validator_key_pair.public,
+        '7': primary_validator_key_pair.public,
     }
     call_command(
         'add_signed_change_request', '3', 'local', self_node_key_pair.private, json.dumps(schedule), stdout=out

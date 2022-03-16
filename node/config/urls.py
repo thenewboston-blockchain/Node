@@ -16,12 +16,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 import node.blockchain.urls
 import node.web.urls
 
+API_PREFIX = 'api/'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(node.blockchain.urls)),
-    path('', include(node.web.urls))
+    path('', include(node.web.urls)),
+    path(API_PREFIX, include(node.blockchain.urls)),
+    path(API_PREFIX + 'schema/', SpectacularAPIView.as_view(), name='schema'),
+    path(API_PREFIX + 'docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]
