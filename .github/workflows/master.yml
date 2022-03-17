@@ -3,7 +3,7 @@ name: Continuous integration
 on:
   push:
     branches:
-      - master
+      - BC-274-second-node
 
 concurrency: master
 
@@ -111,11 +111,19 @@ jobs:
         if: ${{ env.CONTINUOUS_DEPLOYMENT_ENABLED == 'True' }}
         run: |
           mkdir -p ~/.ssh/
-          echo "$DEPLOY_SSH_KEY" > ~/.ssh/github
+          echo "$DEPLOY_SSH_KEY_1" > ~/.ssh/github
+          echo "$DEPLOY_SSH_KEY_2" >> ~/.ssh/github
           chmod 600 ~/.ssh/github
           cat >>~/.ssh/config <<END
-          Host target
-            HostName $DEPLOY_SSH_HOST
+          Host target_1
+            HostName $DEPLOY_SSH_HOST_1
+            User $DEPLOY_SSH_USER
+            IdentityFile ~/.ssh/github
+            LogLevel ERROR
+            StrictHostKeyChecking no
+          END
+          Host target_2
+            HostName $DEPLOY_SSH_HOST_2
             User $DEPLOY_SSH_USER
             IdentityFile ~/.ssh/github
             LogLevel ERROR
@@ -123,8 +131,10 @@ jobs:
           END
         env:
           CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
-          DEPLOY_SSH_KEY: ${{ secrets.NODE_DEPLOY_SSH_KEY }}
-          DEPLOY_SSH_HOST: ${{ secrets.NODE_DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_KEY_1: ${{ secrets.NODE_DEPLOY_SSH_KEY_1 }}
+          DEPLOY_SSH_KEY_2: ${{ secrets.NODE_DEPLOY_SSH_KEY_2 }}
+          DEPLOY_SSH_HOST_1: ${{ secrets.NODE_DEPLOY_SSH_HOST_1 }}
+          DEPLOY_SSH_HOST_2: ${{ secrets.NODE_DEPLOY_SSH_HOST_2 }}
           DEPLOY_SSH_USER: ${{ secrets.NODE_DEPLOY_SSH_USER }}
 
       - name: Run deploy
@@ -132,6 +142,6 @@ jobs:
         #                   https://github.com/actions/runner/issues/520#issuecomment-877193387
         if: ${{ env.CONTINUOUS_DEPLOYMENT_ENABLED == 'True' }}
         run: |
-          ssh target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} ${{ secrets.NODE_RUN_GENESIS }} && rm -f /tmp/deploy-node.sh"
+          for variables in "target_1 ${{ secrets.NODE_RUN_GENESIS }}" "target_2 False"; do vars=($variables) && target=${vars[0]} && node_run_genesis=${vars[1]} && ssh $target "docker system prune --all --volumes --force && wget https://raw.githubusercontent.com/thenewboston-developers/Node/master/scripts/deploy.sh -O /tmp/deploy-node.sh && chmod a+x /tmp/deploy-node.sh && /tmp/deploy-node.sh ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }} $node_run_genesis && rm -f /tmp/deploy-node.sh"; done
         env:
           CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
