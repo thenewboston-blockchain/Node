@@ -1,3 +1,4 @@
+import logging
 from itertools import groupby
 from operator import attrgetter
 
@@ -8,6 +9,9 @@ from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.models import BlockConfirmation, PendingBlock
 from node.blockchain.utils.lock import lock
+from node.core.exceptions import ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 @lock(BLOCK_LOCK)
@@ -15,23 +19,42 @@ def process_next_block():
     facade = BlockchainFacade.get_instance()
     next_block_number = facade.get_next_block_number()
     cv_identifiers = facade.get_confirmation_validator_identifiers()
-    confirmations = BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers)
-    grouped_confirmations = groupby(confirmations.order_by('hash'), key=attrgetter('hash'))
+
+    # Query only confirmations for the next block number and received from confirmation validators
+    all_confirmations = BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers)
+
+    # Group confirmations by hash to see which hash wins the consensus
+    grouped_confirmations = groupby(all_confirmations.order_by('hash'), key=attrgetter('hash'))
     minimum_consensus = facade.get_minimum_consensus()
 
-    finalizable_hashes = [
-        hash_ for hash_, _confirmations in grouped_confirmations if len(list(_confirmations)) >= minimum_consensus
-    ]
+    finalizable_hashes = [(hash_, confirmations)
+                          for hash_, confirmations in grouped_confirmations
+                          if len(list(confirmations)) >= minimum_consensus]
 
     if not finalizable_hashes:
-        return False
+        return False  # No consensus, yet
 
     if len(finalizable_hashes) >= 2:
         # We should never get here
         raise ValueError('More than one finalizable hash found')
 
     assert len(finalizable_hashes) == 1
-    hash_ = finalizable_hashes[0]
+    hash_, consensus_confirmations = finalizable_hashes[0]
+
+    # Validate confirmations, since they may have not been validated on API call because some of them were added
+    # much earlier then the next block number become equal to confirmation block number
+    valid_confirmations = []
+    for confirmation in consensus_confirmations:
+        try:
+            confirmation.validate_all()
+        except ValidationError:
+            logger.warning('Invalid confirmation detected: %s', confirmation)
+            continue
+
+        valid_confirmations.append(confirmation)
+
+    if len(valid_confirmations) < minimum_consensus:  # Check that we still have consensus after validation
+        return False
 
     pending_block = PendingBlock.objects.get_or_none(number=next_block_number, hash=hash_)
     if pending_block is None:
