@@ -14,8 +14,8 @@ class BlockConfirmation(CustomModel):
     body = models.BinaryField()
 
     class Meta:
-        unique_together = ('number', 'hash', 'signer')
+        unique_together = ('number', 'signer')
         ordering = unique_together
 
     def __str__(self):
-        return f'block_number={self.number}, hash={self.hash}, signer={self.signer}'
+        return f'block_number={self.number}, signer={self.signer}, hash={self.hash}'
