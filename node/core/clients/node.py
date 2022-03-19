@@ -6,7 +6,7 @@ from urllib.parse import urlencode, urljoin
 
 import requests
 
-from node.blockchain.inner_models import AccountState, Block, Node, SignedChangeRequest
+from node.blockchain.inner_models import AccountState, Block, BlockConfirmation, Node, SignedChangeRequest
 from node.blockchain.types import AccountNumber
 
 logger = logging.getLogger(__name__)
@@ -193,6 +193,11 @@ class NodeClient:
     def send_block(self, /, address: str, block: Union[Block, str]):
         logger.debug('Sending %s to %s', block, address)
         return self.http_post(address, 'blocks', data=block.json() if isinstance(block, Block) else block)
+
+    @with_node
+    def send_block_confirmation(self, /, address: str, block_confirmation: BlockConfirmation):
+        logger.debug('Sending %s to %s', block_confirmation, address)
+        return self.http_post(address, 'block-confirmations', data=block_confirmation.json())
 
     def yield_nodes(self, /, address: str) -> Generator[Node, None, None]:
         for item in self.yield_resource(address, 'nodes', by_limit=LIST_NODES_LIMIT):
