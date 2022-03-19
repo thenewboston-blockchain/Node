@@ -260,3 +260,11 @@ class BlockchainFacade:
     def yield_nodes(roles=None):
         for node in ORMNode.objects.filter_by_roles(roles):
             yield node.get_node()
+
+    @staticmethod
+    def get_confirmation_validator_identifiers():
+        return ORMNode.objects.filter_by_roles((NodeRole.CONFIRMATION_VALIDATOR,)).values_list('_id', flat=True)
+
+    @staticmethod
+    def is_confirmation_validator(identifier):
+        return ORMNode.objects.is_confirmation_validator(identifier)

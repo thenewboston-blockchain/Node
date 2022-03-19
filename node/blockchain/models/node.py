@@ -58,6 +58,9 @@ class NodeManager(DjongoManager.from_queryset(NodeQuerySet)):  # type: ignore
     def get_queryset(self):
         return super().get_queryset().filter(node__isnull=False)
 
+    def is_confirmation_validator(self, identifier):
+        return self.filter_by_roles((NodeRole.CONFIRMATION_VALIDATOR,)).filter(_id=identifier).exists()
+
 
 class Node(AccountState):
 

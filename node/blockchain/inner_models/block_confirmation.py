@@ -6,7 +6,7 @@ from node.core.exceptions import ValidationError
 from node.core.utils.cryptography import derive_public_key
 from node.core.utils.types import non_negative_int
 
-from ..types import AccountNumber, Hash, NodeRole, Signature
+from ..types import AccountNumber, Hash, Signature
 from .base import BaseModel
 
 
@@ -42,8 +42,7 @@ class BlockConfirmation(ValidatableMixin, BaseModel):
         if not blockchain_facade.has_blocks():
             return
 
-        cv_identifiers = (node.identifier for node in blockchain_facade.yield_nodes({NodeRole.CONFIRMATION_VALIDATOR}))
-        if self.signer not in cv_identifiers:
+        if not blockchain_facade.is_confirmation_validator(self.signer):
             raise ValidationError('Invalid block signer')
 
     def validate_business_logic(self):
