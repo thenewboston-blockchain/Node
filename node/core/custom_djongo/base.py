@@ -68,6 +68,7 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
         super()._close()
 
     def _rollback(self):
+        logger.debug('Rolling back...')
         if self.is_autocommit:
             self.on_rollback_callables.clear()
             return
@@ -80,6 +81,7 @@ class DatabaseWrapper(DjongoDatabaseWrapper):
             on_rollback_callables.popleft()()
 
     def _commit(self):
+        logger.debug('Committing...')
         if self.is_autocommit:
             self.on_rollback_callables.clear()
             return
