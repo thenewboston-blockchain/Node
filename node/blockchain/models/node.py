@@ -52,6 +52,9 @@ class NodeQuerySet(CustomQuerySet):
 
         raise AssertionError('Should have exited on previous shortcut guard condition')
 
+    def filter_confirmation_validators(self):
+        return self.filter_by_roles((NodeRole.CONFIRMATION_VALIDATOR,))
+
 
 class NodeManager(DjongoManager.from_queryset(NodeQuerySet)):  # type: ignore
 

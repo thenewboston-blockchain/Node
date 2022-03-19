@@ -17,7 +17,7 @@ def process_next_block():
     cv_identifiers = facade.get_confirmation_validator_identifiers()
     confirmations = BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers)
     grouped_confirmations = groupby(confirmations.order_by('hash'), key=attrgetter('hash'))
-    minimum_consensus = len(cv_identifiers) * 2 / 3
+    minimum_consensus = facade.get_minimum_consensus()
 
     finalizable_hashes = [
         hash_ for hash_, _confirmations in grouped_confirmations if len(list(_confirmations)) >= minimum_consensus
