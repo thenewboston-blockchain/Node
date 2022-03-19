@@ -1,4 +1,5 @@
 import logging
+import math
 from typing import TYPE_CHECKING, Optional, Type, TypeVar  # noqa: I101
 
 from node.blockchain.constants import BLOCK_LOCK
@@ -263,8 +264,12 @@ class BlockchainFacade:
 
     @staticmethod
     def get_confirmation_validator_identifiers():
-        return ORMNode.objects.filter_by_roles((NodeRole.CONFIRMATION_VALIDATOR,)).values_list('_id', flat=True)
+        return ORMNode.objects.filter_confirmation_validators().values_list('_id', flat=True)
 
     @staticmethod
     def is_confirmation_validator(identifier):
         return ORMNode.objects.is_confirmation_validator(identifier)
+
+    @staticmethod
+    def get_minimum_consensus():
+        return int(math.ceil(ORMNode.objects.filter_confirmation_validators().count() * 2 / 3))

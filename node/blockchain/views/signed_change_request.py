@@ -30,7 +30,7 @@ class SignedChangeRequestViewSet(GenericViewSet):
             #                 of validators instead of the list existed before the block (fix it)
             #                 https://thenewboston.atlassian.net/browse/BC-268
             block_number = block.get_block_number()  # it is important to put block number to a variable first
-            apply_on_commit(lambda: start_send_new_block_task(block_number))
+            apply_on_commit(lambda block_number_=block_number: start_send_new_block_task(block_number_))
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         pv_node = blockchain_facade.get_primary_validator()
