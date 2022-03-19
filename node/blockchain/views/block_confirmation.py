@@ -21,9 +21,15 @@ class BlockConfirmationViewSet(GenericViewSet):
 
         ORMBlockConfirmation.objects.update_or_create(
             number=block_confirmation.get_number(),
-            hash=block_confirmation.get_hash(),
             signer=block_confirmation.signer,
-            body=block_confirmation.json(),  # TODO(dmu) LOW: Pick request body as is instead
+            defaults={
+                'hash': block_confirmation.get_hash(),
+                'body': block_confirmation.json(),  # TODO(dmu) LOW: Pick request body AS IS instead
+            },
         )
+
+        # TODO(dmu) CRITICAL: https://thenewboston.atlassian.net/browse/BC-272
+        # if next block number and we have enough confirmations then run a celery task
+        # to add the block to the blockchain
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
