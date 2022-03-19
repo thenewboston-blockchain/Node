@@ -5,9 +5,10 @@ import pytest
 from requests.exceptions import HTTPError
 
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import Block
+from node.blockchain.inner_models import Block, BlockConfirmation
 from node.blockchain.inner_models import Node as InnerNode
 from node.blockchain.models import Block as ORMBlock
+from node.blockchain.models import BlockConfirmation as ORMBlockConfirmation
 from node.blockchain.models import Node as ORMNode
 from node.blockchain.models import PendingBlock
 from node.blockchain.tests.factories.block import make_block
@@ -112,6 +113,28 @@ def test_send_block_to_address_integration(
         assert pending_block
         assert pending_block.body == block.json()
         PendingBlock.objects.all().delete()
+
+
+@pytest.mark.usefixtures('rich_blockchain', 'as_confirmation_validator')
+def test_send_confirmation_to_cv(test_server_address, confirmation_validator_key_pair_2, smart_mocked_node_client):
+    assert not ORMBlockConfirmation.objects.exists()
+
+    facade = BlockchainFacade.get_instance()
+    assert facade.get_next_block_number() >= 4
+    block = facade.get_block_by_number(4)
+
+    hash_ = block.make_hash()
+    block_confirmation = BlockConfirmation.create(
+        block.get_block_number(), hash_, confirmation_validator_key_pair_2.private
+    )
+    payload = block_confirmation.json()
+    response = smart_mocked_node_client.send_block_confirmation(test_server_address, block_confirmation)
+
+    assert response.status_code == 201
+    confirmation_orm = ORMBlockConfirmation.objects.get_or_none(number=block_confirmation.get_number(), hash=hash_)
+    assert confirmation_orm
+    assert confirmation_orm.signer == confirmation_validator_key_pair_2.public
+    assert confirmation_orm.body == payload
 
 
 @pytest.mark.django_db
