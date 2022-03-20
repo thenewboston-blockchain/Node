@@ -23,14 +23,18 @@ def get_next_block_confirmations(next_block_number) -> list[BlockConfirmation]:
     return list(BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers))
 
 
-def get_consensus_block_hash_with_confirmations(confirmations,
-                                                minimum_consensus) -> Optional[tuple[Hash, list[BlockConfirmation]]]:
+def get_consensus_block_hash_with_confirmations(
+    confirmations: list[BlockConfirmation], minimum_consensus: int
+) -> Optional[tuple[Hash, list[BlockConfirmation]]]:
+
+    assert len(set(confirmation.number for confirmation in confirmations)) <= 1
+
     key_func = attrgetter('hash')
-    grouped_confirmations = [(Hash(hash_), list(confirmations))
-                             for hash_, confirmations in groupby(sorted(confirmations, key=key_func), key=key_func)]
-    finalizable_hashes = [(hash_, confirmations)
-                          for hash_, confirmations in grouped_confirmations
-                          if len(confirmations) >= minimum_consensus]
+    grouped_confirmations = [(Hash(hash_), list(confirmations_))
+                             for hash_, confirmations_ in groupby(sorted(confirmations, key=key_func), key=key_func)]
+    finalizable_hashes = [(hash_, confirmations_)
+                          for hash_, confirmations_ in grouped_confirmations
+                          if len(confirmations_) >= minimum_consensus]
 
     if not finalizable_hashes:
         return None  # No consensus, yet
@@ -44,7 +48,7 @@ def get_consensus_block_hash_with_confirmations(confirmations,
     return block_hash, consensus_confirmations
 
 
-def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus):
+def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus: int):
     # Validate confirmations, since they may have not been validated on API call because some of them were added
     # much earlier then the next block number become equal to confirmation block number
     assert len(set(confirmation.signer for confirmation in confirmations)) == len(confirmations)
