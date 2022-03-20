@@ -45,8 +45,13 @@ class BlockConfirmation(ValidatableMixin, BaseModel):
         if not blockchain_facade.is_confirmation_validator(self.signer):
             raise ValidationError('Invalid block signer')
 
+    def validate_number(self, blockchain_facade):
+        if blockchain_facade.get_next_block_number() != self.get_number():
+            raise ValidationError('Invalid block number')
+
     def validate_business_logic(self):
         pass
 
     def validate_blockchain_state_dependent(self, blockchain_facade):
         self.validate_signer(blockchain_facade)
+        self.validate_number(blockchain_facade)
