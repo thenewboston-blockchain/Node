@@ -3,9 +3,11 @@ from unittest.mock import patch
 import pytest
 from model_bakery import baker
 
-from node.blockchain.models import Node
+from node.blockchain.facade import BlockchainFacade
+from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
+from node.blockchain.models import BlockConfirmation, Node
 from node.blockchain.tasks.process_block_confirmations import (
-    get_consensus_block_hash_with_confirmations, get_next_block_confirmations
+    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus
 )
 from node.blockchain.types import NodeRole
 
@@ -43,3 +45,21 @@ def test_get_consensus_block_hash_with_confirmations():
 
     result = get_consensus_block_hash_with_confirmations(confirmations, 3)
     assert result is None
+
+
+@pytest.mark.parametrize('delta, is_valid', ((0, True), (1, False)))
+@pytest.mark.django_db
+def test_is_valid_consensus(delta, is_valid):
+    block_number = BlockchainFacade.get_instance().get_next_block_number()
+    bc0 = BlockConfirmation.objects.create_from_block_confirmation(
+        PydanticBlockConfirmation.create(number=block_number + delta, hash_='a' * 64, signing_key='0' * 64)
+    )
+    bc1 = BlockConfirmation.objects.create_from_block_confirmation(
+        PydanticBlockConfirmation.create(number=block_number + delta, hash_='a' * 64, signing_key='1' * 64)
+    )
+    bc2 = BlockConfirmation.objects.create_from_block_confirmation(
+        PydanticBlockConfirmation.create(number=block_number + delta, hash_='a' * 64, signing_key='2' * 64)
+    )
+
+    confirmations = [bc0, bc1, bc2]
+    assert is_valid_consensus(confirmations, 2) == is_valid

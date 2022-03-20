@@ -25,14 +25,7 @@ class BlockConfirmationViewSet(GenericViewSet):
         else:
             block_confirmation.validate_business_logic()
 
-        ORMBlockConfirmation.objects.update_or_create(
-            number=block_confirmation.get_number(),
-            signer=block_confirmation.signer,
-            defaults={
-                'hash': block_confirmation.get_hash(),
-                'body': block_confirmation.json(),  # TODO(dmu) LOW: Pick request body AS IS instead
-            },
-        )
+        ORMBlockConfirmation.objects.update_or_create_from_block_confirmation(block_confirmation)
 
         if is_next_block_number and (
             ORMBlockConfirmation.objects.filter(number=next_block_number).count() >= facade.get_minimum_consensus()
