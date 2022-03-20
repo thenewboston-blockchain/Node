@@ -8,7 +8,6 @@ from django.db import transaction
 
 from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.facade import BlockchainFacade
-from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
 from node.blockchain.mixins.crypto import HashableStringWrapper
 from node.blockchain.models import BlockConfirmation, PendingBlock
 from node.blockchain.types import Hash
@@ -18,19 +17,20 @@ from node.core.exceptions import ValidationError
 logger = logging.getLogger(__name__)
 
 
-def get_consensus_block_hash_with_confirmations(
-    facade, next_block_number, minimum_consensus
-) -> Optional[tuple[Hash, list[PydanticBlockConfirmation]]]:
+def get_next_block_confirmations(next_block_number) -> list[BlockConfirmation]:
+    facade = BlockchainFacade.get_instance()
     cv_identifiers = facade.get_confirmation_validator_identifiers()
+    return list(BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers))
 
-    # Query only confirmations for the next block number and received from confirmation validators
-    all_confirmations = BlockConfirmation.objects.filter(number=next_block_number, signer__in=cv_identifiers)
 
-    # Group confirmations by hash to see which hash wins the consensus
-    grouped_confirmations = groupby(all_confirmations.order_by('hash'), key=attrgetter('hash'))
+def get_consensus_block_hash_with_confirmations(confirmations,
+                                                minimum_consensus) -> Optional[tuple[Hash, list[BlockConfirmation]]]:
+    key_func = attrgetter('hash')
+    grouped_confirmations = [(Hash(hash_), list(confirmations))
+                             for hash_, confirmations in groupby(sorted(confirmations, key=key_func), key=key_func)]
     finalizable_hashes = [(hash_, confirmations)
                           for hash_, confirmations in grouped_confirmations
-                          if len(list(confirmations)) >= minimum_consensus]
+                          if len(confirmations) >= minimum_consensus]
 
     if not finalizable_hashes:
         return None  # No consensus, yet
@@ -40,36 +40,43 @@ def get_consensus_block_hash_with_confirmations(
 
     assert len(finalizable_hashes) == 1
     block_hash, consensus_confirmations = finalizable_hashes[0]
-    return block_hash, [confirmation.get_block_confirmation() for confirmation in consensus_confirmations]
+    assert len(set(confirmation.signer for confirmation in consensus_confirmations)) == len(consensus_confirmations)
+    return block_hash, consensus_confirmations
 
 
-def is_valid_consensus(facade, confirmations, minimum_consensus):
+def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus):
     # Validate confirmations, since they may have not been validated on API call because some of them were added
     # much earlier then the next block number become equal to confirmation block number
-    valid_confirmations = []
+    assert len(set(confirmation.signer for confirmation in confirmations)) == len(confirmations)
+    facade = BlockchainFacade.get_instance()
+
+    confirmations_left = minimum_consensus
     for confirmation in confirmations:
         try:
-            confirmation.validate_all(facade)
+            confirmation.get_block_confirmation().validate_all(facade)
         except ValidationError:
             logger.warning('Invalid confirmation detected: %s', confirmation)
             continue
 
-        valid_confirmations.append(confirmation)
+        confirmations_left -= 1
+        if confirmations_left <= 0:
+            return True
 
-    return len(valid_confirmations) >= minimum_consensus
+    return False
 
 
 @lock(BLOCK_LOCK)
 def process_next_block():
     facade = BlockchainFacade.get_instance()
     next_block_number = facade.get_next_block_number()
-    minimum_consensus = facade.get_minimum_consensus()
+    confirmations = get_next_block_confirmations(next_block_number)
 
-    if not (result := get_consensus_block_hash_with_confirmations(facade, next_block_number, minimum_consensus)):
+    minimum_consensus = facade.get_minimum_consensus()
+    if not (result := get_consensus_block_hash_with_confirmations(confirmations, minimum_consensus)):
         return False
 
     block_hash, confirmations = result
-    if not is_valid_consensus(facade, confirmations, minimum_consensus):
+    if not is_valid_consensus(confirmations, minimum_consensus):
         return False
 
     pending_block = PendingBlock.objects.get_or_none(number=next_block_number, hash=block_hash)

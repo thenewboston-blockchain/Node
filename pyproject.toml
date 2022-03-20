@@ -25,6 +25,7 @@ colorlog = "^6.6.0"
 celery = "^5.2.3"
 sentry-sdk = "^1.5.6"
 drf-spectacular = "^0.21.2"
+model-bakery = "^1.4.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.15.0"
