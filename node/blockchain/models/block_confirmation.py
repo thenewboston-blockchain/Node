@@ -2,6 +2,7 @@ import uuid
 
 from djongo import models
 
+from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
 from node.core.models import CustomModel
 
 
@@ -16,6 +17,9 @@ class BlockConfirmation(CustomModel):
     class Meta:
         unique_together = ('number', 'signer')
         ordering = unique_together
+
+    def get_block_confirmation(self) -> PydanticBlockConfirmation:
+        return PydanticBlockConfirmation.parse_raw(self.body)
 
     def __str__(self):
         return f'block_number={self.number}, signer={self.signer}, hash={self.hash}'
