@@ -5,9 +5,10 @@ from model_bakery import baker
 
 from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
-from node.blockchain.models import BlockConfirmation, Node
+from node.blockchain.models import BlockConfirmation, Node, PendingBlock
 from node.blockchain.tasks.process_block_confirmations import (
-    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus, process_next_block
+    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus,
+    process_block_confirmations_task, process_next_block
 )
 from node.blockchain.types import NodeRole
 
@@ -101,5 +102,53 @@ def test_process_next_block_adds_new_block(pending_block):
     assert block.get_block_number() == block_number
 
     assert process_next_block()
+    assert facade.get_next_block_number() == block_number + 1
+    assert facade.get_last_block().get_block() == block
+
+
+def test_process_block_confirmations_task():
+    with patch(
+        'node.blockchain.tasks.process_block_confirmations.process_next_block', side_effect=[True, True, False]
+    ) as mock:
+        process_block_confirmations_task()
+
+    assert mock.call_count == 3
+
+
+@pytest.mark.usefixtures('rich_blockchain', 'as_confirmation_validator')
+def test_process_block_confirmations_integration(
+    next_block, self_node_key_pair, confirmation_validator_key_pair, confirmation_validator_key_pair_2, api_client
+):
+    facade = BlockchainFacade.get_instance()
+    block_number = facade.get_next_block_number()
+
+    # Create pending block via API
+    assert not PendingBlock.objects.exists()
+
+    facade = BlockchainFacade.get_instance()
+    block = next_block
+    assert facade.get_primary_validator().identifier == block.signer
+
+    payload = block.json()
+    response = api_client.post('/api/blocks/', payload, content_type='application/json')
+    assert response.status_code == 204
+
+    pending_block = PendingBlock.objects.get_or_none(number=block.get_block_number(), hash=block.make_hash())
+    assert pending_block
+    assert pending_block.body == payload
+
+    # TODO(dmu) CRITICAL: Remove artificial own confirmation
+    #                     https://thenewboston.atlassian.net/browse/BC-263
+    confirmation = PydanticBlockConfirmation.create_from_block(block, self_node_key_pair.private)
+    BlockConfirmation.objects.create_from_block_confirmation(confirmation)
+
+    # Create confirmations from other CVs
+    for private_key in (confirmation_validator_key_pair.private, confirmation_validator_key_pair_2.private):
+        confirmation = PydanticBlockConfirmation.create_from_block(block, private_key)
+        payload = confirmation.json()
+        response = api_client.post('/api/block-confirmations/', payload, content_type='application/json')
+        assert response.status_code == 201
+
+    # Assert that block was added to the blockchain
     assert facade.get_next_block_number() == block_number + 1
     assert facade.get_last_block().get_block() == block
