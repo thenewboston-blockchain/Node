@@ -2,6 +2,7 @@ import uuid
 
 from djongo import models
 
+from node.blockchain.inner_models import Block as PydanticBlock
 from node.core.models import CustomModel
 
 
@@ -11,6 +12,9 @@ class PendingBlock(CustomModel):
     number = models.PositiveBigIntegerField()
     hash = models.CharField(max_length=128)  # noqa: A003
     body = models.BinaryField()
+
+    def get_block(self) -> PydanticBlock:
+        return PydanticBlock.parse_raw(self.body)
 
     class Meta:
         unique_together = ('number', 'hash')
