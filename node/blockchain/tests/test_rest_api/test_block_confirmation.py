@@ -9,12 +9,11 @@ from node.blockchain.models.block_confirmation import BlockConfirmation as ORMBl
 
 
 @pytest.mark.usefixtures('rich_blockchain', 'as_confirmation_validator')
-def test_send_confirmation_to_cv(confirmation_validator_key_pair_2, api_client):
+def test_send_confirmation_to_cv(next_block, confirmation_validator_key_pair_2, api_client):
     assert not ORMBlockConfirmation.objects.exists()
 
-    facade = BlockchainFacade.get_instance()
-    assert facade.get_next_block_number() >= 4
-    block = facade.get_block_by_number(4)
+    block = next_block
+    assert BlockchainFacade.get_instance().get_next_block_number() >= block.get_block_number()
 
     hash_ = block.make_hash()
     block_confirmation = BlockConfirmation.create(

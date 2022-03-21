@@ -6,10 +6,8 @@ from node.blockchain.types import NodeRole
 from node.core.utils.cryptography import get_node_identifier
 
 
-@contextmanager
-def as_role(node_role: NodeRole):
+def make_node_as_role(node_identifier, node_role):
     next_block_number = BlockchainFacade.get_instance().get_next_block_number()
-    node_identifier = get_node_identifier()
     if node_role == NodeRole.PRIMARY_VALIDATOR:
         Schedule.objects.update_or_create(_id=next_block_number, defaults={'node_identifier': node_identifier})
     elif node_role == NodeRole.CONFIRMATION_VALIDATOR:
@@ -20,4 +18,8 @@ def as_role(node_role: NodeRole):
         assert node_role == NodeRole.REGULAR_NODE
         Schedule.objects.filter(node_identifier=node_identifier).delete()
 
+
+@contextmanager
+def as_role(node_role: NodeRole):
+    make_node_as_role(get_node_identifier(), node_role)
     yield

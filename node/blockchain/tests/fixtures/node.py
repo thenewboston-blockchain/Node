@@ -38,6 +38,14 @@ def confirmation_validator_node_2(confirmation_validator_key_pair_2):
 
 
 @pytest.fixture
+def confirmation_validator_node_3(confirmation_validator_key_pair_3):
+    return make_node(
+        confirmation_validator_key_pair_3,
+        ['http://not-existing-confirmation-validator-3-address-674898923.com:8555/']
+    )
+
+
+@pytest.fixture
 def self_node(self_node_key_pair, test_server_address):
     return make_node(self_node_key_pair, ['http://not-existing-self-address-674898923.com:8555/', test_server_address])
 

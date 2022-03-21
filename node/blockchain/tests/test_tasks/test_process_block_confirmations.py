@@ -10,6 +10,7 @@ from node.blockchain.tasks.process_block_confirmations import (
     get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus,
     process_block_confirmations_task, process_next_block
 )
+from node.blockchain.tests.base import make_node_as_role
 from node.blockchain.types import NodeRole
 
 
@@ -117,8 +118,11 @@ def test_process_block_confirmations_task():
 
 @pytest.mark.usefixtures('rich_blockchain', 'as_confirmation_validator')
 def test_process_block_confirmations_integration(
-    next_block, self_node_key_pair, confirmation_validator_key_pair, confirmation_validator_key_pair_2, api_client
+    next_block, self_node_key_pair, confirmation_validator_key_pair, confirmation_validator_key_pair_2,
+    confirmation_validator_key_pair_3, api_client
 ):
+    make_node_as_role(confirmation_validator_key_pair_3.public, NodeRole.CONFIRMATION_VALIDATOR)
+
     facade = BlockchainFacade.get_instance()
     block_number = facade.get_next_block_number()
 
@@ -137,17 +141,34 @@ def test_process_block_confirmations_integration(
     assert pending_block
     assert pending_block.body == payload
 
+    assert not BlockConfirmation.objects.all().exists()
     # TODO(dmu) CRITICAL: Remove artificial own confirmation
     #                     https://thenewboston.atlassian.net/browse/BC-263
     confirmation = PydanticBlockConfirmation.create_from_block(block, self_node_key_pair.private)
     BlockConfirmation.objects.create_from_block_confirmation(confirmation)
+    assert BlockConfirmation.objects.all().exists()
 
     # Create confirmations from other CVs
-    for private_key in (confirmation_validator_key_pair.private, confirmation_validator_key_pair_2.private):
+    counter = 1
+    cv_keys = (
+        confirmation_validator_key_pair.private, confirmation_validator_key_pair_2.private,
+        confirmation_validator_key_pair_3.private
+    )
+    for private_key in cv_keys:
         confirmation = PydanticBlockConfirmation.create_from_block(block, private_key)
         payload = confirmation.json()
         response = api_client.post('/api/block-confirmations/', payload, content_type='application/json')
-        assert response.status_code == 201
+
+        counter += 1
+        if counter < 3:
+            assert response.status_code == 201
+            assert BlockConfirmation.objects.all().exists()
+        elif counter == 3:
+            assert response.status_code == 201
+            assert not BlockConfirmation.objects.all().exists()  # because of always eager
+        else:
+            assert response.status_code == 204
+            assert not BlockConfirmation.objects.all().exists()
 
     # Assert that block was added to the blockchain
     assert facade.get_next_block_number() == block_number + 1

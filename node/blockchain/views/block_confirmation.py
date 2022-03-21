@@ -19,15 +19,18 @@ class BlockConfirmationViewSet(GenericViewSet):
 
         facade = BlockchainFacade.get_instance()
         next_block_number = facade.get_next_block_number()
-        is_next_block_number = block_confirmation.get_number() == next_block_number
-        if is_next_block_number:
+        block_confirmation_number = block_confirmation.get_number()
+        if block_confirmation_number < next_block_number:
+            return Response(status=status.HTTP_204_NO_CONTENT)  # Block is already confirmed
+
+        if block_confirmation_number == next_block_number:
             block_confirmation.validate_all(facade)
         else:
             block_confirmation.validate_business_logic()
 
         ORMBlockConfirmation.objects.update_or_create_from_block_confirmation(block_confirmation)
 
-        if is_next_block_number and (
+        if block_confirmation_number == next_block_number and (
             ORMBlockConfirmation.objects.filter(number=next_block_number).count() >= facade.get_minimum_consensus()
         ):
             apply_on_commit(start_process_block_confirmations_task)
