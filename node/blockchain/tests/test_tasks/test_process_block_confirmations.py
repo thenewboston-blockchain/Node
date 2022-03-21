@@ -7,7 +7,7 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
 from node.blockchain.models import BlockConfirmation, Node
 from node.blockchain.tasks.process_block_confirmations import (
-    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus
+    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus, process_next_block
 )
 from node.blockchain.types import NodeRole
 
@@ -63,3 +63,29 @@ def test_is_valid_consensus(delta, is_valid):
 
     confirmations = [bc0, bc1, bc2]
     assert is_valid_consensus(confirmations, 2) == is_valid
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+@pytest.mark.django_db
+def test_process_next_block_no_consensus():
+    assert not process_next_block()
+
+
+@pytest.mark.usefixtures('rich_blockchain')
+@pytest.mark.django_db
+def test_process_next_block_no_valid_consensus(confirmation_validator_key_pair, confirmation_validator_key_pair_2):
+    facade = BlockchainFacade.get_instance()
+    block_number = facade.get_next_block_number() + 1
+    hash_ = 'a' * 64
+    private_keys = {
+        confirmation_validator_key_pair.public: confirmation_validator_key_pair.private,
+        confirmation_validator_key_pair_2.public: confirmation_validator_key_pair_2.private,
+    }
+    identifiers = facade.get_confirmation_validator_identifiers()
+    assert set(identifiers) == private_keys.keys()
+    for identifier in identifiers:
+        BlockConfirmation.objects.create_from_block_confirmation(
+            PydanticBlockConfirmation.create(number=block_number, hash_=hash_, signing_key=private_keys[identifier])
+        )
+
+    assert not process_next_block()
