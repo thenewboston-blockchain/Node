@@ -5,4 +5,5 @@ from .blockchain_structure import *  # noqa: F401
 from .misc import *  # noqa: F401
 from .mocks import *  # noqa: F401
 from .node import *  # noqa: F401
+from .pending_block import *  # noqa: F401
 from .roles import *  # noqa: F401

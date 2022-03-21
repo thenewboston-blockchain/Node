@@ -81,11 +81,25 @@ def test_process_next_block_no_valid_consensus(confirmation_validator_key_pair, 
         confirmation_validator_key_pair.public: confirmation_validator_key_pair.private,
         confirmation_validator_key_pair_2.public: confirmation_validator_key_pair_2.private,
     }
-    identifiers = facade.get_confirmation_validator_identifiers()
-    assert set(identifiers) == private_keys.keys()
-    for identifier in identifiers:
+    assert set(facade.get_confirmation_validator_identifiers()) == private_keys.keys()
+    for private_key in private_keys.values():
         BlockConfirmation.objects.create_from_block_confirmation(
-            PydanticBlockConfirmation.create(number=block_number, hash_=hash_, signing_key=private_keys[identifier])
+            PydanticBlockConfirmation.create(number=block_number, hash_=hash_, signing_key=private_key)
         )
 
     assert not process_next_block()
+
+
+@pytest.mark.usefixtures('rich_blockchain', 'pending_block_confirmations')
+@pytest.mark.django_db
+def test_process_next_block_adds_new_block(pending_block):
+    facade = BlockchainFacade.get_instance()
+    block = pending_block.get_block()
+    block_number = facade.get_next_block_number()
+
+    assert facade.get_last_block() != block
+    assert block.get_block_number() == block_number
+
+    assert process_next_block()
+    assert facade.get_next_block_number() == block_number + 1
+    assert facade.get_last_block().get_block() == block

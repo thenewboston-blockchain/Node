@@ -158,26 +158,6 @@ def test_validate_node_fee_when_send_coins_through_itself(
     assert blockchain_facade.get_account_balance(regular_node.identifier) == 104
 
 
-@pytest.mark.parametrize('fees', ([], [1, 2], [3]))
-@pytest.mark.usefixtures('base_blockchain', 'as_primary_validator')
-def test_validate_node_fee(fees, treasury_account_key_pair, self_node, self_node_key_pair, regular_node):
-    blockchain_facade = BlockchainFacade.get_instance()
-
-    signed_change_request_message = CoinTransferSignedChangeRequestMessage(
-        account_lock=blockchain_facade.get_account_lock(treasury_account_key_pair.public),
-        txs=[
-            CoinTransferTransaction(recipient=self_node.identifier, amount=100),
-            *[CoinTransferTransaction(recipient=self_node.identifier, amount=f, is_fee=True) for f in fees]
-        ]
-    )
-    request = CoinTransferSignedChangeRequest.create_from_signed_change_request_message(
-        message=signed_change_request_message,
-        signing_key=treasury_account_key_pair.private,
-    )
-    with pytest.raises(ValidationError, match='Fee amount is not enough'):
-        blockchain_facade.add_block_from_signed_change_request(request)
-
-
 @coin_transfer_message_type_validation_parametrizer
 def test_type_validation_for_coin_transfer_message_on_parsing(
     id_,
