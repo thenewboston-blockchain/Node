@@ -28,6 +28,10 @@ class BlockConfirmation(ValidatableMixin, BaseModel):
 
         return cls(signer=signer, signature=signature, message=message)
 
+    @classmethod
+    def create_from_block(cls, block, signing_key):
+        return cls.create(block.get_block_number(), block.make_hash(), signing_key)
+
     @root_validator
     def validate_signature(cls, values):
         return validate_signature_helper(values)

@@ -50,6 +50,9 @@ def get_consensus_block_hash_with_confirmations(
 def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus: int):
     # Validate confirmations, since they may have not been validated on API call because some of them were added
     # much earlier then the next block number become equal to confirmation block number
+    # TODO(dmu) CRITICAL: Make own confirmation mandatory to have valid consensus
+    #                     https://thenewboston.atlassian.net/browse/BC-263
+
     assert len(set(confirmation.number for confirmation in confirmations)) <= 1
     assert len(set(confirmation.hash for confirmation in confirmations)) <= 1
     assert len(set(confirmation.signer for confirmation in confirmations)) == len(confirmations)
@@ -71,7 +74,7 @@ def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus
 
 
 @lock(BLOCK_LOCK)
-def process_next_block():
+def process_next_block() -> bool:
     facade = BlockchainFacade.get_instance()
     next_block_number = facade.get_next_block_number()
     confirmations = get_next_block_confirmations(next_block_number)
