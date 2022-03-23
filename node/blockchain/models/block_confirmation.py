@@ -30,10 +30,10 @@ class BlockConfirmationManager(CustomManager):
 
 class BlockConfirmation(CustomModel):
 
-    _id = models.UUIDField(primary_key=True, default=uuid.uuid4)  # noqa: A003
+    _id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     number = models.PositiveBigIntegerField()
     hash = models.CharField(max_length=128)  # noqa: A003
-    signer = models.CharField(max_length=64)  # noqa: A003
+    signer = models.CharField(max_length=64)
     body = models.BinaryField()
 
     objects = BlockConfirmationManager()

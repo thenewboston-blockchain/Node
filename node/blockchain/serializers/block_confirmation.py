@@ -5,6 +5,8 @@ from node.core.fields import PydanticModelBackedJSONField
 from node.core.serializers import ValidateUnknownFieldsMixin
 
 
+# TODO(dmu) MEDIUM: Consider implementing BlockConfirmationSerializer as ModelSerializer similar to
+#                   node.blockchain.serializers.block.BlockSerializer
 class BlockConfirmationSerializer(serializers.Serializer, ValidateUnknownFieldsMixin):
     signer = serializers.CharField()
     signature = serializers.CharField()
