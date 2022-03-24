@@ -8,6 +8,8 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import Block as PydanticBlock
 from node.blockchain.models import Block as ORMBlock
 from node.blockchain.models import PendingBlock
+from node.blockchain.tasks.process_pending_blocks import start_process_pending_blocks_task
+from node.core.utils.misc import apply_on_commit
 
 logger = logging.getLogger(__name__)
 
@@ -22,16 +24,21 @@ class BlockSerializer(serializers.ModelSerializer):
         # This "hack" is needed to reduce deserialization / serialization overhead when reading blocks
         return OrderedDict(body=instance.body)
 
-    def validate_message(self, message):
-        is_invalid_number = ((block_number := message.get('number')) is None or
-                             block_number < BlockchainFacade.get_instance().get_next_block_number())
-        if is_invalid_number:
-            raise ValidationError('Invalid number')
-
-        return message
-
     def create(self, validated_data):
         block = PydanticBlock.parse_obj(validated_data)
+
+        facade = BlockchainFacade.get_instance()
+        block_number = block.get_block_number()
+        next_block_number = facade.get_next_block_number()
+        if block_number < next_block_number:
+            raise ValidationError('Invalid block number')
+
+        if block_number == next_block_number:
+            # Preliminary validation (we will revalidate it later) therefore providing `bypass_lock_validation=True`
+            block.validate_all(facade, bypass_lock_validation=True)
+        else:
+            block.validate_business_logic()
+
         instance, _ = PendingBlock.objects.update_or_create(
             number=block.get_block_number(),
             signer=block.signer,
@@ -41,6 +48,9 @@ class BlockSerializer(serializers.ModelSerializer):
                 'body': block.json(),
             },
         )
+
+        if block_number == next_block_number:
+            apply_on_commit(start_process_pending_blocks_task)
 
         return instance
 

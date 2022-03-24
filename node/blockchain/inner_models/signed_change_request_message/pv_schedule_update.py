@@ -3,6 +3,8 @@ from bisect import bisect_right
 from django.conf import settings
 from pydantic import Field, validator
 
+from node.blockchain.constants import BLOCK_LOCK
+from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
 from node.core.utils.types import non_negative_intstr
 
@@ -40,6 +42,7 @@ class PVScheduleUpdateSignedChangeRequestMessage(SignedChangeRequestMessage):
         if insertion_point > 1:
             raise ValidationError('Outdated block numbers detected in schedule')
 
+    @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
         super().validate_blockchain_state_dependent(blockchain_facade)
         self.validate_nodes_are_declared(blockchain_facade)
