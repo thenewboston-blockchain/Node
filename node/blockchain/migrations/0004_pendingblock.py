@@ -18,10 +18,11 @@ class Migration(migrations.Migration):
                 ('_id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
                 ('number', models.PositiveBigIntegerField()),
                 ('hash', models.CharField(max_length=128)),
+                ('signer', models.CharField(max_length=64)),
                 ('body', models.BinaryField()),
             ],
             options={
-                'ordering': ('number', 'hash'),
+                'ordering': ('number', 'signer'),
                 'unique_together': {('number', 'hash')},
             },
         ),
