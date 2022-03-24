@@ -22,7 +22,7 @@ class PVScheduleUpdateSignedChangeRequestMessage(SignedChangeRequestMessage):
 
     @validator('schedule')
     def should_contain_not_more_elements(cls, schedule):
-        if len(schedule) > (schedule_capacity := settings.SCHEDULE_CAPACITY):
+        if len(schedule) > (schedule_capacity := settings.NODE_SCHEDULE_CAPACITY):
             raise ValidationError(f'Schedule should contain not more than {schedule_capacity} elements')
         return schedule
 

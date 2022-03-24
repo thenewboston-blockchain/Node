@@ -47,7 +47,7 @@ services:
       TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
       TNB_CELERY_BROKER_URL: 'amqp://guest:guest@celery-broker:5672//'
     env_file: .env
-    command: poetry run celery -A node.config.celery worker --loglevel=INFO
+    command: poetry run celery -A node.config.celery worker --loglevel=INFO --concurrency=${TNB_NODE_SCHEDULE_CAPACITY}
     depends_on:
       - node-mongo
       - celery-broker

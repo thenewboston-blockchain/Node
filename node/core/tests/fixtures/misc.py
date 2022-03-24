@@ -20,6 +20,7 @@ def test_settings(settings):
         NODE_SIGNING_KEY='a025da120a1c95b27f17bb9442af9c27d3a357733aa150b458f21682a2d539a9',
         CELERY_BROKER_URL='memory://',
         CELERY_TASK_ALWAYS_EAGER=True,
+        NODE_SCHEDULE_CAPACITY=20,
     ):
         # For some reason we need to import the app to make celery settings work
         from node.config.celery import app  # noqa: F401
