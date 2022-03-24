@@ -68,6 +68,7 @@ class BlockchainFacade:
             block.validate_business_logic()
 
         # Make blockchain state specific validations
+        # TODO(dmu) LOW: Why do we need `bypass_lock_validation=True`?
         block.validate_blockchain_state_dependent(self, bypass_lock_validation=True)
 
         from node.blockchain.models import Block as ORMBlock
