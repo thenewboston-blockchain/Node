@@ -74,10 +74,9 @@ def is_valid_consensus(confirmations: list[BlockConfirmation], minimum_consensus
 
 
 @lock(BLOCK_LOCK)
-def process_next_block() -> bool:
+def process_block(block_number) -> bool:
     facade = BlockchainFacade.get_instance()
-    next_block_number = facade.get_next_block_number()
-    confirmations = get_next_block_confirmations(next_block_number)
+    confirmations = get_next_block_confirmations(block_number)
 
     minimum_consensus = facade.get_minimum_consensus()
     if not (result := get_consensus_block_hash_with_confirmations(confirmations, minimum_consensus)):
@@ -87,7 +86,7 @@ def process_next_block() -> bool:
     if not is_valid_consensus(confirmations, minimum_consensus):
         return False
 
-    pending_block = PendingBlock.objects.get_or_none(number=next_block_number, hash=block_hash)
+    pending_block = PendingBlock.objects.get_or_none(number=block_number, hash=block_hash)
     if pending_block is None:
         # TODO(dmu) CRITICAL: https://thenewboston.atlassian.net/browse/BC-283
         raise NotImplementedError('Edge case of processing confirmed missing pending block is not implemented')
@@ -108,9 +107,12 @@ def process_next_block() -> bool:
 
 @shared_task
 def process_block_confirmations_task():
-    should_process_next_block = True
-    while should_process_next_block:
-        should_process_next_block = process_next_block()
+    next_block_number = BlockchainFacade.get_instance().get_next_block_number()
+    while True:
+        # This implementation is safer in terms of infinitive loops
+        if not process_block(next_block_number):
+            break
+        next_block_number += 1
 
 
 def start_process_block_confirmations_task():

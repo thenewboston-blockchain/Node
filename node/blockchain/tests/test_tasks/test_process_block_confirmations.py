@@ -7,8 +7,8 @@ from node.blockchain.facade import BlockchainFacade
 from node.blockchain.inner_models import BlockConfirmation as PydanticBlockConfirmation
 from node.blockchain.models import BlockConfirmation, Node, PendingBlock
 from node.blockchain.tasks.process_block_confirmations import (
-    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus,
-    process_block_confirmations_task, process_next_block
+    get_consensus_block_hash_with_confirmations, get_next_block_confirmations, is_valid_consensus, process_block,
+    process_block_confirmations_task
 )
 from node.blockchain.tests.base import make_node_as_role
 from node.blockchain.types import NodeRole
@@ -70,7 +70,7 @@ def test_is_valid_consensus(delta, is_valid):
 @pytest.mark.usefixtures('rich_blockchain')
 @pytest.mark.django_db
 def test_process_next_block_no_consensus():
-    assert not process_next_block()
+    assert not process_block(BlockchainFacade.get_instance().get_next_block_number())
 
 
 @pytest.mark.usefixtures('rich_blockchain')
@@ -89,7 +89,7 @@ def test_process_next_block_no_valid_consensus(confirmation_validator_key_pair, 
             PydanticBlockConfirmation.create(number=block_number, hash_=hash_, signing_key=private_key)
         )
 
-    assert not process_next_block()
+    assert not process_block(facade.get_next_block_number())
 
 
 @pytest.mark.usefixtures('rich_blockchain', 'pending_block_confirmations')
@@ -102,14 +102,15 @@ def test_process_next_block_adds_new_block(pending_block):
     assert facade.get_last_block() != block
     assert block.get_block_number() == block_number
 
-    assert process_next_block()
+    assert process_block(facade.get_next_block_number())
     assert facade.get_next_block_number() == block_number + 1
     assert facade.get_last_block().get_block() == block
 
 
+@pytest.mark.django_db
 def test_process_block_confirmations_task():
     with patch(
-        'node.blockchain.tasks.process_block_confirmations.process_next_block', side_effect=[True, True, False]
+        'node.blockchain.tasks.process_block_confirmations.process_block', side_effect=[True, True, False]
     ) as mock:
         process_block_confirmations_task()
 
@@ -140,13 +141,7 @@ def test_process_block_confirmations_integration(
     pending_block = PendingBlock.objects.get_or_none(number=block.get_block_number(), hash=block.make_hash())
     assert pending_block
     assert pending_block.body == payload
-
-    assert not BlockConfirmation.objects.all().exists()
-    # TODO(dmu) CRITICAL: Remove artificial own confirmation
-    #                     https://thenewboston.atlassian.net/browse/BC-263
-    confirmation = PydanticBlockConfirmation.create_from_block(block, self_node_key_pair.private)
-    BlockConfirmation.objects.create_from_block_confirmation(confirmation)
-    assert BlockConfirmation.objects.all().exists()
+    assert BlockConfirmation.objects.filter(signer=self_node_key_pair.public).exists()
 
     # Create confirmations from other CVs
     counter = 1
