@@ -104,7 +104,7 @@ def test_send_block_to_address_integration(
     block = make_block(block_message, primary_validator_key_pair.private)
 
     for block_arg in (block, block.json()):
-        with patch('node.blockchain.views.block.start_process_pending_blocks_task') as mock:
+        with patch('node.blockchain.serializers.block.start_process_pending_blocks_task') as mock:
             response = smart_mocked_node_client.send_block(test_server_address, block_arg)
 
         assert response.status_code == 204

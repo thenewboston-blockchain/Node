@@ -97,10 +97,11 @@ def process_next_block() -> bool:
         raise ValidationError('Pending block body hash is not valid')  # we should never get here
 
     with transaction.atomic():
-        facade.add_block_from_json(block_body, expect_locked=True)
+        orm_block = facade.add_block_from_json(block_body, expect_locked=True)
         # There may be blocks with other hashes therefore we delete all of them
-        PendingBlock.objects.filter(number__lte=next_block_number).delete()
-        BlockConfirmation.objects.filter(number__lte=next_block_number).delete()
+        block_number = orm_block._id
+        PendingBlock.objects.filter(number__lte=block_number).delete()
+        BlockConfirmation.objects.filter(number__lte=block_number).delete()
 
     return True
 

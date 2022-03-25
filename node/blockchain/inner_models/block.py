@@ -60,7 +60,7 @@ class Block(ValidatableMixin, BlockType, HashableMixin):
 
     @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
-        self.message.validate_blockchain_state_dependent(blockchain_facade)
+        self.message.validate_blockchain_state_dependent(blockchain_facade, bypass_lock_validation=True)
         self.validate_signer(blockchain_facade)
 
 

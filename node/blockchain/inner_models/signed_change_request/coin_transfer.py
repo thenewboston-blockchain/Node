@@ -1,3 +1,5 @@
+from node.blockchain.constants import BLOCK_LOCK
+from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
 
 from ..signed_change_request_message import CoinTransferSignedChangeRequestMessage
@@ -11,8 +13,9 @@ class CoinTransferSignedChangeRequest(SignedChangeRequest):
         super().validate_business_logic()
         self.validate_circular_transactions()
 
+    @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
-        super().validate_blockchain_state_dependent(blockchain_facade)
+        super().validate_blockchain_state_dependent(blockchain_facade, bypass_lock_validation=True)
         self.validate_amount(blockchain_facade)
 
     def validate_circular_transactions(self):

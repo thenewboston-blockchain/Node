@@ -2,15 +2,13 @@ import django_filters
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend, RangeFilter
 from rest_framework import status
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from node.blockchain.models import Block
 from node.blockchain.serializers.block import BlockSerializer
-from node.blockchain.tasks.process_pending_blocks import start_process_pending_blocks_task
 from node.core.pagination import CustomLimitOffsetNoCountPagination
-from node.core.utils.misc import apply_on_commit
 
 from ..constants import LAST_BLOCK_ID
 
@@ -23,7 +21,7 @@ class BlockFilterSet(django_filters.FilterSet):
         fields = ('block_number',)
 
 
-class BlockViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
+class BlockViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet):
     serializer_class = BlockSerializer
     # TODO(dmu) MEDIUM: We might need to add dynamic ordering later
     queryset = BlockSerializer.Meta.model.objects.order_by('_id')
@@ -32,10 +30,7 @@ class BlockViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
     filterset_class = BlockFilterSet
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        apply_on_commit(start_process_pending_blocks_task)
+        super().create(request, *args, **kwargs)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, *args, **kwargs):  # noqa: A003

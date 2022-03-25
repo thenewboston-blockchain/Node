@@ -109,7 +109,7 @@ class BlockMessage(ValidatableMixin, BlockMessageType, SignableMixin):
 
     @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
-        self.request.validate_blockchain_state_dependent(blockchain_facade)
+        self.request.validate_blockchain_state_dependent(blockchain_facade, bypass_lock_validation=True)
         self.validate_number(blockchain_facade)
         self.validate_identifier(blockchain_facade)
         self.validate_update(blockchain_facade)

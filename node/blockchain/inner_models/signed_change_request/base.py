@@ -66,7 +66,7 @@ class SignedChangeRequest(ValidatableMixin, BaseModel, HashableMixin):
 
     @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
-        self.message.validate_blockchain_state_dependent(blockchain_facade)
+        self.message.validate_blockchain_state_dependent(blockchain_facade, bypass_lock_validation=True)
         self.validate_account_lock(blockchain_facade)
 
     def get_type(self):

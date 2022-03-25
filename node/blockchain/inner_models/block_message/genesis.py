@@ -5,9 +5,11 @@ from typing import TypeVar
 
 from pydantic import Field
 
+from node.blockchain.constants import BLOCK_LOCK
 from node.blockchain.inner_models.account_state import AccountState
 from node.blockchain.inner_models.node import Node
 from node.blockchain.inner_models.signed_change_request import GenesisSignedChangeRequest
+from node.blockchain.utils.lock import lock
 from node.core.exceptions import ValidationError
 
 from ...types import BlockIdentifier, Type
@@ -76,7 +78,8 @@ class GenesisBlockMessage(BlockMessage):
         # TODO(dmu) MEDIUM: Is it critical not to be able to validate genesis block?
         pass
 
+    @lock(BLOCK_LOCK, expect_locked=True)
     def validate_blockchain_state_dependent(self, blockchain_facade):
-        super().validate_blockchain_state_dependent(blockchain_facade)
+        super().validate_blockchain_state_dependent(blockchain_facade, bypass_lock_validation=True)
         if blockchain_facade.has_blocks():
             raise ValidationError('Blockchain must not have blocks')
