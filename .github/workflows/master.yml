@@ -104,15 +104,6 @@ jobs:
     environment: Node deployment
     needs: publish-images
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - node: First node
-            deploy_ssh_key: NODE_DEPLOY_SSH_KEY_1
-            deploy_ssh_host: NODE_DEPLOY_SSH_HOST_1
-          - node: Second node
-            deploy_ssh_key: NODE_DEPLOY_SSH_KEY_2
-            deploy_ssh_host: NODE_DEPLOY_SSH_HOST_2
     steps:
       - name: Configure SSH
         # TODO(dmu) MEDIUM: Once/if github implements secrets on job level
@@ -132,8 +123,8 @@ jobs:
           END
         env:
           CONTINUOUS_DEPLOYMENT_ENABLED: ${{ secrets.NODE_CONTINUOUS_DEPLOYMENT_ENABLED }}
-          DEPLOY_SSH_KEY: ${{ secrets[matrix.deploy_ssh_key] }}
-          DEPLOY_SSH_HOST: ${{ secrets[matrix.deploy_ssh_host] }}
+          DEPLOY_SSH_KEY: ${{ secrets.NODE_DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.NODE_DEPLOY_SSH_HOST }}
           DEPLOY_SSH_USER: ${{ secrets.NODE_DEPLOY_SSH_USER }}
 
       - name: Run deploy
