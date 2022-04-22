@@ -57,6 +57,7 @@ services:
     command: ./run.sh
     environment:
       TNB_DATABASES: '{"default":{"CLIENT":{"host":"node-mongo","password":"${MONGO_INITDB_ROOT_PASSWORD}"}}}'
+      TNB_CELERY_BROKER_URL: 'amqp://guest:guest@celery-broker:5672//'
     env_file: .env
     depends_on:
       - node-mongo
