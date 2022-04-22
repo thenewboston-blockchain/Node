@@ -100,3 +100,4 @@ dot-env:
 	grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$$(xxd -l 16 -p /dev/urandom)" >> .env
 	grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$$(xxd -c 48 -l 48 -p /dev/urandom)" >> .env
 	grep -q -o TNB_NODE_SIGNING_KEY .env || echo "TNB_NODE_SIGNING_KEY=$$(poetry run python -m node.manage generate_signing_key)" >> .env
+	grep -q -o TNB_NODE_SCHEDULE_CAPACITY .env || echo "TNB_NODE_SCHEDULE_CAPACITY=20" >> .env

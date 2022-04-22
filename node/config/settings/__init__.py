@@ -37,3 +37,4 @@ logging.captureWarnings(True)
 if not is_pytest_running():
     assert SECRET_KEY is not NotImplemented  # type: ignore # noqa: F821
     assert NODE_SIGNING_KEY is not NotImplemented  # type: ignore # noqa: F821
+    assert NODE_SCHEDULE_CAPACITY is not NotImplemented  # type: ignore # noqa: F821

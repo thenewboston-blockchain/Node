@@ -32,6 +32,7 @@ echo 'Creating/updating .env file...'
 test -f .env || touch .env
 grep -q -o MONGO_INITDB_ROOT_PASSWORD .env || echo "MONGO_INITDB_ROOT_PASSWORD=$(xxd -l 16 -p /dev/urandom)" >> .env
 grep -q -o TNB_SECRET_KEY .env || echo "TNB_SECRET_KEY=$(xxd -c 48 -l 48 -p /dev/urandom)" >> .env
+grep -q -o TNB_NODE_SCHEDULE_CAPACITY .env || echo "TNB_NODE_SCHEDULE_CAPACITY=20" >> .env
 
 docker-compose pull
 
