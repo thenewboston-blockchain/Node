@@ -1,5 +1,7 @@
 import os
 
+SENTRY_MAX_STRING_LENGTH = 4096
+
 if not SENTRY_DSN:  # type: ignore # noqa: F821
     SENTRY_DSN = os.getenv('SENTRY_DSN')
 
@@ -7,9 +9,12 @@ if SENTRY_DSN:
     import logging
 
     import sentry_sdk
+    from sentry_sdk import utils
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
+
+    utils.MAX_STRING_LENGTH = SENTRY_MAX_STRING_LENGTH
 
     handlers = LOGGING['root']['handlers']  # type: ignore # noqa: F821
     if 'pre_sentry_handler' not in handlers:
